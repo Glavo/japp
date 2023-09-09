@@ -7,8 +7,9 @@
 本项目计划有如下几个子模块：
 
 * `packer`: 打包器模块，用于生成 japp 文件（用 Java 实现）。
-* `launcher`: 启动器模块，用于启动 japp 格式的程序（前期原型仅用 Java 实现，后期考虑提供一个由 Rust 重新实现的版本）。
-* `bootlauncher`：引导模块，用于在 Java 程序中支持直接从 japp 文件中加载类（用 Java 实现）。
+* `launcher`: 启动器模块，用于启动 japp 格式的程序（前期原型仅用 Java 实现，后期同时提供一个由 Rust 重新实现的版本）。
+* `bootlauncher`: 引导模块，用于在 Java 程序中支持直接从 japp 文件中加载类（用 Java 实现）。
+* `Gradle`/`Maven` Plugin: 用于直接在构建工具中打包 japp。
 
 ## 文件格式
 
