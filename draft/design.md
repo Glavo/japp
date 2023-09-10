@@ -36,13 +36,17 @@
 * 用户文件头 (通常为 Shebang, japp 应忽略)
 * 类路径
 * TODO
-* 字符串池 (TODO)
-* 文件元数据 (TODO)
+* TODO
+* 文件索引池
+* 
+* launcher 元数据 (包含)
 * 文件尾部标记：
   * 4 字节 Magic Number `JAPP`
   * 4 字节版本号
+    * 2 字节主版本号 (不向后兼容)
+    * 2 字节副版本号 (向后兼容)
   * 8 字节文件大小
-  * 8 字节文件元数据 Offset
+  * 8 字节 launcher 元数据 Offset
   * 8 字节预留
 
 元数据和文件尾由 launcher 解析，其余部分由 bootlauncher 解析。 
