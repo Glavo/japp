@@ -34,18 +34,18 @@
 文件结构草稿：
 
 * 用户文件头 (通常为 Shebang, japp 应忽略)
-* TODO
+* 类路径
 * TODO
 * 字符串池 (TODO)
 * 文件元数据 (TODO)
 * 文件尾部标记：
   * 4 字节 Magic Number `JAPP`
-  * 4 字节版本号 (TODO)
-  * 8 字节 TODO
-  * 8 字节 TODO
-  * 8 字节字符串池大小
-  * 8 字节元数据大小
-  
+  * 4 字节版本号
+  * 8 字节文件大小
+  * 8 字节文件元数据 Offset
+  * 8 字节预留
+
+元数据和文件尾由 launcher 解析，其余部分由 bootlauncher 解析。 
 
 TODO
 
