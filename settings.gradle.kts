@@ -1,3 +1,7 @@
 rootProject.name = "japp"
 
-include("packer")
+include(
+    "packer",
+    "boot-loader",
+    "boot-loader-java9",
+)

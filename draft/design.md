@@ -8,7 +8,7 @@
 
 * `packer`: 打包器模块，用于生成 japp 文件 (用 Java 实现)。
 * `launcher`: 启动器模块，用于启动 japp 格式的程序 (前期原型仅用 Java 实现，后期同时提供一个由 Rust 重新实现的版本)。
-* `bootlauncher`: 引导模块，用于在 Java 程序中支持直接从 japp 文件中加载类 (用 Java 实现)。
+* `boot-launcher`: 引导模块，用于在 Java 程序中支持直接从 japp 文件中加载类 (用 Java 实现)。
 * `Gradle`/`Maven` Plugin: 用于直接在构建工具中打包 japp。
 
 ## 文件格式
@@ -24,7 +24,7 @@
     我们可以使用该文件头让程序能够直接在 Unix-Like 的系统上以 `./myapp.japp` 的方式运行，而对于 Windows 则注册文件的打开方式，允许双击打开。
     文件头可以灵活更改，之后可以在其中实现更多逻辑，比如在发现用户没有安装 japp 启动器时给用户更详细的提示与引导。
 
-* 我们应该使用类似 JImage 的方式，使用一个共享字符串池存储类名信息，加载时再通过 `bootlauncher` 重新复原类。
+* 我们应该使用类似 JImage 的方式，使用一个共享字符串池存储类名信息，加载时再通过 `boot-launcher` 重新复原类。
 * 对于共享字符串池，我们可以运用某种压缩方法进行压缩处理。(也许可以采用 LZ4 或者 zstd，并使用 Java 标准库和常用类的名称生成一个预训练字典)
 * 文件中应该提供元数据描述程序兼容的 Java 版本 (以及其他信息？)，在执行时启动器可以根据此信息自动选择 Java。
 * 文件中可以提供一组必要的 JVM 选项 (比如 `--add-opens` 等)，以及一些条件应用的 JVM 选项。
@@ -38,8 +38,8 @@
 * TODO
 * TODO
 * 文件索引池
-* 
-* launcher 元数据 (包含)
+* boot-launcher 元数据 (包含)
+* launcher 元数据 (包含 Java 版本、JVM 参数等信息)
 * 文件尾部标记：
   * 4 字节 Magic Number `JAPP`
   * 4 字节版本号
@@ -47,9 +47,10 @@
     * 2 字节副版本号 (向后兼容)
   * 8 字节文件大小
   * 8 字节 launcher 元数据 Offset
+  * 8 字节 boot-launcher 元数据 Offset
   * 8 字节预留
 
-元数据和文件尾由 launcher 解析，其余部分由 bootlauncher 解析。 
+元数据和文件尾由 launcher 解析，其余部分由 boot-launcher 解析。 
 
 TODO
 
