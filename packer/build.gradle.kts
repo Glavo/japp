@@ -1,5 +1,6 @@
 tasks.compileJava {
-    options.release.set(8)
+    // TODO: Java 8
+    options.release.set(9)
 }
 
 dependencies {

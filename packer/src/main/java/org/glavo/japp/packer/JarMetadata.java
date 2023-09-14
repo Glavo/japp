@@ -18,8 +18,8 @@ public final class JarMetadata {
         this.moduleName = moduleName;
     }
 
-    public void addEntry(Entry entry) {
-        this.entries.add(entry);
+    public List<Entry> getEntries() {
+        return this.entries;
     }
 
     public List<Entry> getMultiReleaseEntries(int release) {
@@ -51,7 +51,6 @@ public final class JarMetadata {
                 for (Entry entry : this.entries) {
                     releaseEntries.put(entry.toJsonObject());
                 }
-
                 multiRelease.put(release.toString(), releaseEntries);
             });
 
