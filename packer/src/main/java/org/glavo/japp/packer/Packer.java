@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Objects;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.jar.JarFile;
 
 public final class Packer implements Closeable {
 
@@ -14,6 +16,9 @@ public final class Packer implements Closeable {
 
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
+
+    private final Map<String, Long> moduleOffsets = new LinkedHashMap<>();
+    private final Map<String, Long> jarOffsets = new LinkedHashMap<>();
 
     private final OutputStream outputStream;
     private long totalBytes = 0L;
@@ -54,6 +59,15 @@ public final class Packer implements Closeable {
         totalBytes += len;
     }
 
+
+    public void writeModule(JarFile module) throws IOException {
+
+    }
+
+    private void writeMetadata() throws IOException {
+        // TODO
+    }
+
     private void writeFileEnd(long metadataOffset) throws IOException {
         long fileSize = totalBytes + 48;
 
@@ -88,11 +102,30 @@ public final class Packer implements Closeable {
 
     @Override
     public void close() throws IOException {
-        // TODO
-        writeFileEnd(0L);
+        long metadataOffset = totalBytes;
+        writeMetadata();
+        writeFileEnd(metadataOffset);
     }
 
     public static void main(String[] args) {
-        // TODO
+        List<Path> modulePath = new ArrayList<>();
+        List<Path> classPath = new ArrayList<>();
+        Path outputFile = null;
+
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+
+            switch (arg) {
+                case "-module-path":
+                case "--module-path": {
+
+                }
+
+
+
+            }
+
+        }
+
     }
 }
