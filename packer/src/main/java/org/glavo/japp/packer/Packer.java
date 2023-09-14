@@ -3,15 +3,14 @@ package org.glavo.japp.packer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -31,11 +30,21 @@ public final class Packer implements Closeable {
     private final List<JarMetadata> modulePath = new ArrayList<>();
     private final List<JarMetadata> classPath = new ArrayList<>();
 
-    private final OutputStream outputStream;
+    private final List<String> addReads = new ArrayList<>();
+    private final List<String> addExports = new ArrayList<>();
+    private final List<String> addOpens = new ArrayList<>();
+
+    private String mainClass;
+    private String mainModule;
+
+    private OutputStream outputStream;
     private long totalBytes = 0L;
 
-    public Packer(OutputStream outputStream) {
-        this.outputStream = Objects.requireNonNull(outputStream);
+    public Packer() {
+    }
+
+    public void setOutputStream(OutputStream outputStream) {
+        this.outputStream = outputStream;
     }
 
     private void writeByte(byte b) throws IOException {
@@ -135,6 +144,11 @@ public final class Packer implements Closeable {
 
             // If the module name is not found, the file name is retained
             JarMetadata metadata = new JarMetadata(moduleName == null ? jar.getFileName().toString() : null, moduleName);
+            if (modulePath) {
+                this.modulePath.add(metadata);
+            } else {
+                this.classPath.add(metadata);
+            }
 
             // Then write all entries
 
@@ -180,6 +194,17 @@ public final class Packer implements Closeable {
         }
     }
 
+    private static void putJsonArray(JSONObject obj, String key, List<String> list) {
+        if (list.isEmpty()) {
+            return;
+        }
+        JSONArray arr = new JSONArray();
+        for (String s : list) {
+            arr.put(s);
+        }
+        obj.put(key, arr);
+    }
+
     private void writeMetadata() throws IOException {
         JSONObject res = new JSONObject();
 
@@ -194,8 +219,15 @@ public final class Packer implements Closeable {
             classPath.put(metadata.toJson());
         }
 
-        res.put("modulePath", modulePath);
-        res.put("classPath", classPath);
+        res.put("Module-Path", modulePath);
+        res.put("Class-Path", classPath);
+
+        putJsonArray(res, "Add-Reads", addReads);
+        putJsonArray(res, "Add-Exports", addExports);
+        putJsonArray(res, "Add-Opens", addOpens);
+
+        res.putOpt("Main-Class", mainClass);
+        res.putOpt("Main-Module", mainModule);
 
         writeBytes(res.toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -234,28 +266,95 @@ public final class Packer implements Closeable {
 
     @Override
     public void close() throws IOException {
-        long metadataOffset = totalBytes;
-        writeMetadata();
-        writeFileEnd(metadataOffset);
+        try (Closeable __ = outputStream) {
+            long metadataOffset = totalBytes;
+            writeMetadata();
+            writeFileEnd(metadataOffset);
+        }
     }
 
-    public static void main(String[] args) {
+    private static String nextArg(String[] args, int index) {
+        if (index < args.length - 1) {
+            return args[index + 1];
+        } else {
+            System.err.println("Error: no value given for " + args[index]);
+            System.exit(1);
+            throw new AssertionError();
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
         List<Path> modulePath = new ArrayList<>();
         List<Path> classPath = new ArrayList<>();
+
         Path outputFile = null;
 
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i];
+        try (Packer packer = new Packer()) {
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
 
-            switch (arg) {
-                case "-module-path":
-                case "--module-path": {
+                switch (arg) {
+                    case "-module-path":
+                    case "--module-path": {
+                        String mp = nextArg(args, i++);
 
+                        String[] elements = mp.split(File.pathSeparator);
+                        for (String element : elements) {
+                            modulePath.add(Paths.get(element));
+                        }
+                        break;
+                    }
+                    case "-classpath":
+                    case "--classpath":
+                    case "-class-path":
+                    case "--class-path": {
+                        String cp = nextArg(args, i++);
+
+                        String[] elements = cp.split(File.pathSeparator);
+                        for (String element : elements) {
+                            classPath.add(Paths.get(element));
+                        }
+                        break;
+                    }
+                    case "-o": {
+                        outputFile = Paths.get(nextArg(args, i++));
+                        break;
+                    }
+                    case "-m": {
+                        packer.mainModule = nextArg(args, i++);
+                        break;
+                    }
                 }
 
+                if (arg.startsWith("--add-reads=")) {
+                    packer.addReads.add(arg.substring("--add-reads=".length()));
+                } else if (arg.startsWith("--add-exports=")) {
+                    packer.addExports.add(arg.substring("--add-exports=".length()));
+                } else if (arg.startsWith("--add-opens=")) {
+                    packer.addOpens.add(arg.substring("--add-opens=".length()));
+                } else {
+                    if (i < args.length - 1) {
+                        System.err.println("Error: too many arguments");
+                        System.exit(1);
+                    }
 
+                    packer.mainClass = arg;
+                }
             }
 
+            if (outputFile == null) {
+                System.err.println("Error: miss output file");
+                System.exit(1);
+            }
+
+            packer.setOutputStream(Files.newOutputStream(outputFile));
+
+            for (Path path : modulePath) {
+                packer.writeJar(path, true);
+            }
+            for (Path path : classPath) {
+                packer.writeJar(path, false);
+            }
         }
 
     }

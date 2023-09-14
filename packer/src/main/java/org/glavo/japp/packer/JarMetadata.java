@@ -34,14 +34,14 @@ public final class JarMetadata {
     public JSONObject toJson() {
         JSONObject res = new JSONObject();
 
-        res.putOpt("fileName", fileName);
-        res.putOpt("moduleName", moduleName);
+        res.putOpt("File-Name", fileName);
+        res.putOpt("Module-Name", moduleName);
 
         JSONArray jsonEntries = new JSONArray(this.entries.size());
         for (Entry entry : this.entries) {
             jsonEntries.put(entry.toJsonObject());
         }
-        res.put("entries", entries);
+        res.put("Entries", entries);
 
         if (multiReleaseEntries != null) {
             JSONObject multiRelease = new JSONObject();
@@ -54,7 +54,7 @@ public final class JarMetadata {
                 multiRelease.put(release.toString(), releaseEntries);
             });
 
-            res.put("multiRelease", multiRelease);
+            res.put("Multi-Release", multiRelease);
         }
 
         return res;
@@ -77,11 +77,11 @@ public final class JarMetadata {
 
         JSONObject toJsonObject() {
             JSONObject jsonEntry = new JSONObject();
-            jsonEntry.put("name", name);
-            jsonEntry.put("offset", offset);
-            jsonEntry.put("size", size);
-            jsonEntry.put("creationTime", creationTime.toMillis());
-            jsonEntry.put("lastModifiedTime", lastModifiedTime.toMillis());
+            jsonEntry.put("Name", name);
+            jsonEntry.put("Offset", offset);
+            jsonEntry.put("Size", size);
+            jsonEntry.put("Creation-Time", creationTime.toMillis());
+            jsonEntry.put("Last-Modified-Time", lastModifiedTime.toMillis());
             return jsonEntry;
         }
     }
