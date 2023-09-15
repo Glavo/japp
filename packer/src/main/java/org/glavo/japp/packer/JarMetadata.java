@@ -80,8 +80,12 @@ public final class JarMetadata {
             jsonEntry.put("Name", name);
             jsonEntry.put("Offset", offset);
             jsonEntry.put("Size", size);
-            jsonEntry.put("Creation-Time", creationTime.toMillis());
-            jsonEntry.put("Last-Modified-Time", lastModifiedTime.toMillis());
+            if (creationTime != null) {
+                jsonEntry.put("Creation-Time", creationTime.toMillis());
+            }
+            if (lastModifiedTime != null) {
+                jsonEntry.put("Last-Modified-Time", lastModifiedTime.toMillis());
+            }
             return jsonEntry;
         }
     }

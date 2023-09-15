@@ -304,6 +304,7 @@ public final class Packer implements Closeable {
                         }
                         break;
                     }
+                    case "-cp":
                     case "-classpath":
                     case "--classpath":
                     case "-class-path":
@@ -324,21 +325,25 @@ public final class Packer implements Closeable {
                         packer.mainModule = nextArg(args, i++);
                         break;
                     }
-                }
+                    default: {
+                        if (arg.startsWith("--add-reads=")) {
+                            packer.addReads.add(arg.substring("--add-reads=".length()));
+                        } else if (arg.startsWith("--add-exports=")) {
+                            packer.addExports.add(arg.substring("--add-exports=".length()));
+                        } else if (arg.startsWith("--add-opens=")) {
+                            packer.addOpens.add(arg.substring("--add-opens=".length()));
+                        } else if (arg.startsWith("-")) {
+                            System.err.println("Error: Unrecognized option: " + arg);
+                            System.exit(1);
+                        } else {
+                            if (i < args.length - 1) {
+                                System.err.println("Error: too many arguments");
+                                System.exit(1);
+                            }
 
-                if (arg.startsWith("--add-reads=")) {
-                    packer.addReads.add(arg.substring("--add-reads=".length()));
-                } else if (arg.startsWith("--add-exports=")) {
-                    packer.addExports.add(arg.substring("--add-exports=".length()));
-                } else if (arg.startsWith("--add-opens=")) {
-                    packer.addOpens.add(arg.substring("--add-opens=".length()));
-                } else {
-                    if (i < args.length - 1) {
-                        System.err.println("Error: too many arguments");
-                        System.exit(1);
+                            packer.mainClass = arg;
+                        }
                     }
-
-                    packer.mainClass = arg;
                 }
             }
 
