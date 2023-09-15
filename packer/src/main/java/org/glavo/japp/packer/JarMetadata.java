@@ -41,7 +41,7 @@ public final class JarMetadata {
         for (Entry entry : this.entries) {
             jsonEntries.put(entry.toJsonObject());
         }
-        res.put("Entries", entries);
+        res.put("Entries", jsonEntries);
 
         if (multiReleaseEntries != null) {
             JSONObject multiRelease = new JSONObject();
