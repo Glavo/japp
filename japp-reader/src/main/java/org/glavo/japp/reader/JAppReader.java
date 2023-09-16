@@ -15,10 +15,11 @@ public final class JAppReader implements Closeable {
 
     public static final int FILE_END_LENGTH = 48;
 
-
     private final ReentrantLock lock = new ReentrantLock();
 
     private final FileChannel channel;
+
+    private final long contentOffset;
 
     public JAppReader(Path file) throws IOException {
         this.channel = FileChannel.open(file);
@@ -35,7 +36,7 @@ public final class JAppReader implements Closeable {
 
             channel.position(fileSize - endBufferSize);
 
-            while (channel.read(endBuffer) >= 0) {
+            while (channel.read(endBuffer) > 0) {
             }
 
             if (endBuffer.remaining() > 0) {
@@ -75,6 +76,8 @@ public final class JAppReader implements Closeable {
                 throw new IOException("Invalid metadata offset: " + metadataOffset);
             }
 
+            this.contentOffset = fileSize - fileContentSize;
+
             // TODO
 
         } catch (Throwable e) {
@@ -84,6 +87,8 @@ public final class JAppReader implements Closeable {
                 e2.addSuppressed(e);
                 throw e2;
             }
+
+            throw e;
         }
     }
 
