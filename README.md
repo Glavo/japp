@@ -24,4 +24,4 @@ More details can be found in the draft (in Chinese): [Draft](draft/design.md).
 
 ## Try it
 
-TODO: Please keep an eye on this project and I will provide a working prototype in the near future.
+TODO: Please keep an eye on this project, and I will provide a working prototype in the near future.
