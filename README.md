@@ -6,7 +6,7 @@ In the early stages and under active development, stay tuned.
 
 Features being implemented:
 
-* Pack multiple JARs into one file;
+* Pack multiple modular or non-modular JARs into one file;
 * Preserves all `module-info.class`, works well with the JPMS (Java Platform Module System);
 * Share data between class files to reduce file size;
 * Automatic selection of applicable Java;
