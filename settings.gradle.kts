@@ -1,9 +1,9 @@
 rootProject.name = "japp"
 
 include(
+    "base",
     "packer",
-    "japp-reader",
-    "japp-filesystem",
+    "jappfs",
     "boot-loader",
     "boot-loader-java8",
 )

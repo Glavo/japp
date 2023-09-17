@@ -1,4 +1,4 @@
-package org.glavo.japp.packer;
+package org.glavo.japp;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,8 +27,8 @@ public final class Packer implements Closeable {
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
 
-    private final List<JarMetadata> modulePath = new ArrayList<>();
-    private final List<JarMetadata> classPath = new ArrayList<>();
+    private final List<ClasspathItem> modulePath = new ArrayList<>();
+    private final List<ClasspathItem> classPath = new ArrayList<>();
 
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
@@ -143,7 +143,7 @@ public final class Packer implements Closeable {
             }
 
             // If the module name is not found, the file name is retained
-            JarMetadata metadata = new JarMetadata(moduleName == null ? jar.getFileName().toString() : null, moduleName);
+            ClasspathItem metadata = new ClasspathItem(moduleName == null ? jar.getFileName().toString() : null, moduleName);
             if (modulePath) {
                 this.modulePath.add(metadata);
             } else {
@@ -159,7 +159,7 @@ public final class Packer implements Closeable {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                List<JarMetadata.Entry> metadataEntries = null;
+                List<ClasspathItem.Entry> metadataEntries = null;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -182,7 +182,7 @@ public final class Packer implements Closeable {
                     metadataEntries = metadata.getEntries();
                 }
 
-                metadataEntries.add(new JarMetadata.Entry(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                metadataEntries.add(new ClasspathItem.Entry(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;
@@ -211,11 +211,11 @@ public final class Packer implements Closeable {
         JSONArray modulePath = new JSONArray();
         JSONArray classPath = new JSONArray();
 
-        for (JarMetadata metadata : this.modulePath) {
+        for (ClasspathItem metadata : this.modulePath) {
             modulePath.put(metadata.toJson());
         }
 
-        for (JarMetadata metadata : this.classPath) {
+        for (ClasspathItem metadata : this.classPath) {
             classPath.put(metadata.toJson());
         }
 

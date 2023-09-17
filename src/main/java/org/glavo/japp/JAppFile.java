@@ -1,7 +1,7 @@
-package org.glavo.japp.reader;
+package org.glavo.japp;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import java.io.Closeable;
 import java.io.EOFException;
@@ -9,11 +9,15 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class JAppReader implements Closeable {
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+public final class JAppFile implements Closeable {
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
 
@@ -25,7 +29,17 @@ public final class JAppReader implements Closeable {
 
     private final long contentOffset;
 
-    public JAppReader(Path file) throws IOException {
+    private final List<ClasspathItem> modulePath = new ArrayList<>();
+    private final List<ClasspathItem> classPath = new ArrayList<>();
+
+    private final List<String> addReads = new ArrayList<>();
+    private final List<String> addExports = new ArrayList<>();
+    private final List<String> addOpens = new ArrayList<>();
+
+    private final String mainClass;
+    private final String mainModule;
+
+    public JAppFile(Path file) throws IOException {
         this.channel = FileChannel.open(file);
 
         try {
@@ -84,9 +98,9 @@ public final class JAppReader implements Closeable {
 
             long metadataSize = fileContentSize - FILE_END_SIZE - metadataOffset;
 
-            JSONObject json;
+            String json;
             if (metadataSize < endBufferSize - FILE_END_SIZE) {
-                json = new JSONObject(new String(endBuffer.array(), (int) (endBufferSize - metadataSize - FILE_END_SIZE), (int) metadataSize, StandardCharsets.UTF_8));
+                json = new String(endBuffer.array(), (int) (endBufferSize - metadataSize - FILE_END_SIZE), (int) metadataSize, UTF_8);
             } else {
                 if (metadataSize > (1 << 30)) {
                     throw new IOException("Metadata is too large");
@@ -101,9 +115,20 @@ public final class JAppReader implements Closeable {
                     throw new EOFException();
                 }
 
-                json = new JSONObject(new String(metadataBuffer.array(), StandardCharsets.UTF_8));
+                json = new String(metadataBuffer.array(), UTF_8);
             }
 
+            JSONObject obj = new JSONObject(json);
+
+            readClasspathItems(classPath, obj.optJSONArray("Class-Path"));
+            readClasspathItems(modulePath, obj.optJSONArray("Module-Path"));
+
+            readJsonArray(addReads, obj, "Add-Reads" );
+            readJsonArray(addExports, obj, "Add-Exports");
+            readJsonArray(addOpens, obj, "Add-Opens");
+
+            mainClass = obj.optString("Main-Class");
+            mainModule = obj.optString("Main-Module");
         } catch (Throwable e) {
             try {
                 channel.close();
@@ -113,6 +138,27 @@ public final class JAppReader implements Closeable {
             }
 
             throw e;
+        }
+    }
+
+    private static void readClasspathItems(List<ClasspathItem> list, JSONArray array) {
+        if (array == null) {
+            return;
+        }
+
+        for (Object item : array) {
+            list.add(ClasspathItem.fromJson((JSONObject) item));
+        }
+    }
+
+    private static void readJsonArray(List<String> list, JSONObject obj, String key) {
+        JSONArray arr = obj.optJSONArray(key);
+        if (arr == null) {
+            return;
+        }
+
+        for (Object o : arr) {
+            list.add((String) o);
         }
     }
 
