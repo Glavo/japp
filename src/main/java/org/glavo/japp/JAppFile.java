@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -164,5 +165,33 @@ public final class JAppFile implements Closeable {
     @Override
     public void close() throws IOException {
         channel.close();
+    }
+
+    public InputStream getInputStream(ClasspathItem.Entry entry) throws IOException {
+        // TODO: Need optimization
+        return new InputStream() {
+            private long count = 0;
+
+            @Override
+            public int read() throws IOException {
+                if (count >= entry.size) {
+                    return -1;
+                }
+
+                lock.lock();
+                try {
+                    ByteBuffer buffer = ByteBuffer.allocate(1);
+                    channel.position(entry.offset + count);
+
+                    if (channel.read(buffer) != 1) {
+                        return -1;
+                    } else {
+                        return buffer.array()[0] & 0xff;
+                    }
+                } finally {
+                    lock.unlock();
+                }
+            }
+        };
     }
 }

@@ -109,11 +109,11 @@ public final class ClasspathItem {
     }
 
     public static final class Entry {
-        private final String name;
-        private final long offset;
-        private final long size;
-        private final FileTime creationTime;
-        private final FileTime lastModifiedTime;
+        final String name;
+        final long offset;
+        final long size;
+        final FileTime creationTime;
+        final FileTime lastModifiedTime;
 
         public Entry(String name, long offset, long size, FileTime creationTime, FileTime lastModifiedTime) {
             this.name = name;
