@@ -34,7 +34,10 @@ dependencies {
 
 tasks.compileJava {
     // TODO: Java 8
-    options.release.set(9)
+    sourceCompatibility = "9"
+    targetCompatibility = "9"
+
+    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
 }
 
 tasks.jar {
