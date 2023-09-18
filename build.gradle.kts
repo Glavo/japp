@@ -32,6 +32,8 @@ dependencies {
     // In order to create a prototype more quickly, temporarily store the metadata in JSON format.
     // TODO: Will be replaced by a more compact binary format in the future
     implementation(Deps.JSON)
+
+    implementation(Deps.GLOB)
 }
 
 tasks.compileJava {
