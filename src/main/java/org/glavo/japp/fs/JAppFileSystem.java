@@ -8,9 +8,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public final class JAppFileSystem extends FileSystem {
@@ -23,6 +21,7 @@ public final class JAppFileSystem extends FileSystem {
 
     private final JAppPath root = new JAppPath(this, "/");
     private final List<Path> roots = Collections.singletonList(root);
+    private static final Set<String> supportedFileAttributeViews = Collections.singleton("basic");
 
     JAppFileSystem(JAppFileSystemProvider provider, Path jappFile, boolean isCloseable) throws IOException {
         this.provider = provider;
@@ -78,12 +77,26 @@ public final class JAppFileSystem extends FileSystem {
 
     @Override
     public Set<String> supportedFileAttributeViews() {
-        return null; // TODO
+        return supportedFileAttributeViews;
     }
 
     @Override
     public Path getPath(String first, String... more) {
-        return null; // TODO
+        if (more.length == 0) {
+            return new JAppPath(this, first);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(first);
+        for (String path : more) {
+            if (!path.isEmpty()) {
+                if (sb.length() > 0) {
+                    sb.append('/');
+                }
+                sb.append(path);
+            }
+        }
+        return new JAppPath(this, sb.toString());
     }
 
     @Override
