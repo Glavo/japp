@@ -9,6 +9,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public final class JAppFileSystemProvider extends FileSystemProvider {
@@ -74,7 +75,11 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileStore getFileStore(Path path) throws IOException {
-        return null; // TODO
+        Objects.requireNonNull(path);
+        if (!(path instanceof JAppPath)) {
+            throw new ProviderMismatchException();
+        }
+        return new JAppFileStore((JAppFileSystem) path.getFileSystem());
     }
 
     @Override

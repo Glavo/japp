@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -18,6 +20,9 @@ public final class JAppFileSystem extends FileSystem {
     private final boolean isCloseable;
 
     private volatile boolean closed = false;
+
+    private final JAppPath root = new JAppPath(this, "/");
+    private final List<Path> roots = Collections.singletonList(root);
 
     JAppFileSystem(JAppFileSystemProvider provider, Path jappFile, boolean isCloseable) throws IOException {
         this.provider = provider;
@@ -57,14 +62,18 @@ public final class JAppFileSystem extends FileSystem {
         return "/";
     }
 
+    public JAppPath getRootPath() {
+        return root;
+    }
+
     @Override
     public Iterable<Path> getRootDirectories() {
-        return null; // TODO
+        return roots;
     }
 
     @Override
     public Iterable<FileStore> getFileStores() {
-        return null; // TODO
+        return Collections.singleton(new JAppFileStore(this));
     }
 
     @Override
