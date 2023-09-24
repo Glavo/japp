@@ -186,6 +186,7 @@ public final class JAppFile implements Closeable {
                     if (channel.read(buffer) != 1) {
                         return -1;
                     } else {
+                        count++;
                         return buffer.array()[0] & 0xff;
                     }
                 } finally {
