@@ -2,7 +2,7 @@ package org.glavo.japp.fs;
 
 import com.hrakaroo.glob.GlobPattern;
 import com.hrakaroo.glob.MatchingEngine;
-import org.glavo.japp.JAppFile;
+import org.glavo.japp.JAppReader;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public final class JAppFileSystem extends FileSystem {
 
     private final JAppFileSystemProvider provider;
-    private final JAppFile file;
+    private final JAppReader file;
     private final boolean isCloseable;
 
     private volatile boolean closed = false;
@@ -25,7 +25,7 @@ public final class JAppFileSystem extends FileSystem {
 
     JAppFileSystem(JAppFileSystemProvider provider, Path jappFile, boolean isCloseable) throws IOException {
         this.provider = provider;
-        this.file = new JAppFile(jappFile);
+        this.file = new JAppReader(jappFile);
         this.isCloseable = isCloseable;
     }
 

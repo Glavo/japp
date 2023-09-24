@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class JAppFile implements Closeable {
+public final class JAppReader implements Closeable {
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
 
@@ -39,7 +39,7 @@ public final class JAppFile implements Closeable {
     private final String mainClass;
     private final String mainModule;
 
-    public JAppFile(Path file) throws IOException {
+    public JAppReader(Path file) throws IOException {
         this.channel = FileChannel.open(file);
 
         try {
