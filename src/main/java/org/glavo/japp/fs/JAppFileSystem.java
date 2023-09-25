@@ -14,21 +14,16 @@ import java.util.regex.Pattern;
 public final class JAppFileSystem extends FileSystem {
 
     private final JAppFileSystemProvider provider;
-    private final JAppReader file;
-    private final boolean isCloseable;
-
-    private volatile boolean closed = false;
+    private final JAppReader reader;
 
     private final JAppPath root = new JAppPath(this, "/");
     private final List<Path> roots = Collections.singletonList(root);
     private static final Set<String> supportedFileAttributeViews = Collections.singleton("basic");
 
-    JAppFileSystem(JAppFileSystemProvider provider, Path jappFile, boolean isCloseable) throws IOException {
+    JAppFileSystem(JAppFileSystemProvider provider, Path file, Map<String, ?> env) throws IOException {
         this.provider = provider;
-        this.file = new JAppReader(jappFile);
-        this.isCloseable = isCloseable;
+        this.reader = new JAppReader(file);
     }
-
 
     @Override
     public FileSystemProvider provider() {
@@ -36,19 +31,13 @@ public final class JAppFileSystem extends FileSystem {
     }
 
     @Override
-    public synchronized void close() throws IOException {
-        if (!isCloseable)
-            throw new UnsupportedOperationException();
-
-        if (!closed) {
-            closed = true;
-            file.close();
-        }
+    public void close() throws IOException {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isOpen() {
-        return !closed;
+        return true;
     }
 
     @Override
