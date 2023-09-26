@@ -5,26 +5,25 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
 import java.util.*;
 
 public final class ClasspathItem {
     private final String fileName;
     private final String moduleName;
 
-    private final List<Entry> entries = new ArrayList<>();
-    private Map<Integer, List<Entry>> multiReleaseEntries;
+    private final List<JAppEntry> entries = new ArrayList<>();
+    private Map<Integer, List<JAppEntry>> multiReleaseEntries;
 
     public ClasspathItem(String fileName, String moduleName) {
         this.fileName = fileName;
         this.moduleName = moduleName;
     }
 
-    public List<Entry> getEntries() {
+    public List<JAppEntry> getEntries() {
         return this.entries;
     }
 
-    public List<Entry> getMultiReleaseEntries(int release) {
+    public List<JAppEntry> getMultiReleaseEntries(int release) {
         if (multiReleaseEntries == null) {
             multiReleaseEntries = new TreeMap<>();
         }
@@ -32,9 +31,9 @@ public final class ClasspathItem {
         return multiReleaseEntries.computeIfAbsent(release, i -> new ArrayList<>());
     }
 
-    private static JSONArray writeEntries(List<Entry> entries) {
+    private static JSONArray writeEntries(List<JAppEntry> entries) {
         JSONArray jsonEntries = new JSONArray(entries.size());
-        for (Entry entry : entries) {
+        for (JAppEntry entry : entries) {
             JSONObject jsonEntry = new JSONObject();
             jsonEntry.put("Name", entry.name);
             jsonEntry.put("Offset", entry.offset);
@@ -65,7 +64,7 @@ public final class ClasspathItem {
         return res;
     }
 
-    private static void readEntries(List<Entry> entries, JSONArray jsonArray) {
+    private static void readEntries(List<JAppEntry> entries, JSONArray jsonArray) {
         if (jsonArray == null) {
             return;
         }
@@ -78,7 +77,7 @@ public final class ClasspathItem {
             long creationTime = jsonEntry.optLong("Creation-Time", -1L);
             long lastModifiedTime = jsonEntry.optLong("Last-Modified-Time", -1L);
 
-            entries.add(new Entry(
+            entries.add(new JAppEntry(
                     name, offset, size,
                     creationTime > 0 ? FileTime.fromMillis(creationTime) : null,
                     lastModifiedTime > 0 ? FileTime.fromMillis(lastModifiedTime) : null
@@ -108,19 +107,4 @@ public final class ClasspathItem {
         }
     }
 
-    public static final class Entry {
-        final String name;
-        final long offset;
-        final long size;
-        final FileTime creationTime;
-        final FileTime lastModifiedTime;
-
-        public Entry(String name, long offset, long size, FileTime creationTime, FileTime lastModifiedTime) {
-            this.name = name;
-            this.offset = offset;
-            this.size = size;
-            this.creationTime = creationTime;
-            this.lastModifiedTime = lastModifiedTime;
-        }
-    }
 }

@@ -159,7 +159,7 @@ public final class Packer implements Closeable {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                List<ClasspathItem.Entry> metadataEntries = null;
+                List<JAppEntry> metadataEntries = null;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -182,7 +182,7 @@ public final class Packer implements Closeable {
                     metadataEntries = metadata.getEntries();
                 }
 
-                metadataEntries.add(new ClasspathItem.Entry(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                metadataEntries.add(new JAppEntry(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;

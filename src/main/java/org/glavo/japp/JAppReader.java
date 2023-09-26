@@ -167,7 +167,7 @@ public final class JAppReader implements Closeable {
         channel.close();
     }
 
-    public InputStream getInputStream(ClasspathItem.Entry entry) throws IOException {
+    public InputStream getInputStream(JAppEntry entry) throws IOException {
         // TODO: Need optimization
         return new InputStream() {
             private long count = 0;
