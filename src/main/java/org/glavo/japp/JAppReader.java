@@ -23,6 +23,8 @@ public final class JAppReader implements Closeable {
 
     public static final int FILE_END_SIZE = 48;
 
+    private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+
     private final ReentrantLock lock = new ReentrantLock();
 
     private final FileChannel channel;
@@ -83,7 +85,7 @@ public final class JAppReader implements Closeable {
             assert endBuffer.remaining() == 16;
 
             if (flags != 0) {
-                throw new IOException("Unsupported flag");
+                throw new IOException("Unsupported flags: " + Long.toBinaryString(flags));
             }
 
             if (fileContentSize > fileSize || fileContentSize < FILE_END_SIZE) {
