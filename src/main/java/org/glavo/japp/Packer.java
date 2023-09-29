@@ -84,7 +84,7 @@ public final class Packer implements Closeable {
         return ModuleDescriptor.read(moduleInfo).name();
     }
 
-    public void writeJar(Path jar, boolean modulePath) throws IOException {
+    public void addJar(Path jar, boolean modulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(jar.toFile())) {
             Attributes attributes = null;
 
@@ -355,10 +355,10 @@ public final class Packer implements Closeable {
             packer.setOutputStream(Files.newOutputStream(outputFile));
 
             for (Path path : modulePath) {
-                packer.writeJar(path, true);
+                packer.addJar(path, true);
             }
             for (Path path : classPath) {
-                packer.writeJar(path, false);
+                packer.addJar(path, false);
             }
         }
 
