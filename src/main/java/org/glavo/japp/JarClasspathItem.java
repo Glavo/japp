@@ -7,14 +7,14 @@ import org.json.JSONObject;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 
-public final class ClasspathItem {
+public final class JarClasspathItem {
     private final String fileName;
     private final String moduleName;
 
     private final List<JAppEntry> entries = new ArrayList<>();
     private Map<Integer, List<JAppEntry>> multiReleaseEntries;
 
-    public ClasspathItem(String fileName, String moduleName) {
+    public JarClasspathItem(String fileName, String moduleName) {
         this.fileName = fileName;
         this.moduleName = moduleName;
     }
@@ -85,12 +85,12 @@ public final class ClasspathItem {
         }
     }
 
-    public static ClasspathItem fromJson(JSONObject obj) {
+    public static JarClasspathItem fromJson(JSONObject obj) {
         try {
             String fileName = (String) obj.opt("File-Name");
             String moduleName = (String) obj.opt("Module-Name");
 
-            ClasspathItem item = new ClasspathItem(moduleName, fileName);
+            JarClasspathItem item = new JarClasspathItem(moduleName, fileName);
 
             readEntries(item.getEntries(), (JSONArray) obj.opt("Entries"));
 

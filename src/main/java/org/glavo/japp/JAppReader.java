@@ -31,8 +31,8 @@ public final class JAppReader implements Closeable {
 
     private final long contentOffset;
 
-    private final List<ClasspathItem> modulePath = new ArrayList<>();
-    private final List<ClasspathItem> classPath = new ArrayList<>();
+    private final List<JarClasspathItem> modulePath = new ArrayList<>();
+    private final List<JarClasspathItem> classPath = new ArrayList<>();
 
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
@@ -143,13 +143,13 @@ public final class JAppReader implements Closeable {
         }
     }
 
-    private static void readClasspathItems(List<ClasspathItem> list, JSONArray array) {
+    private static void readClasspathItems(List<JarClasspathItem> list, JSONArray array) {
         if (array == null) {
             return;
         }
 
         for (Object item : array) {
-            list.add(ClasspathItem.fromJson((JSONObject) item));
+            list.add(JarClasspathItem.fromJson((JSONObject) item));
         }
     }
 
