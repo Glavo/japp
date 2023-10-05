@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 
-public final class JarClasspathItem {
+public final class JarClasspathItem implements ClasspathItem {
     private final String fileName;
     private final String moduleName;
 
