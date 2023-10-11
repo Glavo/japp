@@ -17,7 +17,7 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public final class Packer implements Closeable {
+public final class JAppPacker implements Closeable {
 
     private static final short MAJOR_VERSION = -1;
     private static final short MINOR_VERSION = 0;
@@ -40,7 +40,7 @@ public final class Packer implements Closeable {
     private OutputStream outputStream;
     private long totalBytes = 0L;
 
-    public Packer() {
+    public JAppPacker() {
     }
 
     public void setOutputStream(OutputStream outputStream) {
@@ -289,7 +289,7 @@ public final class Packer implements Closeable {
 
         Path outputFile = null;
 
-        try (Packer packer = new Packer()) {
+        try (JAppPacker packer = new JAppPacker()) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
 
