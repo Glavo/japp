@@ -1,12 +1,10 @@
 package org.glavo.japp;
 
+import org.glavo.japp.util.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.Closeable;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
@@ -14,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -40,6 +39,8 @@ public final class JAppReader implements Closeable {
     public static final short MINOR_VERSION = 0;
 
     public static final int FILE_END_SIZE = 48;
+
+    private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
     public static JAppReader getSystemReader() {
         return SystemReaderHolder.READER;
@@ -76,12 +77,7 @@ public final class JAppReader implements Closeable {
 
             channel.position(fileSize - endBufferSize);
 
-            while (channel.read(endBuffer) > 0) {
-            }
-
-            if (endBuffer.remaining() > 0) {
-                throw new EOFException();
-            }
+            IOUtils.readFully(channel, endBuffer);
 
             endBuffer.limit(endBufferSize).position(endBufferSize - FILE_END_SIZE);
 
@@ -145,7 +141,7 @@ public final class JAppReader implements Closeable {
             readClasspathItems(classPath, obj.optJSONArray("Class-Path"));
             readClasspathItems(modulePath, obj.optJSONArray("Module-Path"));
 
-            readJsonArray(addReads, obj, "Add-Reads" );
+            readJsonArray(addReads, obj, "Add-Reads");
             readJsonArray(addExports, obj, "Add-Exports");
             readJsonArray(addOpens, obj, "Add-Opens");
 
@@ -189,32 +185,30 @@ public final class JAppReader implements Closeable {
         channel.close();
     }
 
-    public InputStream getInputStream(JAppResource entry) throws IOException {
-        // TODO: Need optimization
-        return new InputStream() {
-            private long count = 0;
+    public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
+        long offset = resource.offset;
+        long size = resource.size;
 
-            @Override
-            public int read() throws IOException {
-                if (count >= entry.size) {
-                    return -1;
-                }
+        if (size > MAX_ARRAY_LENGTH || size < 0) {
+            throw new OutOfMemoryError("Resource is too large");
+        }
 
-                lock.lock();
-                try {
-                    ByteBuffer buffer = ByteBuffer.allocate(1);
-                    channel.position(entry.offset + count);
+        byte[] array = new byte[(int) size];
+        if (size == 0) {
+            return array;
+        }
 
-                    if (channel.read(buffer) != 1) {
-                        return -1;
-                    } else {
-                        count++;
-                        return buffer.array()[0] & 0xff;
-                    }
-                } finally {
-                    lock.unlock();
-                }
-            }
-        };
+        lock.lock();
+        try {
+            IOUtils.readFully(channel.position(offset), ByteBuffer.wrap(array));
+        } finally {
+            lock.unlock();
+        }
+
+        return array;
+    }
+
+    public InputStream getResourceAsInputStream(JAppResource resource) throws IOException {
+        return new ByteArrayInputStream(getResourceAsByteArray(resource));
     }
 }
