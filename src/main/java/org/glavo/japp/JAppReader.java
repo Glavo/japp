@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -18,12 +19,31 @@ import java.util.concurrent.locks.ReentrantLock;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class JAppReader implements Closeable {
+    private static final class SystemReaderHolder {
+        static final JAppReader READER;
+
+        static {
+            String property = System.getProperty("org.glavo.japp.file");
+
+            JAppReader reader = null;
+            if (property != null) {
+                try {
+                    reader = new JAppReader(Paths.get(property));
+                } catch (IOException ignored) {
+                }
+            }
+            READER = reader;
+        }
+    }
+
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
 
     public static final int FILE_END_SIZE = 48;
 
-    private static final int MAX_BUFFER_SIZE = Integer.MAX_VALUE - 8;
+    public static JAppReader getSystemReader() {
+        return SystemReaderHolder.READER;
+    }
 
     private final ReentrantLock lock = new ReentrantLock();
 
@@ -31,8 +51,8 @@ public final class JAppReader implements Closeable {
 
     private final long contentOffset;
 
-    private final List<JarClasspathItem> modulePath = new ArrayList<>();
-    private final List<JarClasspathItem> classPath = new ArrayList<>();
+    private final List<JAppClasspathItem> modulePath = new ArrayList<>();
+    private final List<JAppClasspathItem> classPath = new ArrayList<>();
 
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
@@ -143,13 +163,13 @@ public final class JAppReader implements Closeable {
         }
     }
 
-    private static void readClasspathItems(List<JarClasspathItem> list, JSONArray array) {
+    private static void readClasspathItems(List<JAppClasspathItem> list, JSONArray array) {
         if (array == null) {
             return;
         }
 
         for (Object item : array) {
-            list.add(JarClasspathItem.fromJson((JSONObject) item));
+            list.add(JAppClasspathItem.fromJson((JSONObject) item));
         }
     }
 
@@ -169,7 +189,7 @@ public final class JAppReader implements Closeable {
         channel.close();
     }
 
-    public InputStream getInputStream(JAppEntry entry) throws IOException {
+    public InputStream getInputStream(JAppResource entry) throws IOException {
         // TODO: Need optimization
         return new InputStream() {
             private long count = 0;

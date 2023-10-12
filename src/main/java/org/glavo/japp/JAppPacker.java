@@ -27,8 +27,8 @@ public final class JAppPacker implements Closeable {
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
 
-    private final List<ClasspathItem> modulePath = new ArrayList<>();
-    private final List<ClasspathItem> classPath = new ArrayList<>();
+    private final List<JAppClasspathItem> modulePath = new ArrayList<>();
+    private final List<JAppClasspathItem> classPath = new ArrayList<>();
 
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
@@ -143,7 +143,7 @@ public final class JAppPacker implements Closeable {
             }
 
             // If the module name is not found, the file name is retained
-            ClasspathItem metadata = new ClasspathItem(moduleName == null ? jar.getFileName().toString() : null, moduleName);
+            JAppClasspathItem metadata = new JAppClasspathItem(moduleName == null ? jar.getFileName().toString() : null, moduleName);
             if (modulePath) {
                 this.modulePath.add(metadata);
             } else {
@@ -159,7 +159,7 @@ public final class JAppPacker implements Closeable {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                List<JAppEntry> metadataEntries = null;
+                List<JAppResource> metadataEntries = null;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -182,7 +182,7 @@ public final class JAppPacker implements Closeable {
                     metadataEntries = metadata.getEntries();
                 }
 
-                metadataEntries.add(new JAppEntry(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                metadataEntries.add(new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;
@@ -211,11 +211,11 @@ public final class JAppPacker implements Closeable {
         JSONArray modulePath = new JSONArray();
         JSONArray classPath = new JSONArray();
 
-        for (ClasspathItem metadata : this.modulePath) {
+        for (JAppClasspathItem metadata : this.modulePath) {
             modulePath.put(metadata.toJson());
         }
 
-        for (ClasspathItem metadata : this.classPath) {
+        for (JAppClasspathItem metadata : this.classPath) {
             classPath.put(metadata.toJson());
         }
 

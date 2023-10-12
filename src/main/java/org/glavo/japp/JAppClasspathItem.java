@@ -10,23 +10,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public final class ClasspathItem {
+public final class JAppClasspathItem {
     private final String fileName;
     private final String moduleName;
 
-    private final List<JAppEntry> entries = new ArrayList<>();
-    private Map<Integer, List<JAppEntry>> multiReleaseEntries;
+    private final List<JAppResource> entries = new ArrayList<>();
+    private Map<Integer, List<JAppResource>> multiReleaseEntries;
 
-    public ClasspathItem(String fileName, String moduleName) {
+    public JAppClasspathItem(String fileName, String moduleName) {
         this.fileName = fileName;
         this.moduleName = moduleName;
     }
 
-    public List<JAppEntry> getEntries() {
+    public List<JAppResource> getEntries() {
         return this.entries;
     }
 
-    public List<JAppEntry> getMultiReleaseEntries(int release) {
+    public List<JAppResource> getMultiReleaseEntries(int release) {
         if (multiReleaseEntries == null) {
             multiReleaseEntries = new TreeMap<>();
         }
@@ -34,20 +34,10 @@ public final class ClasspathItem {
         return multiReleaseEntries.computeIfAbsent(release, i -> new ArrayList<>());
     }
 
-
-    private static JSONArray writeEntries(List<JAppEntry> entries) {
+    private static JSONArray writeEntries(List<JAppResource> entries) {
         JSONArray jsonEntries = new JSONArray(entries.size());
-        for (JAppEntry entry : entries) {
-            JSONObject jsonEntry = new JSONObject();
-            jsonEntry.put("Name", entry.name);
-            jsonEntry.put("Offset", entry.offset);
-            jsonEntry.put("Size", entry.size);
-            if (entry.creationTime != null) {
-                jsonEntry.put("Creation-Time", entry.creationTime.toMillis());
-            }
-            if (entry.lastModifiedTime != null) {
-                jsonEntry.put("Last-Modified-Time", entry.lastModifiedTime.toMillis());
-            }
+        for (JAppResource entry : entries) {
+
         }
         return jsonEntries;
     }
@@ -68,7 +58,7 @@ public final class ClasspathItem {
         return res;
     }
 
-    private static void readEntries(List<JAppEntry> entries, JSONArray jsonArray) {
+    private static void readEntries(List<JAppResource> entries, JSONArray jsonArray) {
         if (jsonArray == null) {
             return;
         }
@@ -81,7 +71,7 @@ public final class ClasspathItem {
             long creationTime = jsonEntry.optLong("Creation-Time", -1L);
             long lastModifiedTime = jsonEntry.optLong("Last-Modified-Time", -1L);
 
-            entries.add(new JAppEntry(
+            entries.add(new JAppResource(
                     name, offset, size,
                     creationTime > 0 ? FileTime.fromMillis(creationTime) : null,
                     lastModifiedTime > 0 ? FileTime.fromMillis(lastModifiedTime) : null
@@ -89,12 +79,12 @@ public final class ClasspathItem {
         }
     }
 
-    public static ClasspathItem fromJson(JSONObject obj) {
+    public static JAppClasspathItem fromJson(JSONObject obj) {
         try {
             String fileName = (String) obj.opt("File-Name");
             String moduleName = (String) obj.opt("Module-Name");
 
-            ClasspathItem item = new ClasspathItem(moduleName, fileName);
+            JAppClasspathItem item = new JAppClasspathItem(moduleName, fileName);
 
             readEntries(item.getEntries(), (JSONArray) obj.opt("Entries"));
 

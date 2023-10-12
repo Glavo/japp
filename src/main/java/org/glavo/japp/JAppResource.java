@@ -2,14 +2,14 @@ package org.glavo.japp;
 
 import java.nio.file.attribute.FileTime;
 
-public final class JAppEntry {
+public final class JAppResource {
     final String name;
     final long offset;
     final long size;
     final FileTime creationTime;
     final FileTime lastModifiedTime;
 
-    public JAppEntry(String name, long offset, long size, FileTime creationTime, FileTime lastModifiedTime) {
+    public JAppResource(String name, long offset, long size, FileTime creationTime, FileTime lastModifiedTime) {
         this.name = name;
         this.offset = offset;
         this.size = size;
@@ -19,7 +19,7 @@ public final class JAppEntry {
 
     @Override
     public String toString() {
-        return "JAppEntry{" +
+        return "JAppResource {" +
                "name='" + name + '\'' +
                ", offset=" + offset +
                ", size=" + size +
