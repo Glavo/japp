@@ -27,8 +27,8 @@ public final class JAppPacker implements Closeable {
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
 
-    private final List<JarClasspathItem> modulePath = new ArrayList<>();
-    private final List<JarClasspathItem> classPath = new ArrayList<>();
+    private final List<ClasspathItem> modulePath = new ArrayList<>();
+    private final List<ClasspathItem> classPath = new ArrayList<>();
 
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
@@ -143,7 +143,7 @@ public final class JAppPacker implements Closeable {
             }
 
             // If the module name is not found, the file name is retained
-            JarClasspathItem metadata = new JarClasspathItem(moduleName == null ? jar.getFileName().toString() : null, moduleName);
+            ClasspathItem metadata = new ClasspathItem(moduleName == null ? jar.getFileName().toString() : null, moduleName);
             if (modulePath) {
                 this.modulePath.add(metadata);
             } else {
@@ -211,11 +211,11 @@ public final class JAppPacker implements Closeable {
         JSONArray modulePath = new JSONArray();
         JSONArray classPath = new JSONArray();
 
-        for (JarClasspathItem metadata : this.modulePath) {
+        for (ClasspathItem metadata : this.modulePath) {
             modulePath.put(metadata.toJson());
         }
 
-        for (JarClasspathItem metadata : this.classPath) {
+        for (ClasspathItem metadata : this.classPath) {
             classPath.put(metadata.toJson());
         }
 
