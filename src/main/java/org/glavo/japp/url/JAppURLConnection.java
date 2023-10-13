@@ -65,8 +65,10 @@ public class JAppURLConnection extends URLConnection {
             return;
         }
 
-        JAppReader.ensureSystemReaderAvailable();
-
+        resource = JAppReader.getSystemReader().findResource(isModulePath, itemName, path);
+        if (resource == null) {
+            throw new IOException("Resource not found");
+        }
 
         connected = true;
     }

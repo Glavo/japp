@@ -44,13 +44,11 @@ public final class JAppReader implements Closeable {
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
     public static JAppReader getSystemReader() {
-        return SystemReaderHolder.READER;
-    }
-
-    public static void ensureSystemReaderAvailable() {
         if (SystemReaderHolder.READER == null) {
             throw new IllegalStateException("No System JAppReader");
         }
+
+        return SystemReaderHolder.READER;
     }
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -203,17 +201,8 @@ public final class JAppReader implements Closeable {
 
 
     @SuppressWarnings("deprecation")
-    public JAppResource findResourceInModulePath(String moduleName, String path) {
-        JAppClasspathItem item = modulePath.get(moduleName);
-        if (item == null) {
-            return null;
-        }
-        return item.findResource(Runtime.version().major(), path);
-    }
-
-    @SuppressWarnings("deprecation")
-    public JAppResource findResourceInClassPath(String itemName, String path) {
-        JAppClasspathItem item = classPath.get(itemName);
+    public JAppResource findResource(boolean isModulePath, String itemName, String path) {
+        JAppClasspathItem item = isModulePath ? modulePath.get(itemName) : classPath.get(itemName);
         if (item == null) {
             return null;
         }
