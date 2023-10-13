@@ -11,8 +11,9 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -46,14 +47,20 @@ public final class JAppReader implements Closeable {
         return SystemReaderHolder.READER;
     }
 
+    public static void ensureSystemReaderAvailable() {
+        if (SystemReaderHolder.READER == null) {
+            throw new IllegalStateException("No System JAppReader");
+        }
+    }
+
     private final ReentrantLock lock = new ReentrantLock();
 
     private final FileChannel channel;
 
     private final long contentOffset;
 
-    private final List<JAppClasspathItem> modulePath = new ArrayList<>();
-    private final List<JAppClasspathItem> classPath = new ArrayList<>();
+    private final Map<String, JAppClasspathItem> modulePath = new LinkedHashMap<>();
+    private final Map<String, JAppClasspathItem> classPath = new LinkedHashMap<>();
 
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
@@ -61,6 +68,8 @@ public final class JAppReader implements Closeable {
 
     private final String mainClass;
     private final String mainModule;
+
+    private int unnamedCounter = 0;
 
     public JAppReader(Path file) throws IOException {
         this.channel = FileChannel.open(file);
@@ -126,20 +135,15 @@ public final class JAppReader implements Closeable {
 
                 ByteBuffer metadataBuffer = ByteBuffer.allocate((int) metadataSize);
                 channel.position(contentOffset + metadataOffset);
-                while (channel.read(metadataBuffer) > 0) {
-                }
-
-                if (metadataBuffer.remaining() > 0) {
-                    throw new EOFException();
-                }
+                IOUtils.readFully(channel, metadataBuffer);
 
                 json = new String(metadataBuffer.array(), UTF_8);
             }
 
             JSONObject obj = new JSONObject(json);
 
-            readClasspathItems(classPath, obj.optJSONArray("Class-Path"));
-            readClasspathItems(modulePath, obj.optJSONArray("Module-Path"));
+            readClasspathItems(false, obj.optJSONArray("Class-Path"));
+            readClasspathItems(true, obj.optJSONArray("Module-Path"));
 
             readJsonArray(addReads, obj, "Add-Reads");
             readJsonArray(addExports, obj, "Add-Exports");
@@ -159,13 +163,25 @@ public final class JAppReader implements Closeable {
         }
     }
 
-    private static void readClasspathItems(List<JAppClasspathItem> list, JSONArray array) {
-        if (array == null) {
-            return;
-        }
+    private void readClasspathItems(boolean isModulePath, JSONArray array) throws IOException {
+        Map<String, JAppClasspathItem> map = isModulePath ? this.modulePath : this.classPath;
 
-        for (Object item : array) {
-            list.add(JAppClasspathItem.fromJson((JSONObject) item));
+        if (array != null) {
+            for (Object jsonItem : array) {
+                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem));
+                String name = item.getName();
+
+                if (name == null) {
+                    if (isModulePath) {
+                        throw new IOException("Unnamed modules are not supported");
+                    }
+                    name = "$unnamed$" + unnamedCounter++;
+                }
+
+                if (map.put(name, item) != null) {
+                    throw new IOException(String.format("Duplicate %s path item: %s", isModulePath ? "module" : "", name));
+                }
+            }
         }
     }
 
@@ -183,6 +199,25 @@ public final class JAppReader implements Closeable {
     @Override
     public void close() throws IOException {
         channel.close();
+    }
+
+
+    @SuppressWarnings("deprecation")
+    public JAppResource findResourceInModulePath(String moduleName, String path) {
+        JAppClasspathItem item = modulePath.get(moduleName);
+        if (item == null) {
+            return null;
+        }
+        return item.findResource(Runtime.version().major(), path);
+    }
+
+    @SuppressWarnings("deprecation")
+    public JAppResource findResourceInClassPath(String itemName, String path) {
+        JAppClasspathItem item = classPath.get(itemName);
+        if (item == null) {
+            return null;
+        }
+        return item.findResource(Runtime.version().major(), path);
     }
 
     public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {

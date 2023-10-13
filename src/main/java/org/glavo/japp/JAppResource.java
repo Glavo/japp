@@ -9,6 +9,26 @@ public final class JAppResource {
     final FileTime creationTime;
     final FileTime lastModifiedTime;
 
+    public String getName() {
+        return name;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public long getSize() {
+        return size;
+    }
+
+    public FileTime getCreationTime() {
+        return creationTime;
+    }
+
+    public FileTime getLastModifiedTime() {
+        return lastModifiedTime;
+    }
+
     public JAppResource(String name, long offset, long size, FileTime creationTime, FileTime lastModifiedTime) {
         this.name = name;
         this.offset = offset;

@@ -40,10 +40,14 @@ public final class JAppPacker implements Closeable {
     private OutputStream outputStream;
     private long totalBytes = 0L;
 
-    public JAppPacker() {
+    public JAppPacker(OutputStream outputStream) {
+        setOutputStream(outputStream);
     }
 
-    public void setOutputStream(OutputStream outputStream) {
+    private JAppPacker() {
+    }
+
+    private void setOutputStream(OutputStream outputStream) {
         this.outputStream = outputStream;
     }
 
@@ -169,7 +173,7 @@ public final class JAppPacker implements Closeable {
                         try {
                             int v = Integer.parseInt(ver);
                             if (v > 9) {
-                                metadataEntries = metadata.getMultiReleaseEntries(v);
+                                metadataEntries = metadata.getMultiRelease(v);
                                 name = name.substring(idx + 1);
                             }
 
@@ -179,7 +183,7 @@ public final class JAppPacker implements Closeable {
                 }
 
                 if (metadataEntries == null) {
-                    metadataEntries = metadata.getEntries();
+                    metadataEntries = metadata.getResources();
                 }
 
                 metadataEntries.add(new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
