@@ -9,11 +9,7 @@ import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public final class JAppModuleFinder implements ModuleFinder {
 
@@ -23,7 +19,7 @@ public final class JAppModuleFinder implements ModuleFinder {
     private final Map<String, JAppClasspathItem> items;
 
     @SuppressWarnings("deprecation")
-    private final int release = Runtime.version().major();
+    private final int release = Runtime.version().major(); // TODO
 
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
@@ -38,7 +34,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         JAppResource resource = item.findResource(release, MODULE_INFO);
         if (resource != null) {
             ModuleDescriptor descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource));
-            return new JAppModuleReference(descriptor, item);
+            return new JAppModuleReference(descriptor, item, release);
         } else {
             throw new UnsupportedOperationException("TODO: Automatic Module"); // TODO
         }
@@ -68,9 +64,17 @@ public final class JAppModuleFinder implements ModuleFinder {
     @Override
     public Set<ModuleReference> findAll() {
         if (all == null) {
-            all = items.keySet().stream().map(this::find)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
+            Set<ModuleReference> set = new LinkedHashSet<>();
+            items.forEach((name, item) -> {
+                set.add(cachedModules.computeIfAbsent(name, key -> {
+                    try {
+                        return load(item);
+                    } catch (Throwable e) {
+                        throw new FindException(e);
+                    }
+                }));
+            });
+            all = Collections.unmodifiableSet(set);
         }
 
         return all;

@@ -237,8 +237,8 @@ public final class JAppReader implements Closeable {
     }
 
     public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
-        long offset = resource.offset;
-        long size = resource.size;
+        long offset = resource.getOffset();
+        long size = resource.getSize();
 
         if (size > MAX_ARRAY_LENGTH || size < 0) {
             throw new OutOfMemoryError("Resource is too large");

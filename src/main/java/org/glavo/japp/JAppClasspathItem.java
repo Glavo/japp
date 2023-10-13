@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 public final class JAppClasspathItem {
     private final String name;
@@ -116,10 +117,35 @@ public final class JAppClasspathItem {
         String prefix = isModulePath ? JAppResource.MODULES : JAppResource.CLASSPATH;
 
         try {
-            return new URI("japp", null, prefix + name, null);
+            return new URI("japp", null, prefix + name + "/", null);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public URI toURI(boolean isModulePath, JAppResource resource) {
+        String prefix = isModulePath ? JAppResource.MODULES : JAppResource.CLASSPATH;
+
+        try {
+            return new URI("japp", null, prefix + name + resource.getName(), null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Stream<JAppResource> list(int release) {
+        if (multiReleaseResources == null) {
+            return resources.values().stream();
+        }
+
+        LinkedHashMap<String, JAppResource> map = new LinkedHashMap<>(resources);
+        multiReleaseResources.forEach((r, m) -> {
+            if (r <= release) {
+                map.putAll(m);
+            }
+        });
+
+        return map.values().stream();
     }
 
     public static JAppClasspathItem fromJson(JSONObject obj) {
