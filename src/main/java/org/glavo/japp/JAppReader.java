@@ -224,7 +224,7 @@ public final class JAppReader implements Closeable {
 
         lock.lock();
         try {
-            IOUtils.readFully(channel.position(offset), ByteBuffer.wrap(array));
+            IOUtils.readFully(channel.position(offset + contentOffset), ByteBuffer.wrap(array));
         } finally {
             lock.unlock();
         }
