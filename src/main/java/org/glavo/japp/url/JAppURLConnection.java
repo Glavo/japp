@@ -11,8 +11,8 @@ import java.net.URLConnection;
 
 public class JAppURLConnection extends URLConnection {
 
-    private static final String MODULES = "/modules/";
-    private static final String CLASSPATH = "/classpath/";
+    private static final String MODULES = JAppResource.MODULES + "/";
+    private static final String CLASSPATH = JAppResource.CLASSPATH + "/";
 
     private JAppResource resource;
 

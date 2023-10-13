@@ -4,6 +4,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
 
@@ -107,6 +109,16 @@ public final class JAppClasspathItem {
                     creationTime > 0 ? FileTime.fromMillis(creationTime) : null,
                     lastModifiedTime > 0 ? FileTime.fromMillis(lastModifiedTime) : null
             ));
+        }
+    }
+
+    public URI toURI(boolean isModulePath) {
+        String prefix = isModulePath ? JAppResource.MODULES : JAppResource.CLASSPATH;
+
+        try {
+            return new URI("japp", null, prefix + name, null);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 

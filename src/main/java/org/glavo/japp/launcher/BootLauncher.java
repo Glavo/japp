@@ -1,12 +1,10 @@
 package org.glavo.japp.launcher;
 
+import org.glavo.japp.JAppReader;
 
 public final class BootLauncher {
-    private static final String PROPERTY_PREFIX = "org.glavo.japp.";
-
     public static void main(String[] args) {
-        String jappFile = System.getProperty(PROPERTY_PREFIX + "jappFile");
-        String mainClass = System.getProperty(PROPERTY_PREFIX + "mainClass");
+        JAppReader reader = JAppReader.getSystemReader();
 
         // TODO
     }

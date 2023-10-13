@@ -1,8 +1,13 @@
 package org.glavo.japp;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.attribute.FileTime;
 
 public final class JAppResource {
+    public static final String MODULES = "/modules";
+    public static final String CLASSPATH = "/classpath";
+
     final String name;
     final long offset;
     final long size;

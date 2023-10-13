@@ -194,11 +194,38 @@ public final class JAppReader implements Closeable {
         }
     }
 
+    public List<String> getAddReads() {
+        return addReads;
+    }
+
+    public List<String> getAddExports() {
+        return addExports;
+    }
+
+    public List<String> getAddOpens() {
+        return addOpens;
+    }
+
+    public String getMainClass() {
+        return mainClass;
+    }
+
+    public String getMainModule() {
+        return mainModule;
+    }
+
+    public Map<String, JAppClasspathItem> getModulePathItems() {
+        return modulePath;
+    }
+
+    public Map<String, JAppClasspathItem> getClassPathItems() {
+        return classPath;
+    }
+
     @Override
     public void close() throws IOException {
         channel.close();
     }
-
 
     @SuppressWarnings("deprecation")
     public JAppResource findResource(boolean isModulePath, String itemName, String path) {
