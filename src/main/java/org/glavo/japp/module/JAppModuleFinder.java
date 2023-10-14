@@ -18,16 +18,16 @@ public final class JAppModuleFinder implements ModuleFinder {
     private final JAppReader reader;
     private final Map<String, JAppClasspathItem> items;
 
-    @SuppressWarnings("deprecation")
-    private final int release = Runtime.version().major(); // TODO
+    private final int release;
 
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
     private Set<ModuleReference> all;
 
-    public JAppModuleFinder(JAppReader reader) {
+    public JAppModuleFinder(JAppReader reader, int release) {
         this.reader = reader;
         this.items = reader.getModulePathItems();
+        this.release = release;
     }
 
     private ModuleReference load(JAppClasspathItem item) throws IOException {

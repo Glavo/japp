@@ -117,7 +117,7 @@ public final class JAppClasspathItem {
         String prefix = isModulePath ? JAppResource.MODULES : JAppResource.CLASSPATH;
 
         try {
-            return new URI("japp", null, prefix + name + "/", null);
+            return new URI("japp", null, prefix + name, null);
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }
