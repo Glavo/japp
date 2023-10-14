@@ -29,7 +29,7 @@ public final class Launcher {
                 "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",
                 "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED",
                 "--module",
-                "org.glavo.japp/org.glavo.japp.BootLauncher");
+                "org.glavo.japp/org.glavo.japp.launcher.BootLauncher");
 
         for (int i = 1; i < args.length; i++) {
             command.add(args[i]);

@@ -21,18 +21,22 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public final class JAppReader implements Closeable {
     private static final class SystemReaderHolder {
         static final JAppReader READER;
+        static final Throwable EXCEPTION;
 
         static {
             String property = System.getProperty("org.glavo.japp.file");
 
             JAppReader reader = null;
+            Throwable exception = null;
             if (property != null) {
                 try {
                     reader = new JAppReader(Paths.get(property));
-                } catch (IOException ignored) {
+                } catch (IOException e) {
+                    exception = e;
                 }
             }
             READER = reader;
+            EXCEPTION = exception;
         }
     }
 
@@ -45,7 +49,7 @@ public final class JAppReader implements Closeable {
 
     public static JAppReader getSystemReader() {
         if (SystemReaderHolder.READER == null) {
-            throw new IllegalStateException("No System JAppReader");
+            throw new IllegalStateException("No System JAppReader", SystemReaderHolder.EXCEPTION);
         }
 
         return SystemReaderHolder.READER;
