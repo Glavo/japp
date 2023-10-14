@@ -10,7 +10,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
 
@@ -43,14 +42,15 @@ public final class BootLauncher {
 
         ModuleLayer layer = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader).layer();
 
-
         String mainClassName = reader.getMainClass();
         if (mainClassName == null) {
             throw new UnsupportedOperationException("TODO");
         }
 
-        Class<?> mainClass = Class.forName(mainClassName, false, loader);
-        Method main = mainClass.getMethod("main", String[].class);
-        main.invoke(null, (Object) args);
+        // TODO: Add-Opens and Add-Exports
+
+        Class.forName(mainClassName, false, loader)
+                .getMethod("main", String[].class)
+                .invoke(null, (Object) args);
     }
 }

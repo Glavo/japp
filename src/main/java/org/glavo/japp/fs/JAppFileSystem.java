@@ -1,7 +1,7 @@
 package org.glavo.japp.fs;
 
-import com.hrakaroo.glob.GlobPattern;
-import com.hrakaroo.glob.MatchingEngine;
+import org.glavo.japp.thirdparty.glob.GlobPattern;
+import org.glavo.japp.thirdparty.glob.MatchingEngine;
 import org.glavo.japp.JAppReader;
 
 import java.io.IOException;

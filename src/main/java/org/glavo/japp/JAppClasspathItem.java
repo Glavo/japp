@@ -1,8 +1,8 @@
 package org.glavo.japp;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.glavo.japp.thirdparty.json.JSONArray;
+import org.glavo.japp.thirdparty.json.JSONException;
+import org.glavo.japp.thirdparty.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,8 +24,8 @@ public final class JAppClasspathItem {
         return name;
     }
 
-    public Collection<JAppResource> getResources() {
-        return this.resources.values();
+    public Map<String, JAppResource> getResources() {
+        return this.resources;
     }
 
     public Map<String, JAppResource> getMultiRelease(int release) {

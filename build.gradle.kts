@@ -28,22 +28,14 @@ allprojects {
     }
 }
 
-dependencies {
-    // In order to create a prototype more quickly, temporarily store the metadata in JSON format.
-    // TODO: Will be replaced by a more compact binary format in the future
-    implementation(Deps.JSON)
-
-    implementation(Deps.GLOB)
-}
-
 tasks.compileJava {
     // TODO: Java 8
     sourceCompatibility = "9"
     targetCompatibility = "9"
 
     options.compilerArgs.addAll(listOf(
-        "--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED",
-        "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",
+        "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
+        "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
     ))
 }
 

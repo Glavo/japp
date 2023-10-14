@@ -1,8 +1,8 @@
 package org.glavo.japp;
 
 import org.glavo.japp.util.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.glavo.japp.thirdparty.json.JSONArray;
+import org.glavo.japp.thirdparty.json.JSONObject;
 
 import java.io.*;
 import java.nio.ByteBuffer;

@@ -1,0 +1,2 @@
+module org.glavo.japp {
+}

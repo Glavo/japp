@@ -1,7 +1,7 @@
 package org.glavo.japp;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.glavo.japp.thirdparty.json.JSONArray;
+import org.glavo.japp.thirdparty.json.JSONObject;
 
 import java.io.*;
 import java.lang.module.ModuleDescriptor;
@@ -146,8 +146,12 @@ public final class JAppPacker implements Closeable {
                 }
             }
 
+            if (modulePath && moduleName == null) {
+                throw new UnsupportedOperationException("TODO");
+            }
+
             // If the module name is not found, the file name is retained
-            JAppClasspathItem metadata = new JAppClasspathItem(moduleName == null ? jar.getFileName().toString() : null, moduleName);
+            JAppClasspathItem metadata = new JAppClasspathItem(modulePath ? moduleName : jar.getFileName().toString());
             if (modulePath) {
                 this.modulePath.add(metadata);
             } else {
@@ -163,7 +167,7 @@ public final class JAppPacker implements Closeable {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                List<JAppResource> metadataEntries = null;
+                Map<String, JAppResource> metadataEntries = null;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -186,7 +190,7 @@ public final class JAppPacker implements Closeable {
                     metadataEntries = metadata.getResources();
                 }
 
-                metadataEntries.add(new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                metadataEntries.put(name, new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;
