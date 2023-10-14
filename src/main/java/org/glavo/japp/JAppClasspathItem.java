@@ -69,8 +69,13 @@ public final class JAppClasspathItem {
             obj.putOnce("Name", resource.getName());
             obj.putOnce("Offset", resource.getOffset());
             obj.putOnce("Size", resource.getSize());
-            obj.putOnce("Creation-Time", resource.getCreationTime().toMillis());
-            obj.putOnce("Last-Modified-Time", resource.getLastModifiedTime().toMillis());
+
+            if (resource.getCreationTime() != null) {
+                obj.putOnce("Creation-Time", resource.getCreationTime().toMillis());
+            }
+            if (resource.getLastModifiedTime() != null) {
+                obj.putOnce("Last-Modified-Time", resource.getLastModifiedTime().toMillis());
+            }
 
             jsonArray.put(obj);
         }

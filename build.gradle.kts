@@ -1,8 +1,6 @@
-import org.gradle.api.artifacts.dsl.Dependencies
-
 plugins {
     id("java")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    // id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 
@@ -41,6 +39,6 @@ tasks.compileJava {
 
 tasks.jar {
     manifest.attributes(
-        "Main-Class" to "org.glavo.japp.Packer"
+        "Main-Class" to "org.glavo.japp.JAppPacker"
     )
 }
