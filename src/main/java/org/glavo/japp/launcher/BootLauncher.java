@@ -7,7 +7,6 @@ import org.glavo.japp.JAppReader;
 import org.glavo.japp.module.JAppModuleFinder;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
@@ -53,7 +52,9 @@ public final class BootLauncher {
         // TODO: Add-Opens and Add-Exports
 
         Class<?> mainClass = Class.forName(mainClassName, false, loader);
-        controller.addOpens(mainClass.getModule(), mainClass.getPackageName(), BootLauncher.class.getModule());
+        if (mainClass.getModule().isNamed()) {
+            controller.addOpens(mainClass.getModule(), mainClass.getPackageName(), BootLauncher.class.getModule());
+        }
         mainClass.getMethod("main", String[].class).invoke(null, (Object) args);
     }
 }

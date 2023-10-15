@@ -39,6 +39,6 @@ tasks.compileJava {
 
 tasks.jar {
     doLast {
-        tasks.jar.get().archiveFile.get().asFile.copyTo(project.layout.buildDirectory.get().file("japp.jar").asFile)
+        tasks.jar.get().archiveFile.get().asFile.copyTo(project.layout.buildDirectory.get().file("japp.jar").asFile, overwrite = true)
     }
 }
