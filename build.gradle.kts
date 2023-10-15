@@ -38,7 +38,7 @@ tasks.compileJava {
 }
 
 tasks.jar {
-    manifest.attributes(
-        "Main-Class" to "org.glavo.japp.JAppPacker"
-    )
+    doLast {
+        tasks.jar.get().archiveFile.get().asFile.copyTo(project.layout.buildDirectory.get().file("japp.jar").asFile)
+    }
 }
