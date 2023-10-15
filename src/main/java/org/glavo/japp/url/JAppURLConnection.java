@@ -11,9 +11,6 @@ import java.net.URLConnection;
 
 public class JAppURLConnection extends URLConnection {
 
-    private static final String MODULES = JAppResource.MODULES + "/";
-    private static final String CLASSPATH = JAppResource.CLASSPATH + "/";
-
     private JAppResource resource;
 
     private final boolean isModulePath;
@@ -27,11 +24,11 @@ public class JAppURLConnection extends URLConnection {
 
         String prefix;
         boolean isModulePath;
-        if (fullPath.startsWith(MODULES)) {
-            prefix = MODULES;
+        if (fullPath.startsWith(JAppResource.MODULES)) {
+            prefix = JAppResource.MODULES;
             isModulePath = true;
-        } else if (fullPath.startsWith(CLASSPATH)) {
-            prefix = CLASSPATH;
+        } else if (fullPath.startsWith(JAppResource.CLASSPATH)) {
+            prefix = JAppResource.CLASSPATH;
             isModulePath = false;
         } else {
             throw invalidURL();
@@ -42,8 +39,8 @@ public class JAppURLConnection extends URLConnection {
             throw invalidURL();
         }
 
-        String itemName = fullPath.substring(prefix.length() + 1, idx);
-        String path = fullPath.substring(idx);
+        String itemName = fullPath.substring(prefix.length(), idx);
+        String path = fullPath.substring(idx + 1);
 
         if (itemName.isEmpty() || path.isEmpty()) {
             throw invalidURL();

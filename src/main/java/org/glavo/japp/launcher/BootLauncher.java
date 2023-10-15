@@ -21,6 +21,8 @@ public final class BootLauncher {
         int release = Runtime.version().major();
         JAppModuleFinder finder = new JAppModuleFinder(reader, release);
 
+        MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(BuiltinClassLoader.class, MethodHandles.lookup());
+
         BuiltinClassLoader loader = (BuiltinClassLoader) ClassLoader.getSystemClassLoader();
         for (ModuleReference mref : finder.findAll()) {
             loader.loadModule(mref);
@@ -28,7 +30,7 @@ public final class BootLauncher {
 
         Map<String, JAppClasspathItem> classPath = reader.getClassPathItems();
         if (!classPath.isEmpty()) {
-            URLClassPath ucp = (URLClassPath) MethodHandles.privateLookupIn(BuiltinClassLoader.class, MethodHandles.lookup())
+            URLClassPath ucp = (URLClassPath) lookup
                     .findGetter(BuiltinClassLoader.class, "ucp", URLClassPath.class)
                     .invokeExact(loader);
 

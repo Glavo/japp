@@ -3,8 +3,8 @@ package org.glavo.japp;
 import java.nio.file.attribute.FileTime;
 
 public final class JAppResource {
-    public static final String MODULES = "/modules";
-    public static final String CLASSPATH = "/classpath";
+    public static final String MODULES = "/modules/";
+    public static final String CLASSPATH = "/classpath/";
 
     private final String name;
     private final long offset;
