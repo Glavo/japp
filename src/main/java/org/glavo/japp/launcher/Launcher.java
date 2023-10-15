@@ -25,9 +25,9 @@ public final class Launcher {
                 "--module-path",
                 getBootLauncher().toString(),
                 "-Dorg.glavo.japp.file=" + args[0],
-                "--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED",
-                "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",
-                "--add-opens=java.base/jdk.internal.loader=ALL-UNNAMED",
+                "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
+                "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
+                "--add-opens=java.base/jdk.internal.loader=org.glavo.japp",
                 "--module",
                 "org.glavo.japp/org.glavo.japp.launcher.BootLauncher");
 
