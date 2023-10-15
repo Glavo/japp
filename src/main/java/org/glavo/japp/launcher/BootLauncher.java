@@ -7,6 +7,7 @@ import org.glavo.japp.JAppReader;
 import org.glavo.japp.module.JAppModuleFinder;
 
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
@@ -42,7 +43,7 @@ public final class BootLauncher {
         Configuration configuration = ModuleLayer.boot().configuration()
                 .resolve(finder, ModuleFinder.of(), reader.getModulePathItems().keySet());
 
-        ModuleLayer layer = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader).layer();
+        ModuleLayer.Controller controller = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader);
 
         String mainClassName = reader.getMainClass();
         if (mainClassName == null) {
@@ -51,8 +52,8 @@ public final class BootLauncher {
 
         // TODO: Add-Opens and Add-Exports
 
-        Class.forName(mainClassName, false, loader)
-                .getMethod("main", String[].class)
-                .invoke(null, (Object) args);
+        Class<?> mainClass = Class.forName(mainClassName, false, loader);
+        controller.addOpens(mainClass.getModule(), mainClass.getPackageName(), BootLauncher.class.getModule());
+        mainClass.getMethod("main", String[].class).invoke(null, (Object) args);
     }
 }
