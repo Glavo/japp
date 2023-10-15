@@ -21,17 +21,18 @@ public class JAppURLConnection extends URLConnection {
         super(url);
 
         String fullPath = url.getPath();
+        if (!fullPath.startsWith("/")) {
+            throw invalidURL();
+        }
 
         String prefix;
         boolean isModulePath;
         if (fullPath.startsWith(JAppResource.MODULES)) {
             prefix = JAppResource.MODULES;
             isModulePath = true;
-        } else if (fullPath.startsWith(JAppResource.CLASSPATH)) {
-            prefix = JAppResource.CLASSPATH;
-            isModulePath = false;
         } else {
-            throw invalidURL();
+            prefix = "/";
+            isModulePath = false;
         }
 
         int idx = fullPath.indexOf('/', prefix.length() + 1);

@@ -123,7 +123,7 @@ public final class JAppClasspathItem {
     }
 
     public URI toURI(boolean isModulePath) {
-        String prefix = isModulePath ? JAppResource.MODULES : JAppResource.CLASSPATH;
+        String prefix = isModulePath ? JAppResource.MODULES : "/";
 
         try {
             return new URI("japp", null, prefix + name + "/", null);
@@ -133,7 +133,7 @@ public final class JAppClasspathItem {
     }
 
     public URI toURI(boolean isModulePath, JAppResource resource) {
-        String prefix = isModulePath ? JAppResource.MODULES : JAppResource.CLASSPATH;
+        String prefix = isModulePath ? JAppResource.MODULES : "/";
 
         try {
             return new URI("japp", null, prefix + name + "/" + resource.getName(), null);
