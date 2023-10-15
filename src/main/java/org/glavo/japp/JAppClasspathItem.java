@@ -28,6 +28,10 @@ public final class JAppClasspathItem {
         return this.resources;
     }
 
+    public SortedMap<Integer, Map<String, JAppResource>> getMultiReleaseResources() {
+        return multiReleaseResources;
+    }
+
     public Map<String, JAppResource> getMultiRelease(int release) {
         if (multiReleaseResources == null) {
             multiReleaseResources = new TreeMap<>();

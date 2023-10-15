@@ -5,11 +5,14 @@ import org.glavo.japp.JAppReader;
 import org.glavo.japp.JAppResource;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.util.*;
+import java.util.function.Supplier;
+import java.util.zip.ZipEntry;
 
 public final class JAppModuleFinder implements ModuleFinder {
 
@@ -33,10 +36,38 @@ public final class JAppModuleFinder implements ModuleFinder {
     private ModuleReference load(JAppClasspathItem item) throws IOException {
         JAppResource resource = item.findResource(release, MODULE_INFO);
         if (resource != null) {
-            ModuleDescriptor descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource));
+            Supplier<Set<String>> packageFinder = () -> {
+                Set<String> packages = new HashSet<>();
+                findAllPackage(packages, item.getResources().keySet());
+
+                for (int i = 9; i <= release; i++) {
+                    Map<String, JAppResource> multiReleaseResources = item.getMultiRelease(i);
+                    if (multiReleaseResources != null) {
+                        findAllPackage(packages, multiReleaseResources.keySet());
+                    }
+                }
+
+                return packages;
+            };
+
+
+            ModuleDescriptor descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
             return new JAppModuleReference(descriptor, item, release);
         } else {
             throw new UnsupportedOperationException("TODO: Automatic Module"); // TODO
+        }
+    }
+
+    private static void findAllPackage(Set<String> packages, Collection<String> resources) {
+        for (String name : resources) {
+            if (name.endsWith(".class") && !name.equals(MODULE_INFO) && !name.startsWith("META-INF/") && name.contains("/")) {
+                int index = name.lastIndexOf("/");
+                if (index != -1) {
+                    packages.add(name.substring(0, index).replace('/', '.'));
+                } else {
+                    throw new UncheckedIOException(new IOException(name  + " in the unnamed package"));
+                }
+            }
         }
     }
 
