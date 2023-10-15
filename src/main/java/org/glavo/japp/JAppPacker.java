@@ -8,9 +8,8 @@ import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -39,6 +38,8 @@ public final class JAppPacker implements Closeable {
 
     private OutputStream outputStream;
     private long totalBytes = 0L;
+
+    private int unnamedCounter = 0;
 
     public JAppPacker(OutputStream outputStream) {
         setOutputStream(outputStream);
@@ -151,11 +152,11 @@ public final class JAppPacker implements Closeable {
             }
 
             // If the module name is not found, the file name is retained
-            JAppClasspathItem metadata = new JAppClasspathItem(modulePath ? moduleName : jar.getFileName().toString());
+            JAppClasspathItem item = new JAppClasspathItem(modulePath ? moduleName : jar.getFileName().toString());
             if (modulePath) {
-                this.modulePath.add(metadata);
+                this.modulePath.add(item);
             } else {
-                this.classPath.add(metadata);
+                this.classPath.add(item);
             }
 
             // Then write all entries
@@ -167,7 +168,7 @@ public final class JAppPacker implements Closeable {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                Map<String, JAppResource> metadataEntries = null;
+                Map<String, JAppResource> itemEntries = null;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -177,7 +178,7 @@ public final class JAppPacker implements Closeable {
                         try {
                             int v = Integer.parseInt(ver);
                             if (v > 9) {
-                                metadataEntries = metadata.getMultiRelease(v);
+                                itemEntries = item.getMultiRelease(v);
                                 name = name.substring(idx + 1);
                             }
 
@@ -186,11 +187,11 @@ public final class JAppPacker implements Closeable {
                     }
                 }
 
-                if (metadataEntries == null) {
-                    metadataEntries = metadata.getResources();
+                if (itemEntries == null) {
+                    itemEntries = item.getResources();
                 }
 
-                metadataEntries.put(name, new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                itemEntries.put(name, new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;
@@ -200,6 +201,30 @@ public final class JAppPacker implements Closeable {
                 }
             }
         }
+    }
+
+    public void addDir(Path dir, boolean modulePath) throws IOException {
+        if (modulePath) {
+            throw new UnsupportedOperationException("TODO");
+        }
+
+        JAppClasspathItem item = new JAppClasspathItem("$unnamed$" + unnamedCounter++);
+        if (modulePath) {
+            this.modulePath.add(item);
+        } else {
+            this.classPath.add(item);
+        }
+        Files.walkFileTree(dir.toAbsolutePath(), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                String path = dir.relativize(file).toString();
+
+                byte[] bytes = Files.readAllBytes(file);
+                item.getResources().put(path, new JAppResource(path, totalBytes, bytes.length, attrs.creationTime(), attrs.lastModifiedTime()));
+                writeBytes(bytes);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private static void putJsonArray(JSONObject obj, String key, List<String> list) {
@@ -366,7 +391,11 @@ public final class JAppPacker implements Closeable {
                 packer.addJar(path, true);
             }
             for (Path path : classPath) {
-                packer.addJar(path, false);
+                if (Files.isDirectory(path)) {
+                    packer.addDir(path, false);
+                } else {
+                    packer.addJar(path, false);
+                }
             }
         }
 

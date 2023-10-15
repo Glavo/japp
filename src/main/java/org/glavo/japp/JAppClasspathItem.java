@@ -157,6 +157,11 @@ public final class JAppClasspathItem {
         return map.values().stream();
     }
 
+    @Override
+    public String toString() {
+        return toJson().toString();
+    }
+
     public static JAppClasspathItem fromJson(JSONObject obj) {
         try {
             JAppClasspathItem item = new JAppClasspathItem((String) obj.opt("Name"));
