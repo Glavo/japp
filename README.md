@@ -24,4 +24,31 @@ More details can be found in the draft (in Chinese): [Draft](draft/design.md).
 
 ## Try it
 
-TODO: Please keep an eye on this project, and I will provide a working prototype in the near future.
+This project is still in its early stages, but we already have a working prototype.
+
+The purpose of the current prototype is for exploration and verification, 
+many important features such as compression have not yet been implemented, 
+so currently japp files will be much larger than jars.
+These are just trade-offs made by the current prototype for ease of debugging, 
+and I will gradually address them in the future.
+
+To try this project, you first need to compile it:
+
+```shell
+./gradlew jar
+```
+
+(The current prototype only supports Java 9+, it will be compatible with Java 8 in the future.
+Compatibility with Java 7 or earlier is not a goal.)
+
+Then, package your program as a japp file:
+
+```shell
+./bin/japp-pack.sh --module-path <your-app-module-path> --classpath <your-app-class-path> -o myapp.japp <main-class>
+```
+
+Now you can run it:
+
+```shell
+./bin/japp-run.sh myapp.japp <args>
+```
