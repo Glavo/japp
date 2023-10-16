@@ -52,7 +52,7 @@ public final class JAppModuleFinder implements ModuleFinder {
 
 
             ModuleDescriptor descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
-            return new JAppModuleReference(descriptor, item, release);
+            return new JAppModuleReference(reader, descriptor, item, release);
         } else {
             throw new UnsupportedOperationException("TODO: Automatic Module"); // TODO
         }
