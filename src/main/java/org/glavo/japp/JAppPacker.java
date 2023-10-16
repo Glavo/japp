@@ -358,6 +358,18 @@ public final class JAppPacker implements Closeable {
                         packer.mainModule = nextArg(args, i++);
                         break;
                     }
+                    case "--add-reads": {
+                        packer.addReads.add(nextArg(args, i++));
+                        break;
+                    }
+                    case "--add-exports": {
+                        packer.addExports.add(nextArg(args, i++));
+                        break;
+                    }
+                    case "--add-opens": {
+                        packer.addOpens.add(nextArg(args, i++));
+                        break;
+                    }
                     default: {
                         if (arg.startsWith("--add-reads=")) {
                             packer.addReads.add(arg.substring("--add-reads=".length()));
