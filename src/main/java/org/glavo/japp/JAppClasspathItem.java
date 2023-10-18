@@ -169,9 +169,16 @@ public final class JAppClasspathItem {
 
             JSONObject multiRelease = (JSONObject) obj.opt("Multi-Release");
             if (multiRelease != null) {
-                multiRelease.keys().forEachRemaining(release ->
-                        readResources(item.getMultiRelease(Integer.parseInt(release)), multiRelease.getJSONArray(release))
-                );
+                String[] keys = new String[multiRelease.length()];
+                Iterator<String> it = multiRelease.keys();
+                for (int i = 0; i < keys.length; i++) {
+                    keys[i] = it.next();
+                }
+                Arrays.sort(keys, Comparator.comparing(Integer::parseInt));
+
+                for (String release : keys) {
+                    readResources(item.getMultiRelease(Integer.parseInt(release)), multiRelease.getJSONArray(release));
+                }
             }
 
             return item;

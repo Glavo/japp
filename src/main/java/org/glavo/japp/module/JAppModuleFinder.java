@@ -12,7 +12,6 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.zip.ZipEntry;
 
 public final class JAppModuleFinder implements ModuleFinder {
 
@@ -34,28 +33,28 @@ public final class JAppModuleFinder implements ModuleFinder {
     }
 
     private ModuleReference load(JAppClasspathItem item) throws IOException {
-        JAppResource resource = item.findResource(release, MODULE_INFO);
-        if (resource != null) {
-            Supplier<Set<String>> packageFinder = () -> {
-                Set<String> packages = new HashSet<>();
-                findAllPackage(packages, item.getResources().keySet());
+        Supplier<Set<String>> packageFinder = () -> {
+            Set<String> packages = new HashSet<>();
+            findAllPackage(packages, item.getResources().keySet());
 
-                for (int i = 9; i <= release; i++) {
-                    Map<String, JAppResource> multiReleaseResources = item.getMultiRelease(i);
-                    if (multiReleaseResources != null) {
-                        findAllPackage(packages, multiReleaseResources.keySet());
-                    }
+            for (int i = 9; i <= release; i++) {
+                Map<String, JAppResource> multiReleaseResources = item.getMultiRelease(i);
+                if (multiReleaseResources != null) {
+                    findAllPackage(packages, multiReleaseResources.keySet());
                 }
+            }
 
-                return packages;
-            };
+            return packages;
+        };
 
-
-            ModuleDescriptor descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
-            return new JAppModuleReference(reader, descriptor, item, release);
+        JAppResource resource = item.findResource(release, MODULE_INFO);
+        ModuleDescriptor descriptor;
+        if (resource != null) {
+            descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
         } else {
-            throw new UnsupportedOperationException("TODO: Automatic Module"); // TODO
+            descriptor = deriveModuleDescriptor(item);
         }
+        return new JAppModuleReference(reader, descriptor, item, release);
     }
 
     private static void findAllPackage(Set<String> packages, Collection<String> resources) {
@@ -69,6 +68,11 @@ public final class JAppModuleFinder implements ModuleFinder {
                 }
             }
         }
+    }
+
+    private ModuleDescriptor deriveModuleDescriptor(JAppClasspathItem item) {
+        ModuleDescriptor.Builder builder = ModuleDescriptor.newAutomaticModule(item.getName());
+
     }
 
     @Override
