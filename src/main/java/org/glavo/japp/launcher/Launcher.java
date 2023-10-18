@@ -40,8 +40,6 @@ public final class Launcher {
                     "org.glavo.japp/org.glavo.japp.launcher.BootLauncher"
             );
 
-
-
             for (int i = 1; i < args.length; i++) {
                 command.add(args[i]);
             }

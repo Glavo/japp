@@ -72,8 +72,6 @@ public final class JAppReader implements Closeable {
     private final String mainClass;
     private final String mainModule;
 
-    private int unnamedCounter = 0;
-
     public JAppReader(Path file) throws IOException {
         this.channel = FileChannel.open(file);
 
@@ -176,10 +174,7 @@ public final class JAppReader implements Closeable {
                 String name = item.getName();
 
                 if (name == null) {
-                    if (isModulePath) {
-                        throw new IOException("Unnamed modules are not supported");
-                    }
-                    name = "$unnamed$" + unnamedCounter++;
+                    throw new IOException("Item missing name");
                 }
 
                 if (map.put(name, item) != null) {
