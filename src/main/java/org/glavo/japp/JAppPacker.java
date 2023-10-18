@@ -29,9 +29,11 @@ public final class JAppPacker implements Closeable {
     private final List<JAppClasspathItem> modulePath = new ArrayList<>();
     private final List<JAppClasspathItem> classPath = new ArrayList<>();
 
+    private final List<String> jvmProperties = new ArrayList<>();
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
     private final List<String> addOpens = new ArrayList<>();
+
 
     private String mainClass;
     private String mainModule;
@@ -255,6 +257,7 @@ public final class JAppPacker implements Closeable {
         res.put("Module-Path", modulePath);
         res.put("Class-Path", classPath);
 
+        putJsonArray(res, "Properties", jvmProperties);
         putJsonArray(res, "Add-Reads", addReads);
         putJsonArray(res, "Add-Exports", addExports);
         putJsonArray(res, "Add-Opens", addOpens);
@@ -371,7 +374,16 @@ public final class JAppPacker implements Closeable {
                         break;
                     }
                     default: {
-                        if (arg.startsWith("--add-reads=")) {
+                        if (arg.startsWith("-D")) {
+                            String property = arg.substring("-D".length());
+
+                            if (property.isEmpty() || property.indexOf('=') == 0) {
+                                System.err.println("Error: JVM property name cannot be empty");
+                                System.exit(1);
+                            }
+
+                            packer.jvmProperties.add(property);
+                        } else if (arg.startsWith("--add-reads=")) {
                             packer.addReads.add(arg.substring("--add-reads=".length()));
                         } else if (arg.startsWith("--add-exports=")) {
                             packer.addExports.add(arg.substring("--add-exports=".length()));

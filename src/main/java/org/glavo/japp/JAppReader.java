@@ -64,6 +64,7 @@ public final class JAppReader implements Closeable {
     private final Map<String, JAppClasspathItem> modulePath = new LinkedHashMap<>();
     private final Map<String, JAppClasspathItem> classPath = new LinkedHashMap<>();
 
+    private final List<String> jvmProperties = new ArrayList<>();
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
     private final List<String> addOpens = new ArrayList<>();
@@ -147,6 +148,7 @@ public final class JAppReader implements Closeable {
             readClasspathItems(false, obj.optJSONArray("Class-Path"));
             readClasspathItems(true, obj.optJSONArray("Module-Path"));
 
+            readJsonArray(jvmProperties, obj, "Properties");
             readJsonArray(addReads, obj, "Add-Reads");
             readJsonArray(addExports, obj, "Add-Exports");
             readJsonArray(addOpens, obj, "Add-Opens");
@@ -196,6 +198,10 @@ public final class JAppReader implements Closeable {
         for (Object o : arr) {
             list.add((String) o);
         }
+    }
+
+    public List<String> getJvmProperties() {
+        return jvmProperties;
     }
 
     public List<String> getAddReads() {

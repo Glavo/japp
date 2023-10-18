@@ -1,5 +1,7 @@
 package org.glavo.japp.launcher;
 
+import org.glavo.japp.JAppReader;
+
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,22 +21,32 @@ public final class Launcher {
 
         String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";
 
-        List<String> command = new ArrayList<>();
-        Collections.addAll(command,
-                Paths.get(System.getProperty("java.home"), "bin", javaName).toString(),
-                "--module-path",
-                getBootLauncher().toString(),
-                "-Dorg.glavo.japp.file=" + args[0],
-                "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
-                "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
-                "--add-opens=java.base/jdk.internal.loader=org.glavo.japp",
-                "--module",
-                "org.glavo.japp/org.glavo.japp.launcher.BootLauncher");
+        try (JAppReader reader = new JAppReader(Paths.get(args[0]))) {
+            List<String> command = new ArrayList<>();
+            command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
 
-        for (int i = 1; i < args.length; i++) {
-            command.add(args[i]);
+            for (String property : reader.getJvmProperties()) {
+                command.add("-D" + property);
+            }
+
+            Collections.addAll(command,
+                    "--module-path",
+                    getBootLauncher().toString(),
+                    "-Dorg.glavo.japp.file=" + args[0],
+                    "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
+                    "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
+                    "--add-opens=java.base/jdk.internal.loader=org.glavo.japp",
+                    "--module",
+                    "org.glavo.japp/org.glavo.japp.launcher.BootLauncher"
+            );
+
+
+
+            for (int i = 1; i < args.length; i++) {
+                command.add(args[i]);
+            }
+
+            System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
         }
-
-        System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
     }
 }
