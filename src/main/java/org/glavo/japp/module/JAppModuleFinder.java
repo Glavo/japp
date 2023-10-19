@@ -52,7 +52,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         if (resource != null) {
             descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
         } else {
-            descriptor = deriveModuleDescriptor(item);
+            throw new UnsupportedOperationException("TODO");
         }
         return new JAppModuleReference(reader, descriptor, item, release);
     }
@@ -68,11 +68,6 @@ public final class JAppModuleFinder implements ModuleFinder {
                 }
             }
         }
-    }
-
-    private ModuleDescriptor deriveModuleDescriptor(JAppClasspathItem item) {
-        ModuleDescriptor.Builder builder = ModuleDescriptor.newAutomaticModule(item.getName());
-
     }
 
     @Override
