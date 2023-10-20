@@ -1,13 +1,11 @@
 package org.glavo.japp.condition;
 
-import org.glavo.japp.thirdparty.json.JSONObject;
-
 public abstract class JavaVersionCondition implements Condition {
 
     public static final String TYPE = "JavaVersion";
 
-    public static JavaVersionCondition fromJson(JSONObject obj) {
-        return new Simple(Integer.parseInt(obj.getString("Value")));
+    public static JavaVersionCondition fromJson(String value) {
+        return new Simple(Integer.parseInt(value));
     }
 
     public static final class Simple extends JavaVersionCondition {

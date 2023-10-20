@@ -1,13 +1,13 @@
 package org.glavo.japp.condition;
 
-import org.glavo.japp.thirdparty.json.JSONObject;
-
 public interface Condition {
-    static Condition fromJson(JSONObject obj) {
-        String type = obj.getString("Type");
+    static Condition fromJson(String condition) {
+        int idx = condition.indexOf(':');
+        String type = idx > 0 ? condition.substring(0, idx) : condition;
+        String value = idx > 0 ? condition.substring(idx + 1) : "";
         switch (type) {
             case JavaVersionCondition.TYPE:
-                return JavaVersionCondition.fromJson(obj);
+                return JavaVersionCondition.fromJson(value);
             default:
                 throw new IllegalArgumentException("Unsupported type: " + type);
         }
