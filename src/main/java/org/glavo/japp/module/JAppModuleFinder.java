@@ -25,10 +25,10 @@ public final class JAppModuleFinder implements ModuleFinder {
     private Set<ModuleReference> all;
 
     public JAppModuleFinder(JAppReader reader) {
+        reader.ensureResolved();
+
         this.reader = reader;
         this.items = reader.getModulePathItems();
-
-        reader.ensureResolved();
     }
 
     private ModuleReference load(JAppClasspathItem item) throws IOException {
