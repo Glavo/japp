@@ -21,7 +21,7 @@ public final class Launcher {
 
         String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";
 
-        try (JAppReader reader = new JAppReader(Paths.get(args[0]))) {
+        try (JAppReader reader = new JAppReader(Paths.get(args[0]), null)) {
             List<String> command = new ArrayList<>();
             command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
 

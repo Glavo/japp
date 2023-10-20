@@ -1,5 +1,6 @@
 package org.glavo.japp;
 
+import org.glavo.japp.condition.ConditionalHandler;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
@@ -30,7 +31,7 @@ public final class JAppReader implements Closeable {
             Throwable exception = null;
             if (property != null) {
                 try {
-                    reader = new JAppReader(Paths.get(property));
+                    reader = new JAppReader(Paths.get(property), ConditionalHandler.fromCurrentEnvironment());
                 } catch (IOException e) {
                     exception = e;
                 }
@@ -72,7 +73,10 @@ public final class JAppReader implements Closeable {
     private final String mainClass;
     private final String mainModule;
 
-    public JAppReader(Path file) throws IOException {
+    private final ConditionalHandler conditionalHandler;
+
+    public JAppReader(Path file, ConditionalHandler conditionalHandler) throws IOException {
+        this.conditionalHandler = conditionalHandler;
         this.channel = FileChannel.open(file);
 
         try {
@@ -170,7 +174,7 @@ public final class JAppReader implements Closeable {
 
         if (array != null) {
             for (Object jsonItem : array) {
-                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem));
+                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem), conditionalHandler);
                 String name = item.getName();
 
                 if (name == null) {
@@ -192,6 +196,12 @@ public final class JAppReader implements Closeable {
 
         for (Object o : arr) {
             list.add((String) o);
+        }
+    }
+
+    public void ensureResolved() {
+        if (conditionalHandler == null) {
+            throw new IllegalStateException();
         }
     }
 
@@ -232,13 +242,14 @@ public final class JAppReader implements Closeable {
         channel.close();
     }
 
-    @SuppressWarnings("deprecation")
     public JAppResource findResource(boolean isModulePath, String itemName, String path) {
+        ensureResolved();
+
         JAppClasspathItem item = isModulePath ? modulePath.get(itemName) : classPath.get(itemName);
         if (item == null) {
             return null;
         }
-        return item.findResource(Runtime.version().major(), path);
+        return item.getResources().get(path);
     }
 
     public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {

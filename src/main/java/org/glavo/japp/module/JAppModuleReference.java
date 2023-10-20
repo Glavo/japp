@@ -5,12 +5,10 @@ import org.glavo.japp.JAppReader;
 import org.glavo.japp.JAppResource;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -18,13 +16,14 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     private final JAppReader reader;
     private final JAppClasspathItem item;
-    private final int release;
 
-    public JAppModuleReference(JAppReader reader, ModuleDescriptor descriptor, JAppClasspathItem item, int release) {
+    public JAppModuleReference(JAppReader reader, ModuleDescriptor descriptor, JAppClasspathItem item) {
         super(descriptor, item.toURI(true));
+
+        reader.ensureResolved();
+
         this.reader = reader;
         this.item = item;
-        this.release = release;
     }
 
     @Override
@@ -36,7 +35,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Optional<URI> find(String name) throws IOException {
-        JAppResource resource = item.findResource(release, name);
+        JAppResource resource = item.getResources().get(name);
         if (resource != null) {
             return Optional.of(item.toURI(true, resource));
         } else {
@@ -46,7 +45,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Stream<String> list() throws IOException {
-        return item.list(release).map(JAppResource::getName);
+        return item.getResources().values().stream().map(JAppResource::getName);
     }
 
     @Override

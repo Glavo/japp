@@ -20,41 +20,32 @@ public final class JAppModuleFinder implements ModuleFinder {
     private final JAppReader reader;
     private final Map<String, JAppClasspathItem> items;
 
-    private final int release;
-
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
     private Set<ModuleReference> all;
 
-    public JAppModuleFinder(JAppReader reader, int release) {
+    public JAppModuleFinder(JAppReader reader) {
         this.reader = reader;
         this.items = reader.getModulePathItems();
-        this.release = release;
+
+        reader.ensureResolved();
     }
 
     private ModuleReference load(JAppClasspathItem item) throws IOException {
         Supplier<Set<String>> packageFinder = () -> {
             Set<String> packages = new HashSet<>();
             findAllPackage(packages, item.getResources().keySet());
-
-            for (int i = 9; i <= release; i++) {
-                Map<String, JAppResource> multiReleaseResources = item.getMultiRelease(i);
-                if (multiReleaseResources != null) {
-                    findAllPackage(packages, multiReleaseResources.keySet());
-                }
-            }
-
             return packages;
         };
 
-        JAppResource resource = item.findResource(release, MODULE_INFO);
+        JAppResource resource = item.getResources().get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
             descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
         } else {
             throw new UnsupportedOperationException("TODO");
         }
-        return new JAppModuleReference(reader, descriptor, item, release);
+        return new JAppModuleReference(reader, descriptor, item);
     }
 
     private static void findAllPackage(Set<String> packages, Collection<String> resources) {

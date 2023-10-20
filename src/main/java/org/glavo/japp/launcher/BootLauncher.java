@@ -66,9 +66,7 @@ public final class BootLauncher {
     public static void main(String[] args) throws Throwable {
         JAppReader reader = JAppReader.getSystemReader();
 
-        @SuppressWarnings("deprecation")
-        int release = Runtime.version().major();
-        JAppModuleFinder finder = new JAppModuleFinder(reader, release);
+        JAppModuleFinder finder = new JAppModuleFinder(reader);
 
         MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(BuiltinClassLoader.class, MethodHandles.lookup());
 
