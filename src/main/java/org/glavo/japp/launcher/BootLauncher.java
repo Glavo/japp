@@ -11,45 +11,56 @@ import java.lang.invoke.MethodHandles;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 public final class BootLauncher {
-    private static void addExportsOrOpens(ModuleLayer layer, String item, boolean open) {
-        int idx0 = item.indexOf('/');
+    private static void addExportsOrOpens(ModuleLayer layer, boolean opens) {
+        String prefix = opens
+                ? "org.glavo.japp.addopens."
+                : "org.glavo.japp.addexports.";
 
-        if (idx0 <= 0) {
-            throw new IllegalArgumentException(item);
-        }
+        for (int i = 0; ; i++) {
+            String value = System.getProperty(prefix + i);
+            if (value == null) {
+                return;
+            }
 
-        Module source = layer.findModule(item.substring(0, idx0)).get();
+            int pos = value.indexOf('=');
+            if (pos <= 0) {
+                throw new IllegalArgumentException(value);
+            }
 
-        int idx1 = item.indexOf('=', idx0 + 1);
-        if (idx1 <= idx0 + 1 || idx1 == item.length() - 1) {
-            throw new IllegalArgumentException(item);
-        }
+            String[] left = value.substring(0, pos).split("/");
+            if (left.length != 2) {
+                throw new IllegalArgumentException(value);
+            }
 
-        String packageName = item.substring(idx0 + 1, idx1);
+            Module sourceModule = layer.findModule(left[0]).get();
+            String sourcePackage = left[1];
 
-        String[] targets = item.substring(idx1 + 1).split(",");
-
-        for (String targetName : targets) {
-            Module target = targetName.equals("ALL-UNNAMED") ? null : layer.findModule(targetName).get();
-
-            if (open) {
-                if (target == null) {
-                    Modules.addOpensToAllUnnamed(source, packageName);
-                } else {
-                    Modules.addOpens(source, packageName, target);
+            for (String name : value.substring(pos + 1).split(",")) {
+                if (name.isEmpty()) {
+                    continue;
                 }
-            } else {
-                if (target == null) {
-                    Modules.addExportsToAllUnnamed(source, packageName);
+
+                Module targetModule = name.equals("ALL-UNNAMED") ? null : layer.findModule(name).get();
+
+                if (opens) {
+                    if (targetModule == null) {
+                        Modules.addOpensToAllUnnamed(sourceModule, sourcePackage);
+                    } else {
+                        Modules.addOpens(sourceModule, sourcePackage, targetModule);
+                    }
                 } else {
-                    Modules.addExports(source, packageName, target);
+                    if (targetModule == null) {
+                        Modules.addExportsToAllUnnamed(sourceModule, sourcePackage);
+                    } else {
+                        Modules.addExports(sourceModule, sourcePackage, targetModule);
+                    }
                 }
             }
         }
+
     }
 
     public static void main(String[] args) throws Throwable {
@@ -89,13 +100,8 @@ public final class BootLauncher {
 
         // TODO: Add-Reads
 
-        for (String item : reader.getAddOpens()) {
-            addExportsOrOpens(controller.layer(), item, true);
-        }
-
-        for (String item : reader.getAddExports()) {
-            addExportsOrOpens(controller.layer(), item, false);
-        }
+        addExportsOrOpens(controller.layer(), true);
+        addExportsOrOpens(controller.layer(), false);
 
         Class<?> mainClass = Class.forName(mainClassName, false, loader);
         if (mainClass.getModule().isNamed()) {

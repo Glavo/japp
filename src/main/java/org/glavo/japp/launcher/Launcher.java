@@ -29,6 +29,16 @@ public final class Launcher {
                 command.add("-D" + property);
             }
 
+            int index = 0;
+            for (String addOpen : reader.getAddOpens()) {
+                command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
+            }
+
+            index = 0;
+            for (String addExport : reader.getAddExports()) {
+                command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
+            }
+
             Collections.addAll(command,
                     "--module-path",
                     getBootLauncher().toString(),
@@ -36,6 +46,7 @@ public final class Launcher {
                     "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
                     "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
                     "--add-opens=java.base/jdk.internal.loader=org.glavo.japp",
+                    "--add-opens=java.base/java.lang=org.glavo.japp",
                     "--module",
                     "org.glavo.japp/org.glavo.japp.launcher.BootLauncher"
             );
