@@ -69,6 +69,7 @@ public final class JAppReader implements Closeable {
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
     private final List<String> addOpens = new ArrayList<>();
+    private final List<String> enableNativeAccess = new ArrayList<>();
 
     private final String mainClass;
     private final String mainModule;
@@ -154,6 +155,7 @@ public final class JAppReader implements Closeable {
             readJsonArray(addReads, obj, "Add-Reads");
             readJsonArray(addExports, obj, "Add-Exports");
             readJsonArray(addOpens, obj, "Add-Opens");
+            readJsonArray(enableNativeAccess, obj, "Enable-Native-Access");
 
             mainClass = obj.optString("Main-Class");
             mainModule = obj.optString("Main-Module");
@@ -219,6 +221,10 @@ public final class JAppReader implements Closeable {
 
     public List<String> getAddOpens() {
         return addOpens;
+    }
+
+    public List<String> getEnableNativeAccess() {
+        return enableNativeAccess;
     }
 
     public String getMainClass() {

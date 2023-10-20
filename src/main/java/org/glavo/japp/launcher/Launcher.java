@@ -1,6 +1,7 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.JAppReader;
+import org.glavo.japp.condition.ConditionalHandler;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -10,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 
 public final class Launcher {
+    private static final String BOOT_LAUNCHER_MODULE = "org.glavo.japp";
+
     private static Path getBootLauncher() throws URISyntaxException {
         return Paths.get(Launcher.class.getProtectionDomain().getCodeSource().getLocation().toURI());
     }
@@ -20,6 +23,8 @@ public final class Launcher {
         }
 
         String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";
+
+        ConditionalHandler conditionalHandler = ConditionalHandler.fromCurrentEnvironment(); // TODO
 
         try (JAppReader reader = new JAppReader(Paths.get(args[0]), null)) {
             List<String> command = new ArrayList<>();
@@ -39,16 +44,47 @@ public final class Launcher {
                 command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
             }
 
+            if (!reader.getEnableNativeAccess().isEmpty()) {
+                int release = conditionalHandler.getRelease();
+
+                if (release == 16) {
+                    command.add("-Dforeign.restricted=permit");
+                } else if (release >= 17) {
+                    command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
+
+                    StringBuilder builder = new StringBuilder();
+                    boolean isFirst = true;
+                    for (String module : reader.getEnableNativeAccess()) {
+                        if (module.equals("ALL-UNNAMED")) {
+                            command.add("--enable-native-access=ALL-UNNAMED");
+                        } else {
+                            if (isFirst) {
+                                builder.append("-Dorg.glavo.japp.enableNativeAccess=");
+                            } else {
+                                builder.append(',');
+                            }
+
+                            isFirst = false;
+                            builder.append(module);
+                        }
+                    }
+
+                    if (!isFirst) {
+                        command.add(builder.toString());
+                    }
+                }
+            }
+
             Collections.addAll(command,
                     "--module-path",
                     getBootLauncher().toString(),
                     "-Dorg.glavo.japp.file=" + args[0],
-                    "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
-                    "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
-                    "--add-opens=java.base/jdk.internal.loader=org.glavo.japp",
-                    "--add-opens=java.base/java.lang=org.glavo.japp",
+                    "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
+                    "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
+                    "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
+                    "--add-opens=java.base/java.lang=" + BOOT_LAUNCHER_MODULE,
                     "--module",
-                    "org.glavo.japp/org.glavo.japp.launcher.BootLauncher"
+                    BOOT_LAUNCHER_MODULE + "/org.glavo.japp.launcher.BootLauncher"
             );
 
             for (int i = 1; i < args.length; i++) {

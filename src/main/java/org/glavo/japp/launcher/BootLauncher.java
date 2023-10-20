@@ -7,14 +7,18 @@ import org.glavo.japp.JAppClasspathItem;
 import org.glavo.japp.JAppReader;
 import org.glavo.japp.module.JAppModuleFinder;
 
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.util.*;
 
 public final class BootLauncher {
-    private static void addExportsOrOpens(ModuleLayer layer, boolean opens) {
+    private static void addExportsOrOpens(ModuleLayer.Controller controller, boolean opens) {
+        ModuleLayer layer = controller.layer();
+
         String prefix = opens
                 ? "org.glavo.japp.addopens."
                 : "org.glavo.japp.addexports.";
@@ -63,6 +67,32 @@ public final class BootLauncher {
 
     }
 
+    private static void enableNativeAccess(ModuleLayer.Controller controller) {
+        String value = System.getProperty("org.glavo.japp.enableNativeAccess");
+        if (value == null) {
+            return;
+        }
+
+        MethodHandle handle;
+        try {
+            handle = MethodHandles.publicLookup()
+                    .findVirtual(ModuleLayer.Controller.class, "enableNativeAccess",
+                            MethodType.methodType(ModuleLayer.Controller.class, Module.class));
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            return;
+        }
+
+        for (String m : value.split(",")) {
+            Module module = controller.layer().findModule(m).get();
+
+            try {
+                ModuleLayer.Controller ignored = (ModuleLayer.Controller) handle.invokeExact(controller, module);
+            } catch (Throwable e) {
+                throw new IllegalArgumentException(e);
+            }
+        }
+    }
+
     public static void main(String[] args) throws Throwable {
         JAppReader reader = JAppReader.getSystemReader();
 
@@ -98,8 +128,10 @@ public final class BootLauncher {
 
         // TODO: Add-Reads
 
-        addExportsOrOpens(controller.layer(), true);
-        addExportsOrOpens(controller.layer(), false);
+        addExportsOrOpens(controller, true);
+        addExportsOrOpens(controller, false);
+
+        enableNativeAccess(controller);
 
         Class<?> mainClass = Class.forName(mainClassName, false, loader);
         if (mainClass.getModule().isNamed()) {

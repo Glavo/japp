@@ -33,7 +33,7 @@ public final class JAppPacker implements Closeable {
     private final List<String> addReads = new ArrayList<>();
     private final List<String> addExports = new ArrayList<>();
     private final List<String> addOpens = new ArrayList<>();
-
+    private final List<String> enableNativeAccess = new ArrayList<>();
 
     private String mainClass;
     private String mainModule;
@@ -261,6 +261,7 @@ public final class JAppPacker implements Closeable {
         putJsonArray(res, "Add-Reads", addReads);
         putJsonArray(res, "Add-Exports", addExports);
         putJsonArray(res, "Add-Opens", addOpens);
+        putJsonArray(res, "Enable-Native-Access", enableNativeAccess);
 
         res.putOpt("Main-Class", mainClass);
         res.putOpt("Main-Module", mainModule);
@@ -373,6 +374,10 @@ public final class JAppPacker implements Closeable {
                         packer.addOpens.add(nextArg(args, i++));
                         break;
                     }
+                    case "--enable-native-access": {
+                        packer.enableNativeAccess.add(nextArg(args, i++));
+                        break;
+                    }
                     default: {
                         if (arg.startsWith("-D")) {
                             String property = arg.substring("-D".length());
@@ -389,6 +394,8 @@ public final class JAppPacker implements Closeable {
                             packer.addExports.add(arg.substring("--add-exports=".length()));
                         } else if (arg.startsWith("--add-opens=")) {
                             packer.addOpens.add(arg.substring("--add-opens=".length()));
+                        } else if (arg.startsWith("--enable-native-access=")) {
+                            packer.enableNativeAccess.add(arg.substring("--enable-native-access=".length()));
                         } else if (arg.startsWith("-")) {
                             System.err.println("Error: Unrecognized option: " + arg);
                             System.exit(1);
