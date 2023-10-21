@@ -1,8 +1,5 @@
 package org.glavo.japp;
 
-import org.glavo.japp.thirdparty.json.JSONArray;
-import org.glavo.japp.thirdparty.json.JSONObject;
-
 import java.io.*;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
@@ -16,64 +13,51 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public final class JAppPacker implements Closeable {
+public final class JAppPacker {
 
     private static final short MAJOR_VERSION = -1;
     private static final short MINOR_VERSION = 0;
 
     private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
 
+    private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(16 * 1024 * 1024);
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
 
-    private final List<JAppClasspathItem> modulePath = new ArrayList<>();
-    private final List<JAppClasspathItem> classPath = new ArrayList<>();
+    private final JAppMetadata root = new JAppMetadata();
 
-    private final List<String> jvmProperties = new ArrayList<>();
-    private final List<String> addReads = new ArrayList<>();
-    private final List<String> addExports = new ArrayList<>();
-    private final List<String> addOpens = new ArrayList<>();
-    private final List<String> enableNativeAccess = new ArrayList<>();
+    private ArrayDeque<JAppMetadata> stack = new ArrayDeque<>();
+    private JAppMetadata current = root;
 
-    private String mainClass;
-    private String mainModule;
-
-    private OutputStream outputStream;
     private long totalBytes = 0L;
 
     private int unnamedCounter = 0;
 
-    public JAppPacker(OutputStream outputStream) {
-        setOutputStream(outputStream);
-    }
+    private boolean finished = false;
 
     private JAppPacker() {
     }
 
-    private void setOutputStream(OutputStream outputStream) {
-        this.outputStream = outputStream;
-    }
-
     private void writeByte(byte b) throws IOException {
-        outputStream.write(b & 0xff);
+        buffer.write(b & 0xff);
         totalBytes += 1;
     }
 
     private void writeShort(short s) throws IOException {
         bb.putShort(0, s);
-        outputStream.write(ba, 0, 2);
+        buffer.write(ba, 0, 2);
         totalBytes += 2;
     }
 
     private void writeInt(int i) throws IOException {
         bb.putInt(0, i);
-        outputStream.write(ba, 0, 4);
+        buffer.write(ba, 0, 4);
         totalBytes += 4;
     }
 
     private void writeLong(long l) throws IOException {
         bb.putLong(0, l);
-        outputStream.write(ba, 0, 8);
+        buffer.write(ba, 0, 8);
         totalBytes += 8;
     }
 
@@ -82,7 +66,7 @@ public final class JAppPacker implements Closeable {
     }
 
     private void writeBytes(byte[] arr, int offset, int len) throws IOException {
-        outputStream.write(arr, offset, len);
+        buffer.write(arr, offset, len);
         totalBytes += len;
     }
 
@@ -156,9 +140,9 @@ public final class JAppPacker implements Closeable {
             // If the module name is not found, the file name is retained
             JAppClasspathItem item = new JAppClasspathItem(modulePath ? moduleName : jar.getFileName().toString());
             if (modulePath) {
-                this.modulePath.add(item);
+                this.current.modulePath.put(item.getName(), item);
             } else {
-                this.classPath.add(item);
+                this.current.classPath.put(item.getName(), item);
             }
 
             // Then write all entries
@@ -212,9 +196,9 @@ public final class JAppPacker implements Closeable {
 
         JAppClasspathItem item = new JAppClasspathItem("$unnamed$" + unnamedCounter++);
         if (modulePath) {
-            this.modulePath.add(item);
+            this.current.modulePath.put(item.getName(), item);
         } else {
-            this.classPath.add(item);
+            this.current.classPath.put(item.getName(), item);
         }
         Files.walkFileTree(dir.toAbsolutePath(), new SimpleFileVisitor<>() {
             @Override
@@ -229,44 +213,8 @@ public final class JAppPacker implements Closeable {
         });
     }
 
-    private static void putJsonArray(JSONObject obj, String key, List<String> list) {
-        if (list.isEmpty()) {
-            return;
-        }
-        JSONArray arr = new JSONArray();
-        for (String s : list) {
-            arr.put(s);
-        }
-        obj.put(key, arr);
-    }
-
     private void writeMetadata() throws IOException {
-        JSONObject res = new JSONObject();
-
-        JSONArray modulePath = new JSONArray();
-        JSONArray classPath = new JSONArray();
-
-        for (JAppClasspathItem metadata : this.modulePath) {
-            modulePath.put(metadata.toJson());
-        }
-
-        for (JAppClasspathItem metadata : this.classPath) {
-            classPath.put(metadata.toJson());
-        }
-
-        res.put("Module-Path", modulePath);
-        res.put("Class-Path", classPath);
-
-        putJsonArray(res, "Properties", jvmProperties);
-        putJsonArray(res, "Add-Reads", addReads);
-        putJsonArray(res, "Add-Exports", addExports);
-        putJsonArray(res, "Add-Opens", addOpens);
-        putJsonArray(res, "Enable-Native-Access", enableNativeAccess);
-
-        res.putOpt("Main-Class", mainClass);
-        res.putOpt("Main-Module", mainModule);
-
-        writeBytes(res.toString().getBytes(StandardCharsets.UTF_8));
+        writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
     }
 
     private void writeFileEnd(long metadataOffset) throws IOException {
@@ -301,13 +249,16 @@ public final class JAppPacker implements Closeable {
         }
     }
 
-    @Override
-    public void close() throws IOException {
-        try (Closeable __ = outputStream) {
+    public void writeTo(OutputStream outputStream) throws IOException {
+        if (!finished) {
+            finished = true;
+
             long metadataOffset = totalBytes;
             writeMetadata();
             writeFileEnd(metadataOffset);
         }
+
+        this.buffer.writeTo(outputStream);
     }
 
     private static String nextArg(String[] args, int index) {
@@ -321,114 +272,106 @@ public final class JAppPacker implements Closeable {
     }
 
     public static void main(String[] args) throws IOException {
-        List<Path> modulePath = new ArrayList<>();
-        List<Path> classPath = new ArrayList<>();
-
         Path outputFile = null;
 
-        try (JAppPacker packer = new JAppPacker()) {
-            for (int i = 0; i < args.length; i++) {
-                String arg = args[i];
+        JAppPacker packer = new JAppPacker();
 
-                switch (arg) {
-                    case "-module-path":
-                    case "--module-path": {
-                        String mp = nextArg(args, i++);
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
 
-                        String[] elements = mp.split(File.pathSeparator);
-                        for (String element : elements) {
-                            modulePath.add(Paths.get(element));
-                        }
-                        break;
-                    }
-                    case "-cp":
-                    case "-classpath":
-                    case "--classpath":
-                    case "-class-path":
-                    case "--class-path": {
-                        String cp = nextArg(args, i++);
-
-                        String[] elements = cp.split(File.pathSeparator);
-                        for (String element : elements) {
-                            classPath.add(Paths.get(element));
-                        }
-                        break;
-                    }
-                    case "-o": {
-                        outputFile = Paths.get(nextArg(args, i++));
-                        break;
-                    }
-                    case "-m": {
-                        packer.mainModule = nextArg(args, i++);
-                        break;
-                    }
-                    case "--add-reads": {
-                        packer.addReads.add(nextArg(args, i++));
-                        break;
-                    }
-                    case "--add-exports": {
-                        packer.addExports.add(nextArg(args, i++));
-                        break;
-                    }
-                    case "--add-opens": {
-                        packer.addOpens.add(nextArg(args, i++));
-                        break;
-                    }
-                    case "--enable-native-access": {
-                        packer.enableNativeAccess.add(nextArg(args, i++));
-                        break;
-                    }
-                    default: {
-                        if (arg.startsWith("-D")) {
-                            String property = arg.substring("-D".length());
-
-                            if (property.isEmpty() || property.indexOf('=') == 0) {
-                                System.err.println("Error: JVM property name cannot be empty");
-                                System.exit(1);
-                            }
-
-                            packer.jvmProperties.add(property);
-                        } else if (arg.startsWith("--add-reads=")) {
-                            packer.addReads.add(arg.substring("--add-reads=".length()));
-                        } else if (arg.startsWith("--add-exports=")) {
-                            packer.addExports.add(arg.substring("--add-exports=".length()));
-                        } else if (arg.startsWith("--add-opens=")) {
-                            packer.addOpens.add(arg.substring("--add-opens=".length()));
-                        } else if (arg.startsWith("--enable-native-access=")) {
-                            packer.enableNativeAccess.add(arg.substring("--enable-native-access=".length()));
-                        } else if (arg.startsWith("-")) {
-                            System.err.println("Error: Unrecognized option: " + arg);
-                            System.exit(1);
-                        } else {
-                            if (i < args.length - 1) {
-                                System.err.println("Error: too many arguments");
-                                System.exit(1);
-                            }
-
-                            packer.mainClass = arg;
-                        }
-                    }
+            switch (arg) {
+                case "-o": {
+                    outputFile = Paths.get(nextArg(args, i++));
+                    break;
                 }
-            }
+                case "-module-path":
+                case "--module-path": {
+                    String mp = nextArg(args, i++);
 
-            if (outputFile == null) {
-                System.err.println("Error: miss output file");
-                System.exit(1);
-            }
+                    String[] elements = mp.split(File.pathSeparator);
+                    for (String element : elements) {
+                        packer.addJar(Paths.get(element), true);
+                    }
+                    break;
+                }
+                case "-cp":
+                case "-classpath":
+                case "--classpath":
+                case "-class-path":
+                case "--class-path": {
+                    String cp = nextArg(args, i++);
 
-            packer.setOutputStream(Files.newOutputStream(outputFile));
+                    String[] elements = cp.split(File.pathSeparator);
+                    for (String element : elements) {
+                        Path path = Paths.get(element);
+                        if (Files.isDirectory(path)) {
+                            packer.addDir(path, false);
+                        } else {
+                            packer.addJar(path, false);
+                        }
+                    }
+                    break;
+                }
+                case "-m": {
+                    packer.current.mainModule = nextArg(args, i++);
+                    break;
+                }
+                case "--add-reads": {
+                    packer.current.addReads.add(nextArg(args, i++));
+                    break;
+                }
+                case "--add-exports": {
+                    packer.current.addExports.add(nextArg(args, i++));
+                    break;
+                }
+                case "--add-opens": {
+                    packer.current.addOpens.add(nextArg(args, i++));
+                    break;
+                }
+                case "--enable-native-access": {
+                    packer.current.enableNativeAccess.add(nextArg(args, i++));
+                    break;
+                }
+                default: {
+                    if (arg.startsWith("-D")) {
+                        String property = arg.substring("-D".length());
 
-            for (Path path : modulePath) {
-                packer.addJar(path, true);
-            }
-            for (Path path : classPath) {
-                if (Files.isDirectory(path)) {
-                    packer.addDir(path, false);
-                } else {
-                    packer.addJar(path, false);
+                        if (property.isEmpty() || property.indexOf('=') == 0) {
+                            System.err.println("Error: JVM property name cannot be empty");
+                            System.exit(1);
+                        }
+
+                        packer.current.jvmProperties.add(property);
+                    } else if (arg.startsWith("--add-reads=")) {
+                        packer.current.addReads.add(arg.substring("--add-reads=".length()));
+                    } else if (arg.startsWith("--add-exports=")) {
+                        packer.current.addExports.add(arg.substring("--add-exports=".length()));
+                    } else if (arg.startsWith("--add-opens=")) {
+                        packer.current.addOpens.add(arg.substring("--add-opens=".length()));
+                    } else if (arg.startsWith("--enable-native-access=")) {
+                        packer.current.enableNativeAccess.add(arg.substring("--enable-native-access=".length()));
+                    } else if (arg.startsWith("-")) {
+                        System.err.println("Error: Unrecognized option: " + arg);
+                        System.exit(1);
+                    } else {
+                        if (packer.current.mainClass != null) {
+                            System.err.println("Error: Duplicate main class");
+                            System.exit(1);
+                        }
+
+                        packer.current.mainClass = arg;
+                    }
                 }
             }
         }
 
+        if (outputFile == null) {
+            System.err.println("Error: miss output file");
+            System.exit(1);
+        }
+
+        try (OutputStream out = Files.newOutputStream(outputFile)) {
+            packer.writeTo(out);
+        }
     }
 }

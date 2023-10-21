@@ -123,4 +123,44 @@ public final class JAppMetadata {
     public List<JAppMetadata> getSubMetadata() {
         return subMetadata;
     }
+
+    public JSONObject toJson() {
+        JSONObject res = new JSONObject();
+
+        JSONArray modulePath = new JSONArray();
+        JSONArray classPath = new JSONArray();
+
+        for (JAppClasspathItem metadata : this.modulePath.values()) {
+            modulePath.put(metadata.toJson());
+        }
+
+        for (JAppClasspathItem metadata : this.classPath.values()) {
+            classPath.put(metadata.toJson());
+        }
+
+        res.put("Module-Path", modulePath);
+        res.put("Class-Path", classPath);
+
+        putJsonArray(res, "Properties", jvmProperties);
+        putJsonArray(res, "Add-Reads", addReads);
+        putJsonArray(res, "Add-Exports", addExports);
+        putJsonArray(res, "Add-Opens", addOpens);
+        putJsonArray(res, "Enable-Native-Access", enableNativeAccess);
+
+        res.putOpt("Main-Class", mainClass);
+        res.putOpt("Main-Module", mainModule);
+
+        return res;
+    }
+
+    private static void putJsonArray(JSONObject obj, String key, List<String> list) {
+        if (list.isEmpty()) {
+            return;
+        }
+        JSONArray arr = new JSONArray();
+        for (String s : list) {
+            arr.put(s);
+        }
+        obj.put(key, arr);
+    }
 }
