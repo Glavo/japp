@@ -73,20 +73,20 @@ public final class BootLauncher {
             return;
         }
 
-        MethodHandle handle;
+        MethodHandle implAddEnableNativeAccess;
         try {
-            handle = MethodHandles.publicLookup()
-                    .findVirtual(ModuleLayer.Controller.class, "enableNativeAccess",
-                            MethodType.methodType(ModuleLayer.Controller.class, Module.class));
+            implAddEnableNativeAccess = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup())
+                    .findVirtual(Module.class, "implAddEnableNativeAccess",
+                            MethodType.methodType(Module.class));
         } catch (NoSuchMethodException | IllegalAccessException e) {
-            return;
+            throw new RuntimeException(e);
         }
 
         for (String m : value.split(",")) {
             Module module = controller.layer().findModule(m).get();
 
             try {
-                ModuleLayer.Controller ignored = (ModuleLayer.Controller) handle.invokeExact(controller, module);
+                Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module);
             } catch (Throwable e) {
                 throw new IllegalArgumentException(e);
             }
