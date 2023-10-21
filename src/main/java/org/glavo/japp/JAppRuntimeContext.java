@@ -1,16 +1,16 @@
-package org.glavo.japp.condition;
+package org.glavo.japp;
 
-public final class ConditionalHandler {
+public final class JAppRuntimeContext {
     
-    public static ConditionalHandler fromCurrentEnvironment() {
+    public static JAppRuntimeContext fromCurrentEnvironment() {
         @SuppressWarnings("deprecation")
         int release = Runtime.version().major();
-        return new ConditionalHandler(release);
+        return new JAppRuntimeContext(release);
     }
     
     private final int release;
 
-    public ConditionalHandler(int release) {
+    public JAppRuntimeContext(int release) {
         this.release = release;
     }
 

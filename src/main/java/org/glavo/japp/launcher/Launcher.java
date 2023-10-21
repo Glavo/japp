@@ -2,7 +2,7 @@ package org.glavo.japp.launcher;
 
 import org.glavo.japp.JAppReader;
 import org.glavo.japp.TODO;
-import org.glavo.japp.condition.ConditionalHandler;
+import org.glavo.japp.JAppRuntimeContext;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -25,7 +25,7 @@ public final class Launcher {
 
         String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";
 
-        ConditionalHandler conditionalHandler = ConditionalHandler.fromCurrentEnvironment(); // TODO
+        JAppRuntimeContext context = JAppRuntimeContext.fromCurrentEnvironment(); // TODO
 
         try (JAppReader reader = new JAppReader(Paths.get(args[0]), null)) {
             List<String> command = new ArrayList<>();
@@ -46,7 +46,7 @@ public final class Launcher {
             }
 
             if (!reader.getEnableNativeAccess().isEmpty()) {
-                int release = conditionalHandler.getRelease();
+                int release = context.getRelease();
 
                 if (release == 16) {
                     command.add("-Dforeign.restricted=permit");

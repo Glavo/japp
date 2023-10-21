@@ -1,6 +1,6 @@
 package org.glavo.japp.fs;
 
-import org.glavo.japp.condition.ConditionalHandler;
+import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.thirdparty.glob.GlobPattern;
 import org.glavo.japp.thirdparty.glob.MatchingEngine;
 import org.glavo.japp.JAppReader;
@@ -23,7 +23,7 @@ public final class JAppFileSystem extends FileSystem {
 
     JAppFileSystem(JAppFileSystemProvider provider, Path file, Map<String, ?> env) throws IOException {
         this.provider = provider;
-        this.reader = new JAppReader(file, ConditionalHandler.fromCurrentEnvironment());
+        this.reader = new JAppReader(file, JAppRuntimeContext.fromCurrentEnvironment());
     }
 
     @Override

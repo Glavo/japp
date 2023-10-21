@@ -1,6 +1,5 @@
 package org.glavo.japp;
 
-import org.glavo.japp.condition.ConditionalHandler;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
@@ -31,7 +30,7 @@ public final class JAppReader implements Closeable {
             Throwable exception = null;
             if (property != null) {
                 try {
-                    reader = new JAppReader(Paths.get(property), ConditionalHandler.fromCurrentEnvironment());
+                    reader = new JAppReader(Paths.get(property), JAppRuntimeContext.fromCurrentEnvironment());
                 } catch (IOException e) {
                     exception = e;
                 }
@@ -74,10 +73,10 @@ public final class JAppReader implements Closeable {
     private final String mainClass;
     private final String mainModule;
 
-    private final ConditionalHandler conditionalHandler;
+    private final JAppRuntimeContext context;
 
-    public JAppReader(Path file, ConditionalHandler conditionalHandler) throws IOException {
-        this.conditionalHandler = conditionalHandler;
+    public JAppReader(Path file, JAppRuntimeContext context) throws IOException {
+        this.context = context;
         this.channel = FileChannel.open(file);
 
         try {
@@ -176,7 +175,7 @@ public final class JAppReader implements Closeable {
 
         if (array != null) {
             for (Object jsonItem : array) {
-                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem), conditionalHandler);
+                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem), context);
                 String name = item.getName();
 
                 if (name == null) {
@@ -202,7 +201,7 @@ public final class JAppReader implements Closeable {
     }
 
     public void ensureResolved() {
-        if (conditionalHandler == null) {
+        if (context == null) {
             throw new IllegalStateException();
         }
     }

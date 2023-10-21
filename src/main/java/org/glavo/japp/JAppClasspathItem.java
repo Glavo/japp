@@ -1,6 +1,5 @@
 package org.glavo.japp;
 
-import org.glavo.japp.condition.ConditionalHandler;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONException;
 import org.glavo.japp.thirdparty.json.JSONObject;
@@ -163,7 +162,7 @@ public final class JAppClasspathItem {
         return toJson().toString();
     }
 
-    public static JAppClasspathItem fromJson(JSONObject obj, ConditionalHandler conditionalHandler) {
+    public static JAppClasspathItem fromJson(JSONObject obj, JAppRuntimeContext context) {
         try {
             JAppClasspathItem item = new JAppClasspathItem((String) obj.opt("Name"));
             readResources(item.resources, (JSONArray) obj.opt("Resources"));
@@ -177,13 +176,13 @@ public final class JAppClasspathItem {
                 }
                 Arrays.sort(keys, Comparator.comparing(Integer::parseInt));
 
-                if (conditionalHandler == null) {
+                if (context == null) {
                     for (String release : keys) {
                         readResources(item.getMultiRelease(Integer.parseInt(release)), multiRelease.getJSONArray(release));
                     }
                 } else {
                     for (String release : keys) {
-                        if (Integer.parseInt(release) > conditionalHandler.getRelease()) {
+                        if (Integer.parseInt(release) > context.getRelease()) {
                             break;
                         }
                         readResources(item.resources, multiRelease.getJSONArray(release));
