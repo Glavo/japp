@@ -23,6 +23,8 @@ More ideas may be implemented:
 
 More details can be found in the draft (in Chinese): [Draft](draft/design.md).
 
+Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
+
 ## Try it
 
 This project is still in its early stages, but we already have a working prototype.
