@@ -18,6 +18,7 @@ Features being implemented:
 More ideas may be implemented:
 
 * Support bundling and loading native libraries;
+* Download some dependencies from maven repository (or elsewhere) before running;
 * TODO
 
 More details can be found in the draft (in Chinese): [Draft](draft/design.md).
