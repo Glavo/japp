@@ -1,14 +1,24 @@
 package org.glavo.japp.condition;
 
 import org.glavo.japp.JAppRuntimeContext;
-import org.glavo.japp.TODO;
 import org.glavo.japp.thirdparty.json.JSONObject;
 
 import java.util.function.Predicate;
 
 public interface Condition extends Predicate<JAppRuntimeContext> {
-    static Condition fromJson(String condition) {
-        throw new TODO();
+    static Condition fromJson(JSONObject obj) {
+        String type = obj.getString("Type");
+
+        switch (type) {
+            case AndCondition.TYPE:
+                return AndCondition.fromJson(obj);
+            case OrCondition.TYPE:
+                return OrCondition.fromJson(obj);
+            case JavaVersionCondition.TYPE:
+                return JavaVersionCondition.fromJson(obj);
+            default:
+                throw new IllegalArgumentException("Unknown Type: " + type);
+        }
     }
 
     String type();
