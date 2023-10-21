@@ -44,11 +44,31 @@ Compatibility with Java 7 or earlier is not a goal.)
 Then, package your program as a japp file:
 
 ```shell
-./bin/japp-pack.sh --module-path <your-app-module-path> --classpath <your-app-class-path> -o myapp.japp <main-class>
+./bin/japp-pack.sh --module-path <your-app-module-path> --class-path <your-app-class-path> -o myapp.japp <main-class>
 ```
+
+Currently supported options:
+
+* `-o <output file>`
+* `--module-path <module path>`
+* `--class-path <class path>`
+* `--add-opens <module>/<package>=<target-module>(,<target-module>)*`
+* `--add-exports <module>/<package>=<target-module>(,<target-module>)*`
+* `--enable-native-access <module name>[,<module name>...]`
+* `-D<name>=<value>`
 
 Now you can run it:
 
 ```shell
 ./bin/japp-run.sh myapp.japp <args>
 ```
+
+
+## Thanks
+
+Thanks to [PLCT Lab](https://plctlab.github.io/) for supporting me.
+
+<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/IntelliJ_IDEA.svg" alt="IntelliJ IDEA logo.">
+
+This project is developed using JetBrains IDEA. Thanks to JetBrains for providing me with a free license.
+

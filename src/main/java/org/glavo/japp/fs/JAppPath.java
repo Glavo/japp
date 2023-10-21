@@ -1,7 +1,9 @@
 package org.glavo.japp.fs;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.*;
 import java.util.Objects;
 
@@ -82,12 +84,18 @@ public final class JAppPath implements Path {
 
     @Override
     public URI toUri() {
-        return null;
+        try {
+            return new URI("japp", null, path, null);
+        } catch (URISyntaxException e) {
+            throw new IOError(e);
+        }
     }
 
     @Override
     public Path toAbsolutePath() {
-        return null;
+        if (isAbsolute())
+            return this;
+        return new JAppPath(fs, "/" + path);
     }
 
     @Override
@@ -97,7 +105,10 @@ public final class JAppPath implements Path {
 
     @Override
     public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {
-        return null;
+        Objects.requireNonNull(watcher, "watcher");
+        Objects.requireNonNull(events, "events");
+        Objects.requireNonNull(modifiers, "modifiers");
+        throw new UnsupportedOperationException();
     }
 
     @Override
