@@ -31,21 +31,21 @@ public final class Launcher {
             List<String> command = new ArrayList<>();
             command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
 
-            for (String property : reader.getJvmProperties()) {
+            for (String property : reader.getMetadata().getJvmProperties()) {
                 command.add("-D" + property);
             }
 
             int index = 0;
-            for (String addOpen : reader.getAddOpens()) {
+            for (String addOpen : reader.getMetadata().getAddOpens()) {
                 command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
             }
 
             index = 0;
-            for (String addExport : reader.getAddExports()) {
+            for (String addExport : reader.getMetadata().getAddExports()) {
                 command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
             }
 
-            if (!reader.getEnableNativeAccess().isEmpty()) {
+            if (!reader.getMetadata().getEnableNativeAccess().isEmpty()) {
                 int release = context.getRelease();
 
                 if (release == 16) {
@@ -55,7 +55,7 @@ public final class Launcher {
 
                     StringBuilder builder = new StringBuilder();
                     boolean isFirst = true;
-                    for (String module : reader.getEnableNativeAccess()) {
+                    for (String module : reader.getMetadata().getEnableNativeAccess()) {
                         if (module.equals("ALL-UNNAMED")) {
                             command.add("--enable-native-access=ALL-UNNAMED");
                         } else {

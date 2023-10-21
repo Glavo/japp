@@ -106,7 +106,7 @@ public final class BootLauncher {
             loader.loadModule(mref);
         }
 
-        Map<String, JAppClasspathItem> classPath = reader.getClassPathItems();
+        Map<String, JAppClasspathItem> classPath = reader.getMetadata().getClassPathItems();
         if (!classPath.isEmpty()) {
             URLClassPath ucp = (URLClassPath) lookup
                     .findGetter(BuiltinClassLoader.class, "ucp", URLClassPath.class)
@@ -118,11 +118,11 @@ public final class BootLauncher {
         }
 
         Configuration configuration = ModuleLayer.boot().configuration()
-                .resolve(finder, ModuleFinder.of(), reader.getModulePathItems().keySet());
+                .resolve(finder, ModuleFinder.of(), reader.getMetadata().getModulePathItems().keySet());
 
         ModuleLayer.Controller controller = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader);
 
-        String mainClassName = reader.getMainClass();
+        String mainClassName = reader.getMetadata().getMainClass();
         if (mainClassName == null) {
             System.err.println("Missing main class name");
             System.exit(1);

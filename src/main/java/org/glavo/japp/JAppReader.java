@@ -61,17 +61,7 @@ public final class JAppReader implements Closeable {
 
     private final long contentOffset;
 
-    private final Map<String, JAppClasspathItem> modulePath = new LinkedHashMap<>();
-    private final Map<String, JAppClasspathItem> classPath = new LinkedHashMap<>();
-
-    private final List<String> jvmProperties = new ArrayList<>();
-    private final List<String> addReads = new ArrayList<>();
-    private final List<String> addExports = new ArrayList<>();
-    private final List<String> addOpens = new ArrayList<>();
-    private final List<String> enableNativeAccess = new ArrayList<>();
-
-    private final String mainClass;
-    private final String mainModule;
+    private final JAppMetadata metadata;
 
     private final JAppRuntimeContext context;
 
@@ -145,19 +135,8 @@ public final class JAppReader implements Closeable {
                 json = new String(metadataBuffer.array(), UTF_8);
             }
 
-            JSONObject obj = new JSONObject(json);
 
-            readClasspathItems(false, obj.optJSONArray("Class-Path"));
-            readClasspathItems(true, obj.optJSONArray("Module-Path"));
-
-            readJsonArray(jvmProperties, obj, "Properties");
-            readJsonArray(addReads, obj, "Add-Reads");
-            readJsonArray(addExports, obj, "Add-Exports");
-            readJsonArray(addOpens, obj, "Add-Opens");
-            readJsonArray(enableNativeAccess, obj, "Enable-Native-Access");
-
-            mainClass = obj.optString("Main-Class");
-            mainModule = obj.optString("Main-Module");
+            this.metadata = JAppMetadata.fromJson(new JSONObject(json), context);
         } catch (Throwable e) {
             try {
                 channel.close();
@@ -170,76 +149,14 @@ public final class JAppReader implements Closeable {
         }
     }
 
-    private void readClasspathItems(boolean isModulePath, JSONArray array) throws IOException {
-        Map<String, JAppClasspathItem> map = isModulePath ? this.modulePath : this.classPath;
-
-        if (array != null) {
-            for (Object jsonItem : array) {
-                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem), context);
-                String name = item.getName();
-
-                if (name == null) {
-                    throw new IOException("Item missing name");
-                }
-
-                if (map.put(name, item) != null) {
-                    throw new IOException(String.format("Duplicate %s path item: %s", isModulePath ? "module" : "", name));
-                }
-            }
-        }
-    }
-
-    private static void readJsonArray(List<String> list, JSONObject obj, String key) {
-        JSONArray arr = obj.optJSONArray(key);
-        if (arr == null) {
-            return;
-        }
-
-        for (Object o : arr) {
-            list.add((String) o);
-        }
-    }
-
     public void ensureResolved() {
         if (context == null) {
             throw new IllegalStateException();
         }
     }
 
-    public List<String> getJvmProperties() {
-        return jvmProperties;
-    }
-
-    public List<String> getAddReads() {
-        return addReads;
-    }
-
-    public List<String> getAddExports() {
-        return addExports;
-    }
-
-    public List<String> getAddOpens() {
-        return addOpens;
-    }
-
-    public List<String> getEnableNativeAccess() {
-        return enableNativeAccess;
-    }
-
-    public String getMainClass() {
-        return mainClass;
-    }
-
-    public String getMainModule() {
-        return mainModule;
-    }
-
-    public Map<String, JAppClasspathItem> getModulePathItems() {
-        return modulePath;
-    }
-
-    public Map<String, JAppClasspathItem> getClassPathItems() {
-        return classPath;
+    public JAppMetadata getMetadata() {
+        return metadata;
     }
 
     @Override
@@ -250,7 +167,7 @@ public final class JAppReader implements Closeable {
     public JAppResource findResource(boolean isModulePath, String itemName, String path) {
         ensureResolved();
 
-        JAppClasspathItem item = isModulePath ? modulePath.get(itemName) : classPath.get(itemName);
+        JAppClasspathItem item = isModulePath ? metadata.getModulePathItems().get(itemName) : metadata.getClassPathItems().get(itemName);
         if (item == null) {
             return null;
         }

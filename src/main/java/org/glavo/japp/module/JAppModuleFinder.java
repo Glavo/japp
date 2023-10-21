@@ -29,7 +29,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         reader.ensureResolved();
 
         this.reader = reader;
-        this.items = reader.getModulePathItems();
+        this.items = reader.getMetadata().getModulePathItems();
     }
 
     private ModuleReference load(JAppClasspathItem item) throws IOException {
