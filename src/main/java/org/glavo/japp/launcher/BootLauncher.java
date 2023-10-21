@@ -5,6 +5,7 @@ import jdk.internal.loader.URLClassPath;
 import jdk.internal.module.Modules;
 import org.glavo.japp.JAppClasspathItem;
 import org.glavo.japp.JAppReader;
+import org.glavo.japp.TODO;
 import org.glavo.japp.module.JAppModuleFinder;
 
 import java.lang.invoke.MethodHandle;
@@ -123,7 +124,8 @@ public final class BootLauncher {
 
         String mainClassName = reader.getMainClass();
         if (mainClassName == null) {
-            throw new UnsupportedOperationException("TODO");
+            System.err.println("Missing main class name");
+            System.exit(1);
         }
 
         // TODO: Add-Reads

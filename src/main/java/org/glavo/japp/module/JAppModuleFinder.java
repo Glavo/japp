@@ -3,6 +3,7 @@ package org.glavo.japp.module;
 import org.glavo.japp.JAppClasspathItem;
 import org.glavo.japp.JAppReader;
 import org.glavo.japp.JAppResource;
+import org.glavo.japp.TODO;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -43,7 +44,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         if (resource != null) {
             descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
         } else {
-            throw new UnsupportedOperationException("TODO");
+            throw new TODO("Automatic module");
         }
         return new JAppModuleReference(reader, descriptor, item);
     }

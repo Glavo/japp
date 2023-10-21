@@ -1,6 +1,7 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.JAppReader;
+import org.glavo.japp.TODO;
 import org.glavo.japp.condition.ConditionalHandler;
 
 import java.net.URISyntaxException;
@@ -19,7 +20,7 @@ public final class Launcher {
 
     public static void main(String[] args) throws Throwable {
         if (args.length < 1) {
-            throw new UnsupportedOperationException("TODO: Help message");
+            throw new TODO("Help Message");
         }
 
         String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";

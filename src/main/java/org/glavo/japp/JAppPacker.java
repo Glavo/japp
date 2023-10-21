@@ -150,7 +150,7 @@ public final class JAppPacker implements Closeable {
             }
 
             if (modulePath && moduleName == null) {
-                throw new UnsupportedOperationException("TODO");
+                throw new TODO();
             }
 
             // If the module name is not found, the file name is retained
@@ -207,7 +207,7 @@ public final class JAppPacker implements Closeable {
 
     public void addDir(Path dir, boolean modulePath) throws IOException {
         if (modulePath) {
-            throw new UnsupportedOperationException("TODO");
+            throw new TODO();
         }
 
         JAppClasspathItem item = new JAppClasspathItem("$unnamed$" + unnamedCounter++);
