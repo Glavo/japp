@@ -1,5 +1,6 @@
 package org.glavo.japp.launcher;
 
+import org.glavo.japp.JAppMetadata;
 import org.glavo.japp.JAppReader;
 import org.glavo.japp.TODO;
 import org.glavo.japp.JAppRuntimeContext;
@@ -27,72 +28,72 @@ public final class Launcher {
 
         JAppRuntimeContext context = JAppRuntimeContext.fromCurrentEnvironment(); // TODO
 
-        try (JAppReader reader = new JAppReader(Paths.get(args[0]), null)) {
-            List<String> command = new ArrayList<>();
-            command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
+        JAppMetadata metadata = JAppMetadata.readFile(Paths.get(args[0]));
 
-            for (String property : reader.getMetadata().getJvmProperties()) {
-                command.add("-D" + property);
-            }
+        List<String> command = new ArrayList<>();
+        command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
 
-            int index = 0;
-            for (String addOpen : reader.getMetadata().getAddOpens()) {
-                command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
-            }
+        for (String property : metadata.getJvmProperties()) {
+            command.add("-D" + property);
+        }
 
-            index = 0;
-            for (String addExport : reader.getMetadata().getAddExports()) {
-                command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
-            }
+        int index = 0;
+        for (String addOpen : metadata.getAddOpens()) {
+            command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
+        }
 
-            if (!reader.getMetadata().getEnableNativeAccess().isEmpty()) {
-                int release = context.getRelease();
+        index = 0;
+        for (String addExport : metadata.getAddExports()) {
+            command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
+        }
 
-                if (release == 16) {
-                    command.add("-Dforeign.restricted=permit");
-                } else if (release >= 17) {
-                    command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
+        if (!metadata.getEnableNativeAccess().isEmpty()) {
+            int release = context.getRelease();
 
-                    StringBuilder builder = new StringBuilder();
-                    boolean isFirst = true;
-                    for (String module : reader.getMetadata().getEnableNativeAccess()) {
-                        if (module.equals("ALL-UNNAMED")) {
-                            command.add("--enable-native-access=ALL-UNNAMED");
+            if (release == 16) {
+                command.add("-Dforeign.restricted=permit");
+            } else if (release >= 17) {
+                command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
+
+                StringBuilder builder = new StringBuilder();
+                boolean isFirst = true;
+                for (String module : metadata.getEnableNativeAccess()) {
+                    if (module.equals("ALL-UNNAMED")) {
+                        command.add("--enable-native-access=ALL-UNNAMED");
+                    } else {
+                        if (isFirst) {
+                            builder.append("-Dorg.glavo.japp.enableNativeAccess=");
                         } else {
-                            if (isFirst) {
-                                builder.append("-Dorg.glavo.japp.enableNativeAccess=");
-                            } else {
-                                builder.append(',');
-                            }
-
-                            isFirst = false;
-                            builder.append(module);
+                            builder.append(',');
                         }
-                    }
 
-                    if (!isFirst) {
-                        command.add(builder.toString());
+                        isFirst = false;
+                        builder.append(module);
                     }
                 }
+
+                if (!isFirst) {
+                    command.add(builder.toString());
+                }
             }
-
-            Collections.addAll(command,
-                    "--module-path",
-                    getBootLauncher().toString(),
-                    "-Dorg.glavo.japp.file=" + args[0],
-                    "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
-                    "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
-                    "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
-                    "--add-opens=java.base/java.lang=" + BOOT_LAUNCHER_MODULE,
-                    "--module",
-                    BOOT_LAUNCHER_MODULE + "/org.glavo.japp.launcher.BootLauncher"
-            );
-
-            for (int i = 1; i < args.length; i++) {
-                command.add(args[i]);
-            }
-
-            System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
         }
+
+        Collections.addAll(command,
+                "--module-path",
+                getBootLauncher().toString(),
+                "-Dorg.glavo.japp.file=" + args[0],
+                "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
+                "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
+                "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
+                "--add-opens=java.base/java.lang=" + BOOT_LAUNCHER_MODULE,
+                "--module",
+                BOOT_LAUNCHER_MODULE + "/org.glavo.japp.launcher.BootLauncher"
+        );
+
+        for (int i = 1; i < args.length; i++) {
+            command.add(args[i]);
+        }
+
+        System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
     }
 }
