@@ -1,5 +1,7 @@
 package org.glavo.japp.fs;
 
+import org.glavo.japp.TODO;
+
 import java.io.IOError;
 import java.io.IOException;
 import java.net.URI;
@@ -12,9 +14,16 @@ public final class JAppPath implements Path {
     private final JAppFileSystem fs;
     private final String path;
 
+    private String[] pathElements;
+
     JAppPath(JAppFileSystem fs, String path) {
         this.fs = fs;
         this.path = normalize(path);
+    }
+
+    JAppPath(JAppFileSystem fs, String path, boolean normalized) {
+        this.fs = fs;
+        this.path = normalized ? path : normalize(path);
     }
 
     @Override
@@ -29,57 +38,151 @@ public final class JAppPath implements Path {
 
     @Override
     public Path getRoot() {
-        return null;
+        if (this.isAbsolute()) {
+            return fs.getRootPath();
+        } else {
+            return null;
+        }
     }
 
     @Override
     public Path getFileName() {
-        return null;
+        if (path.isEmpty()) {
+            return this;
+        }
+
+        int off = path.lastIndexOf('/');
+        if (off == -1) {
+            return this;
+        }
+        if (off == path.length() - 1) {
+            return null;
+        }
+
+        return new JAppPath(fs, path.substring(off + 1));
     }
 
     @Override
     public Path getParent() {
+
+
         return null;
+    }
+
+    private String[] getPathElements() {
+        if (pathElements == null) {
+            pathElements = path.split("/");
+        }
+
+        return pathElements;
     }
 
     @Override
     public int getNameCount() {
-        return 0;
+        return getPathElements().length;
     }
 
     @Override
     public Path getName(int index) {
-        return null;
+        try {
+            return new JAppPath(fs, getPathElements()[index]);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new IllegalArgumentException();
+        }
     }
 
     @Override
     public Path subpath(int beginIndex, int endIndex) {
-        return null;
+        String[] elements = getPathElements();
+        if (beginIndex < 0 || endIndex > elements.length || beginIndex >= endIndex) {
+            throw new IllegalArgumentException();
+        }
+
+        if (beginIndex == 0 && endIndex == elements.length) {
+            return this;
+        }
+
+        String newPath;
+        if (endIndex - beginIndex == 1) {
+            newPath = elements[beginIndex];
+        } else {
+            StringBuilder builder = new StringBuilder();
+            builder.append(beginIndex);
+            for (int i = beginIndex + 1; i < endIndex; i++) {
+                builder.append('/').append(elements[i]);
+            }
+            newPath = builder.toString();
+        }
+        return new JAppPath(fs, newPath, true);
     }
 
     @Override
     public boolean startsWith(Path other) {
-        return false;
+        if (!(other instanceof JAppPath)) {
+            return false;
+        }
+
+        final JAppPath o = (JAppPath) other;
+        if (isAbsolute() != o.isAbsolute() || !this.path.startsWith(o.path)) {
+            return false;
+        }
+        int otherLength = o.path.length();
+        if (otherLength == 0) {
+            return this.path.isEmpty();
+        }
+        // check match is on name boundary
+        return this.path.length() == otherLength || this.path.charAt(otherLength) == '/';
     }
 
     @Override
     public boolean endsWith(Path other) {
-        return false;
+        if (!(other instanceof JAppPath)) {
+            return false;
+        }
+
+        if (other.isAbsolute()) {
+            return this.equals(other);
+        }
+
+        // fixme: Maybe it's implemented wrong, I'll look at it later
+
+        String[] thisElements = this.getPathElements();
+        String[] otherElements = ((JAppPath) other).getPathElements();
+
+        if (thisElements.length < otherElements.length) {
+            return false;
+        }
+
+
+        int n = thisElements.length - otherElements.length;
+        for (int i = 0; i < otherElements.length; i++) {
+            if (!thisElements[n + i].equals(otherElements[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     public Path normalize() {
-        return null;
+        throw new TODO();
     }
 
     @Override
     public Path resolve(Path other) {
-        return null;
+        final JAppPath o = checkPath(other);
+        if (this.path.isEmpty() || o.isAbsolute()) {
+            return o;
+        }
+        if (o.path.isEmpty()) {
+            return this;
+        }
+        return new JAppPath(fs, path + '/' + o.path, true);
     }
 
     @Override
     public Path relativize(Path other) {
-        return null;
+        throw new TODO();
     }
 
     @Override
@@ -100,7 +203,7 @@ public final class JAppPath implements Path {
 
     @Override
     public Path toRealPath(LinkOption... options) throws IOException {
-        return null;
+        throw new TODO();
     }
 
     @Override
