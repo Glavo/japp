@@ -3,16 +3,44 @@ package org.glavo.japp;
 import java.nio.file.attribute.FileTime;
 
 public final class JAppResource {
+    public enum Type {
+        GROUP,
+        FILE;
+    }
     public static final String MODULES = "/modules/";
+    public static final String CLASSPATH = "/classpath/";
 
     private final String name;
+    private final Type type;
+
     private final long offset;
     private final long size;
-    private final FileTime creationTime;
+    private final FileTime lastAccessTime;
+
     private final FileTime lastModifiedTime;
+    private final FileTime creationTime;
+
+    private final CompressionMethod method;
+    private final long compressedSize;
+
+    public JAppResource(String name, Type type, long offset, long size, FileTime lastAccessTime, FileTime lastModifiedTime, FileTime creationTime, CompressionMethod method, long compressedSize) {
+        this.name = name;
+        this.type = type;
+        this.offset = offset;
+        this.size = size;
+        this.lastAccessTime = lastAccessTime;
+        this.lastModifiedTime = lastModifiedTime;
+        this.creationTime = creationTime;
+        this.method = method;
+        this.compressedSize = compressedSize;
+    }
 
     public String getName() {
         return name;
+    }
+
+    public Type getType() {
+        return type;
     }
 
     public long getOffset() {
@@ -23,30 +51,38 @@ public final class JAppResource {
         return size;
     }
 
-    public FileTime getCreationTime() {
-        return creationTime;
+    public FileTime getLastAccessTime() {
+        return lastAccessTime;
     }
 
     public FileTime getLastModifiedTime() {
         return lastModifiedTime;
     }
 
-    public JAppResource(String name, long offset, long size, FileTime creationTime, FileTime lastModifiedTime) {
-        this.name = name;
-        this.offset = offset;
-        this.size = size;
-        this.creationTime = creationTime;
-        this.lastModifiedTime = lastModifiedTime;
+    public FileTime getCreationTime() {
+        return creationTime;
+    }
+
+    public CompressionMethod getMethod() {
+        return method;
+    }
+
+    public long getCompressedSize() {
+        return compressedSize;
     }
 
     @Override
     public String toString() {
-        return "JAppResource {" +
-               "name='" + name + '\'' +
+        return "JAppResource{" +
+               "name=" + name +
+               ", type=" + type +
                ", offset=" + offset +
                ", size=" + size +
-               ", creationTime=" + creationTime +
+               ", lastAccessTime=" + lastAccessTime +
                ", lastModifiedTime=" + lastModifiedTime +
+               ", creationTime=" + creationTime +
+               ", method=" + method +
+               ", compressedSize=" + compressedSize +
                '}';
     }
 }

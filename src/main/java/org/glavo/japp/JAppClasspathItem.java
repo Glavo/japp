@@ -114,11 +114,12 @@ public final class JAppClasspathItem {
             long creationTime = jsonEntry.optLong("Creation-Time", -1L);
             long lastModifiedTime = jsonEntry.optLong("Last-Modified-Time", -1L);
 
-            entries.put(name, new JAppResource(
-                    name, offset, size,
-                    creationTime > 0 ? FileTime.fromMillis(creationTime) : null,
-                    lastModifiedTime > 0 ? FileTime.fromMillis(lastModifiedTime) : null
-            ));
+            // TODO
+//            entries.put(name, new JAppResource(
+//                    name, offset, size,
+//                    creationTime > 0 ? FileTime.fromMillis(creationTime) : null,
+//                    lastModifiedTime > 0 ? FileTime.fromMillis(lastModifiedTime) : null
+//            ));
         }
     }
 

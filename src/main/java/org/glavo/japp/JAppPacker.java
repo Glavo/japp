@@ -177,7 +177,7 @@ public final class JAppPacker {
                     itemEntries = item.getResources();
                 }
 
-                itemEntries.put(name, new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                // TODO: itemEntries.put(name, new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;
@@ -206,7 +206,7 @@ public final class JAppPacker {
                 String path = dir.relativize(file).toString();
 
                 byte[] bytes = Files.readAllBytes(file);
-                item.getResources().put(path, new JAppResource(path, totalBytes, bytes.length, attrs.creationTime(), attrs.lastModifiedTime()));
+                // TODO: item.getResources().put(path, new JAppResource(path, totalBytes, bytes.length, attrs.creationTime(), attrs.lastModifiedTime()));
                 writeBytes(bytes);
                 return FileVisitResult.CONTINUE;
             }

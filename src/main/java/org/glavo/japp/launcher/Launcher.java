@@ -1,7 +1,6 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.JAppMetadata;
-import org.glavo.japp.JAppReader;
 import org.glavo.japp.TODO;
 import org.glavo.japp.JAppRuntimeContext;
 
