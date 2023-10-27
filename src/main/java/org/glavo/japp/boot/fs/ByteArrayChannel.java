@@ -1,4 +1,4 @@
-package org.glavo.japp.fs;
+package org.glavo.japp.boot.fs;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

@@ -1,4 +1,4 @@
-package org.glavo.japp;
+package org.glavo.japp.launcher;
 
 import org.glavo.japp.condition.Condition;
 import org.glavo.japp.thirdparty.json.JSONArray;
@@ -10,14 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class JAppMetadata {
+public final class JAppLauncherMetadata {
 
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
@@ -26,7 +23,7 @@ public final class JAppMetadata {
 
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
-    public static JAppMetadata readFile(Path file) throws IOException {
+    public static JAppLauncherMetadata readFile(Path file) throws IOException {
         try (FileChannel channel = FileChannel.open(file)) {
             long fileSize = channel.size();
 
@@ -59,8 +56,9 @@ public final class JAppMetadata {
 
             long fileContentSize = endBuffer.getLong();
             long metadataOffset = endBuffer.getLong();
+            long bootMetadataOffset = endBuffer.getLong();
 
-            assert endBuffer.remaining() == 16;
+            assert endBuffer.remaining() == 8;
 
             if (flags != 0) {
                 throw new IOException("Unsupported flags: " + Long.toBinaryString(flags));
@@ -74,7 +72,7 @@ public final class JAppMetadata {
                 throw new IOException("Invalid metadata offset: " + metadataOffset);
             }
 
-            long contentOffset = fileSize - fileContentSize;
+            long baseOffset = fileSize - fileContentSize;
             long metadataSize = fileContentSize - FILE_END_SIZE - metadataOffset;
 
             String json;
@@ -86,62 +84,16 @@ public final class JAppMetadata {
                 }
 
                 ByteBuffer metadataBuffer = ByteBuffer.allocate((int) metadataSize);
-                channel.position(contentOffset + metadataOffset);
+                channel.position(baseOffset + metadataOffset);
                 IOUtils.readFully(channel, metadataBuffer);
 
                 json = new String(metadataBuffer.array(), UTF_8);
             }
 
-
-            return JAppMetadata.fromJson(new JSONObject(json), null);
-        }
-    }
-
-    public static JAppMetadata fromJson(JSONObject obj, JAppRuntimeContext context) throws IOException {
-        JAppMetadata metadata = new JAppMetadata();
-
-        metadata.readClasspathItems(false, obj.optJSONArray("Class-Path"), context);
-        metadata.readClasspathItems(true, obj.optJSONArray("Module-Path"), context);
-
-        readJsonArray(metadata.jvmProperties, obj, "Properties");
-        readJsonArray(metadata.addReads, obj, "Add-Reads");
-        readJsonArray(metadata.addExports, obj, "Add-Exports");
-        readJsonArray(metadata.addOpens, obj, "Add-Opens");
-        readJsonArray(metadata.enableNativeAccess, obj, "Enable-Native-Access");
-
-        metadata.mainClass = obj.optString("Main-Class");
-        metadata.mainModule = obj.optString("Main-Module");
-
-        return metadata;
-    }
-
-    private void readClasspathItems(boolean isModulePath, JSONArray array, JAppRuntimeContext context) throws IOException {
-        Map<String, JAppClasspathItem> map = isModulePath ? this.modulePath : this.classPath;
-
-        if (array != null) {
-            for (Object jsonItem : array) {
-                JAppClasspathItem item = JAppClasspathItem.fromJson(((JSONObject) jsonItem), context);
-                String name = item.getName();
-
-                if (name == null) {
-                    throw new IOException("Item missing name");
-                }
-
-                if (map.put(name, item) != null) {
-                    throw new IOException(String.format("Duplicate %s path item: %s", isModulePath ? "module" : "", name));
-                }
-            }
-        }
-    }
-
-    private static void readJsonArray(List<String> list, JSONObject obj, String key) {
-        JSONArray arr = obj.optJSONArray(key);
-        if (arr == null) {
-            return;
-        }
-
-        for (Object o : arr) {
-            list.add((String) o);
+            JAppLauncherMetadata metadata = JAppLauncherMetadata.fromJson(new JSONObject(json));
+            metadata.baseOffset = baseOffset;
+            metadata.bootMetadataOffset = bootMetadataOffset;
+            return metadata;
         }
     }
 
@@ -152,22 +104,33 @@ public final class JAppMetadata {
         IGNORE
     }
 
-    final Map<String, JAppClasspathItem> modulePath = new LinkedHashMap<>();
-    final Map<String, JAppClasspathItem> classPath = new LinkedHashMap<>();
+    private long baseOffset;
+    private long bootMetadataOffset;
 
-    final List<String> jvmProperties = new ArrayList<>();
-    final List<String> addReads = new ArrayList<>();
-    final List<String> addExports = new ArrayList<>();
-    final List<String> addOpens = new ArrayList<>();
-    final List<String> enableNativeAccess = new ArrayList<>();
+    public final List<JAppResourceReference> modulePath = new ArrayList<>();
+    public final List<JAppResourceReference> classPath = new ArrayList<>();
 
-    SubMode subMode;
-    final List<JAppMetadata> subMetadata =  new ArrayList<>();
+    public final List<String> jvmProperties = new ArrayList<>();
+    public final List<String> addReads = new ArrayList<>();
+    public final List<String> addExports = new ArrayList<>();
+    public final List<String> addOpens = new ArrayList<>();
+    public final List<String> enableNativeAccess = new ArrayList<>();
 
-    Condition condition;
+    public SubMode subMode;
+    public final List<JAppLauncherMetadata> subMetadata =  new ArrayList<>();
 
-    String mainClass;
-    String mainModule;
+    public Condition condition;
+
+    public String mainClass;
+    public String mainModule;
+
+    public long getBaseOffset() {
+        return baseOffset;
+    }
+
+    public long getBootMetadataOffset() {
+        return bootMetadataOffset;
+    }
 
     public List<String> getJvmProperties() {
         return jvmProperties;
@@ -197,16 +160,51 @@ public final class JAppMetadata {
         return mainModule;
     }
 
-    public Map<String, JAppClasspathItem> getModulePathItems() {
+    public List<JAppResourceReference> getModulePath() {
         return modulePath;
     }
 
-    public Map<String, JAppClasspathItem> getClassPathItems() {
+    public List<JAppResourceReference> getClassPath() {
         return classPath;
     }
 
-    public List<JAppMetadata> getSubMetadata() {
-        return subMetadata;
+    private static void readJsonArray(List<String> list, JSONObject obj, String key) {
+        JSONArray arr = obj.optJSONArray(key);
+        if (arr == null) {
+            return;
+        }
+
+        for (Object o : arr) {
+            list.add((String) o);
+        }
+    }
+
+    private void readReferences(boolean isModulePath, JSONArray array) throws IOException {
+        List<JAppResourceReference> list = isModulePath ? this.modulePath : this.classPath;
+
+        if (array != null) {
+            for (Object jsonItem : array) {
+                list.add(JAppResourceReference.fromJson((JSONObject) jsonItem));
+            }
+        }
+    }
+
+    public static JAppLauncherMetadata fromJson(JSONObject obj) throws IOException {
+        JAppLauncherMetadata metadata = new JAppLauncherMetadata();
+
+        metadata.readReferences(false, obj.optJSONArray("Class-Path"));
+        metadata.readReferences(true, obj.optJSONArray("Module-Path"));
+
+        readJsonArray(metadata.jvmProperties, obj, "Properties");
+        readJsonArray(metadata.addReads, obj, "Add-Reads");
+        readJsonArray(metadata.addExports, obj, "Add-Exports");
+        readJsonArray(metadata.addOpens, obj, "Add-Opens");
+        readJsonArray(metadata.enableNativeAccess, obj, "Enable-Native-Access");
+
+        metadata.mainClass = obj.optString("Main-Class");
+        metadata.mainModule = obj.optString("Main-Module");
+
+        return metadata;
     }
 
     public JSONObject toJson() {
@@ -215,12 +213,12 @@ public final class JAppMetadata {
         JSONArray modulePath = new JSONArray();
         JSONArray classPath = new JSONArray();
 
-        for (JAppClasspathItem metadata : this.modulePath.values()) {
-            modulePath.put(metadata.toJson());
+        for (JAppResourceReference reference : this.modulePath) {
+            modulePath.put(reference.toJson());
         }
 
-        for (JAppClasspathItem metadata : this.classPath.values()) {
-            classPath.put(metadata.toJson());
+        for (JAppResourceReference reference : this.classPath) {
+            classPath.put(reference.toJson());
         }
 
         res.put("Module-Path", modulePath);
@@ -247,5 +245,10 @@ public final class JAppMetadata {
             arr.put(s);
         }
         obj.put(key, arr);
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getName() + toJson();
     }
 }

@@ -1,9 +1,8 @@
-package org.glavo.japp.fs;
+package org.glavo.japp.boot.fs;
 
-import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.thirdparty.glob.GlobPattern;
 import org.glavo.japp.thirdparty.glob.MatchingEngine;
-import org.glavo.japp.JAppReader;
+import org.glavo.japp.boot.JAppReader;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -23,7 +22,7 @@ public final class JAppFileSystem extends FileSystem {
 
     JAppFileSystem(JAppFileSystemProvider provider, Path file, Map<String, ?> env) throws IOException {
         this.provider = provider;
-        this.reader = new JAppReader(file, JAppRuntimeContext.fromCurrentEnvironment());
+        this.reader = JAppReader.getSystemReader();
     }
 
     @Override

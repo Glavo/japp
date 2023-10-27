@@ -1,4 +1,4 @@
-package org.glavo.japp.url;
+package org.glavo.japp.boot.url;
 
 import java.io.IOException;
 import java.net.URL;

@@ -1,8 +1,8 @@
-package org.glavo.japp.module;
+package org.glavo.japp.boot.module;
 
-import org.glavo.japp.JAppClasspathItem;
-import org.glavo.japp.JAppReader;
-import org.glavo.japp.JAppResource;
+import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.boot.JAppReader;
+import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.TODO;
 
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -19,34 +21,34 @@ public final class JAppModuleFinder implements ModuleFinder {
     private static final String MODULE_INFO = "module-info.class";
 
     private final JAppReader reader;
-    private final Map<String, JAppClasspathItem> items;
+    private final Map<String, JAppResourceGroup> modules;
+    private final ModuleFinder externalModulesFinder;
 
     private final Map<String, ModuleReference> cachedModules = new HashMap<>();
 
     private Set<ModuleReference> all;
 
-    public JAppModuleFinder(JAppReader reader) {
-        reader.ensureResolved();
-
+    public JAppModuleFinder(JAppReader reader, Map<String, JAppResourceGroup> modules, List<Path> externalModules) {
         this.reader = reader;
-        this.items = reader.getMetadata().getModulePathItems();
+        this.modules = modules;
+        this.externalModulesFinder = externalModules == null ? null : ModuleFinder.of(externalModules.toArray(new Path[0]));
     }
 
-    private ModuleReference load(JAppClasspathItem item) throws IOException {
+    private ModuleReference load(JAppResourceGroup group) throws IOException {
         Supplier<Set<String>> packageFinder = () -> {
             Set<String> packages = new HashSet<>();
-            findAllPackage(packages, item.getResources().keySet());
+            findAllPackage(packages, group.getResources().keySet());
             return packages;
         };
 
-        JAppResource resource = item.getResources().get(MODULE_INFO);
+        JAppResource resource = group.getResources().get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
-            descriptor = ModuleDescriptor.read(reader.getResourceAsInputStream(resource), packageFinder);
+            descriptor = ModuleDescriptor.read(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)), packageFinder);
         } else {
             throw new TODO("Automatic module");
         }
-        return new JAppModuleReference(reader, descriptor, item);
+        return new JAppModuleReference(reader, descriptor, group);
     }
 
     private static void findAllPackage(Set<String> packages, Collection<String> resources) {
@@ -56,7 +58,7 @@ public final class JAppModuleFinder implements ModuleFinder {
                 if (index != -1) {
                     packages.add(name.substring(0, index).replace('/', '.'));
                 } else {
-                    throw new UncheckedIOException(new IOException(name  + " in the unnamed package"));
+                    throw new UncheckedIOException(new IOException(name + " in the unnamed package"));
                 }
             }
         }
@@ -69,25 +71,31 @@ public final class JAppModuleFinder implements ModuleFinder {
             return Optional.of(ref);
         }
 
-        JAppClasspathItem item = items.get(name);
-        if (item == null) {
-            return Optional.empty();
+        JAppResourceGroup group = modules.get(name);
+        if (group != null) {
+            try {
+                ref = load(group);
+            } catch (Throwable e) {
+                throw new FindException(e);
+            }
+            cachedModules.put(name, ref);
+            return Optional.of(ref);
         }
 
-        try {
-            ref = load(item);
-        } catch (Throwable e) {
-            throw new FindException(e);
+        if (externalModulesFinder != null) {
+            Optional<ModuleReference> res = externalModulesFinder.find(name);
+            res.ifPresent(moduleReference -> cachedModules.put(name, moduleReference));
+            return res;
         }
-        cachedModules.put(name, ref);
-        return Optional.of(ref);
+
+        return Optional.empty();
     }
 
     @Override
     public Set<ModuleReference> findAll() {
         if (all == null) {
             Set<ModuleReference> set = new LinkedHashSet<>();
-            items.forEach((name, item) -> {
+            modules.forEach((name, item) -> {
                 set.add(cachedModules.computeIfAbsent(name, key -> {
                     try {
                         return load(item);
@@ -96,6 +104,9 @@ public final class JAppModuleFinder implements ModuleFinder {
                     }
                 }));
             });
+            if (externalModulesFinder != null) {
+                set.addAll(externalModulesFinder.findAll());
+            }
             all = Collections.unmodifiableSet(set);
         }
 

@@ -1,3 +1,5 @@
+import org.glavo.japp.boot.url.JAppURLStreamHandlerProvider;
+
 module org.glavo.japp {
-    provides java.net.spi.URLStreamHandlerProvider with org.glavo.japp.url.JAppURLStreamHandlerProvider;
+    provides java.net.spi.URLStreamHandlerProvider with JAppURLStreamHandlerProvider;
 }

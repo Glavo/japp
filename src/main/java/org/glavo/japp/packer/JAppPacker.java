@@ -1,4 +1,12 @@
-package org.glavo.japp;
+package org.glavo.japp.packer;
+
+import org.glavo.japp.CompressionMethod;
+import org.glavo.japp.TODO;
+import org.glavo.japp.boot.JAppBootMetadata;
+import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.boot.JAppResource;
+import org.glavo.japp.launcher.JAppLauncherMetadata;
+import org.glavo.japp.launcher.JAppResourceReference;
 
 import java.io.*;
 import java.lang.module.ModuleDescriptor;
@@ -24,14 +32,14 @@ public final class JAppPacker {
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
 
-    private final JAppMetadata root = new JAppMetadata();
+    private final JAppLauncherMetadata root = new JAppLauncherMetadata();
 
-    private ArrayDeque<JAppMetadata> stack = new ArrayDeque<>();
-    private JAppMetadata current = root;
+    private ArrayDeque<JAppLauncherMetadata> stack = new ArrayDeque<>();
+    private JAppLauncherMetadata current = root;
+
+    private final List<JAppResourceGroup> groups = new ArrayList<>();
 
     private long totalBytes = 0L;
-
-    private int unnamedCounter = 0;
 
     private boolean finished = false;
 
@@ -138,11 +146,14 @@ public final class JAppPacker {
             }
 
             // If the module name is not found, the file name is retained
-            JAppClasspathItem item = new JAppClasspathItem(modulePath ? moduleName : jar.getFileName().toString());
+            JAppResourceGroup group = new JAppResourceGroup(modulePath ? moduleName : jar.getFileName().toString());
+            JAppResourceReference reference = new JAppResourceReference.Local(group.getName(), groups.size());
+
+            groups.add(group);
             if (modulePath) {
-                this.current.modulePath.put(item.getName(), item);
+                this.current.modulePath.add(reference);
             } else {
-                this.current.classPath.put(item.getName(), item);
+                this.current.classPath.add(reference);
             }
 
             // Then write all entries
@@ -154,7 +165,7 @@ public final class JAppPacker {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
 
-                Map<String, JAppResource> itemEntries = null;
+                Map<String, JAppResource> groupEntries = null;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -164,7 +175,7 @@ public final class JAppPacker {
                         try {
                             int v = Integer.parseInt(ver);
                             if (v > 9) {
-                                itemEntries = item.getMultiRelease(v);
+                                groupEntries = group.getMultiRelease(v);
                                 name = name.substring(idx + 1);
                             }
 
@@ -173,11 +184,14 @@ public final class JAppPacker {
                     }
                 }
 
-                if (itemEntries == null) {
-                    itemEntries = item.getResources();
+                if (groupEntries == null) {
+                    groupEntries = group.getResources();
                 }
 
-                // TODO: itemEntries.put(name, new JAppResource(name, totalBytes, entry.getSize(), entry.getCreationTime(), entry.getLastModifiedTime()));
+                groupEntries.put(name, new JAppResource(
+                        name, totalBytes, entry.getSize(),
+                        entry.getLastAccessTime(), entry.getLastModifiedTime(), entry.getCreationTime(),
+                        CompressionMethod.NONE, entry.getSize()));
 
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int n;
@@ -194,30 +208,30 @@ public final class JAppPacker {
             throw new TODO();
         }
 
-        JAppClasspathItem item = new JAppClasspathItem("$unnamed$" + unnamedCounter++);
+        JAppResourceGroup group = new JAppResourceGroup(null);
+        JAppResourceReference reference = new JAppResourceReference.Local(null, groups.size());
         if (modulePath) {
-            this.current.modulePath.put(item.getName(), item);
+            throw new TODO();
         } else {
-            this.current.classPath.put(item.getName(), item);
+            this.current.classPath.add(reference);
         }
         Files.walkFileTree(dir.toAbsolutePath(), new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                String path = dir.relativize(file).toString();
-
+                String path = dir.relativize(file).toString().replace('\\', '/');
                 byte[] bytes = Files.readAllBytes(file);
-                // TODO: item.getResources().put(path, new JAppResource(path, totalBytes, bytes.length, attrs.creationTime(), attrs.lastModifiedTime()));
+                group.getResources().put(path, new JAppResource(
+                        path, totalBytes, bytes.length,
+                        attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime(),
+                        CompressionMethod.NONE, bytes.length
+                ));
                 writeBytes(bytes);
                 return FileVisitResult.CONTINUE;
             }
         });
     }
 
-    private void writeMetadata() throws IOException {
-        writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
-    }
-
-    private void writeFileEnd(long metadataOffset) throws IOException {
+    private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
         long fileSize = totalBytes + 48;
 
         // magic number
@@ -240,8 +254,10 @@ public final class JAppPacker {
         // metadata offset
         writeLong(metadataOffset);
 
+        // boot metadata offset
+        writeLong(bootMetadataOffset);
+
         // reserved
-        writeLong(0L);
         writeLong(0L);
 
         if (totalBytes != fileSize) {
@@ -253,9 +269,14 @@ public final class JAppPacker {
         if (!finished) {
             finished = true;
 
+            long bootMetadataOffset = totalBytes;
+            byte[] bootMetadata = new JAppBootMetadata(groups).toJson().toString().getBytes(StandardCharsets.UTF_8);
+            writeInt(bootMetadata.length);
+            writeBytes(bootMetadata);
+
             long metadataOffset = totalBytes;
-            writeMetadata();
-            writeFileEnd(metadataOffset);
+            writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
+            writeFileEnd(metadataOffset, bootMetadataOffset);
         }
 
         this.buffer.writeTo(outputStream);

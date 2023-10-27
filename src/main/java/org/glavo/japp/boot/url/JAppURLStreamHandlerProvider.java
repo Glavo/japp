@@ -1,4 +1,4 @@
-package org.glavo.japp.url;
+package org.glavo.japp.boot.url;
 
 import java.net.URLStreamHandler;
 import java.net.spi.URLStreamHandlerProvider;

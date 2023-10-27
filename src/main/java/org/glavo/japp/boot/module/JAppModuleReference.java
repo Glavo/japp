@@ -1,8 +1,9 @@
-package org.glavo.japp.module;
+package org.glavo.japp.boot.module;
 
-import org.glavo.japp.JAppClasspathItem;
-import org.glavo.japp.JAppReader;
-import org.glavo.japp.JAppResource;
+import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.boot.JAppReader;
+import org.glavo.japp.boot.JAppResource;
+import org.glavo.japp.boot.JAppResourceRoot;
 
 import java.io.IOException;
 import java.lang.module.ModuleDescriptor;
@@ -15,15 +16,13 @@ import java.util.stream.Stream;
 public final class JAppModuleReference extends ModuleReference implements ModuleReader {
 
     private final JAppReader reader;
-    private final JAppClasspathItem item;
+    private final JAppResourceGroup group;
 
-    public JAppModuleReference(JAppReader reader, ModuleDescriptor descriptor, JAppClasspathItem item) {
-        super(descriptor, item.toURI(true));
-
-        reader.ensureResolved();
+    public JAppModuleReference(JAppReader reader, ModuleDescriptor descriptor, JAppResourceGroup group) {
+        super(descriptor, JAppResourceRoot.MODULES.toURI(group));
 
         this.reader = reader;
-        this.item = item;
+        this.group = group;
     }
 
     @Override
@@ -35,9 +34,9 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Optional<URI> find(String name) throws IOException {
-        JAppResource resource = item.getResources().get(name);
+        JAppResource resource = group.getResources().get(name);
         if (resource != null) {
-            return Optional.of(item.toURI(true, resource));
+            return Optional.of(JAppResourceRoot.MODULES.toURI(group, resource));
         } else {
             return Optional.empty();
         }
@@ -45,7 +44,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Stream<String> list() throws IOException {
-        return item.getResources().values().stream().map(JAppResource::getName);
+        return group.getResources().values().stream().map(JAppResource::getName);
     }
 
     @Override

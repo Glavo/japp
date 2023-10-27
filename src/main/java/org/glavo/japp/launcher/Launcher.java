@@ -1,6 +1,5 @@
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.JAppMetadata;
 import org.glavo.japp.TODO;
 import org.glavo.japp.JAppRuntimeContext;
 
@@ -27,7 +26,7 @@ public final class Launcher {
 
         JAppRuntimeContext context = JAppRuntimeContext.fromCurrentEnvironment(); // TODO
 
-        JAppMetadata metadata = JAppMetadata.readFile(Paths.get(args[0]));
+        JAppLauncherMetadata metadata = JAppLauncherMetadata.readFile(Paths.get(args[0]));
 
         List<String> command = new ArrayList<>();
         command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
@@ -36,7 +35,20 @@ public final class Launcher {
             command.add("-D" + property);
         }
 
+        command.add("-Dorg.glavo.japp.file=" + args[0]);
+
+        if (metadata.getBaseOffset() != 0) {
+            command.add("-Dorg.glavo.japp.file.offset=" + metadata.getBaseOffset());
+        }
+
+        command.add("-Dorg.glavo.japp.file.metadataOffset=" + metadata.getBootMetadataOffset());
+
         int index = 0;
+        for (String addReads : metadata.getAddReads()) {
+            command.add("-Dorg.glavo.japp.addreads." + index++ + "=" + addReads);
+        }
+
+        index = 0;
         for (String addOpen : metadata.getAddOpens()) {
             command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
         }
@@ -46,6 +58,8 @@ public final class Launcher {
             command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
         }
 
+        boolean isFirst = true;
+        StringBuilder builder = new StringBuilder(80);
         if (!metadata.getEnableNativeAccess().isEmpty()) {
             int release = context.getRelease();
 
@@ -54,8 +68,6 @@ public final class Launcher {
             } else if (release >= 17) {
                 command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
 
-                StringBuilder builder = new StringBuilder();
-                boolean isFirst = true;
                 for (String module : metadata.getEnableNativeAccess()) {
                     if (module.equals("ALL-UNNAMED")) {
                         command.add("--enable-native-access=ALL-UNNAMED");
@@ -77,16 +89,59 @@ public final class Launcher {
             }
         }
 
+        isFirst = true;
+        builder.setLength(0);
+        for (JAppResourceReference reference : metadata.getModulePath()) {
+            String name = reference.name;
+
+            if (isFirst) {
+                isFirst = false;
+                builder.append("-Dorg.glavo.japp.modulePaths=");
+            } else {
+                builder.append(',');
+            }
+
+            builder.append(name).append(":").append(Integer.toHexString(((JAppResourceReference.Local) reference).getIndex()));
+        }
+        if (!isFirst) {
+            command.add(builder.toString());
+        }
+
+        isFirst = true;
+        builder.setLength(0);
+        for (JAppResourceReference reference : metadata.getClassPath()) {
+            String name = reference.getName();
+
+            if (isFirst) {
+                isFirst = false;
+                builder.append("-Dorg.glavo.japp.classPaths=");
+            } else {
+                builder.append(',');
+            }
+
+            builder.append(name != null ? name : "").append(":").append(Integer.toHexString(((JAppResourceReference.Local) reference).getIndex()));
+        }
+        if (!isFirst) {
+            command.add(builder.toString());
+        }
+
+        if (metadata.getMainClass() != null) {
+            command.add("-Dorg.glavo.japp.mainClass=" + metadata.getMainClass());
+        }
+
+        if (metadata.getMainModule() != null) {
+            command.add("-Dorg.glavo.japp.mainModule=" + metadata.getMainModule());
+        }
+
         Collections.addAll(command,
                 "--module-path",
                 getBootLauncher().toString(),
-                "-Dorg.glavo.japp.file=" + args[0],
                 "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
                 "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-opens=java.base/java.lang=" + BOOT_LAUNCHER_MODULE,
                 "--module",
-                BOOT_LAUNCHER_MODULE + "/org.glavo.japp.launcher.BootLauncher"
+                BOOT_LAUNCHER_MODULE + "/org.glavo.japp.boot.BootLauncher"
         );
 
         for (int i = 1; i < args.length; i++) {
