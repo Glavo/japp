@@ -201,8 +201,8 @@ public final class JAppLauncherMetadata {
         readJsonArray(metadata.addOpens, obj, "Add-Opens");
         readJsonArray(metadata.enableNativeAccess, obj, "Enable-Native-Access");
 
-        metadata.mainClass = obj.optString("Main-Class");
-        metadata.mainModule = obj.optString("Main-Module");
+        metadata.mainClass = obj.optString("Main-Class", null);
+        metadata.mainModule = obj.optString("Main-Module", null);
 
         return metadata;
     }

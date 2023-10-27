@@ -189,7 +189,7 @@ public final class BootLauncher {
                 String index = item.substring(idx + 1);
 
                 char ch = index.charAt(0);
-                if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F')) {
+                if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
                     JAppResourceGroup group = metadata.getGroups().get(Integer.parseInt(index, 16));
                     if (!group.getName().equals(name)) {
                         throw new AssertionError(group.getName() + " != " + name);
@@ -217,16 +217,16 @@ public final class BootLauncher {
                 String index = item.substring(idx + 1);
 
                 char ch = index.charAt(0);
-                if ((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F')) {
+                if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
                     JAppResourceGroup group = metadata.getGroups().get(Integer.parseInt(index, 16));
-                    if (!name.equals(group.getName()) && !(name.isEmpty() && group.getName() == null)) {
-                        throw new AssertionError(group.getName() + " != " + name);
-                    }
-                    ucp.addURL(JAppResourceRoot.CLASSPATH.toURI(group).toURL());
                     if (group.getName() == null) {
                         name = "unnamed@" + index;
                         group.name = name;
+                    } else if (!name.equals(group.getName())) {
+                        throw new AssertionError(group.getName() + " != " + name);
                     }
+                    ucp.addURL(JAppResourceRoot.CLASSPATH.toURI(group).toURL());
+
                     classPath.put(name, group);
                 } else {
                     throw new TODO();

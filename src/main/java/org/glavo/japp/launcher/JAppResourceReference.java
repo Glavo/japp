@@ -10,7 +10,7 @@ public abstract class JAppResourceReference {
 
     public static JAppResourceReference fromJson(JSONObject obj) {
         String type = obj.getString("Type");
-        String name = obj.optString("Name");
+        String name = obj.optString("Name", null);
         if (type.equals(Local.class.getSimpleName())) {
             int index = obj.getInt("Index");
             return new Local(name, index);

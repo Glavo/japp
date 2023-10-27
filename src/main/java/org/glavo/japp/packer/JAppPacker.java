@@ -210,6 +210,7 @@ public final class JAppPacker {
 
         JAppResourceGroup group = new JAppResourceGroup(null);
         JAppResourceReference reference = new JAppResourceReference.Local(null, groups.size());
+        groups.add(group);
         if (modulePath) {
             throw new TODO();
         } else {

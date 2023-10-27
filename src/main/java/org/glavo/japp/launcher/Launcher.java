@@ -38,10 +38,10 @@ public final class Launcher {
         command.add("-Dorg.glavo.japp.file=" + args[0]);
 
         if (metadata.getBaseOffset() != 0) {
-            command.add("-Dorg.glavo.japp.file.offset=" + metadata.getBaseOffset());
+            command.add("-Dorg.glavo.japp.file.offset=" + Long.toHexString(metadata.getBaseOffset()));
         }
 
-        command.add("-Dorg.glavo.japp.file.metadataOffset=" + metadata.getBootMetadataOffset());
+        command.add("-Dorg.glavo.japp.file.metadataOffset=" + Long.toHexString(metadata.getBootMetadataOffset()));
 
         int index = 0;
         for (String addReads : metadata.getAddReads()) {

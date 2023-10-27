@@ -87,6 +87,7 @@ public class JAppResource {
     public JSONObject toJson() {
         JSONObject obj = new JSONObject();
 
+        obj.putOpt("Name", name);
         obj.putOnce("Offset", offset);
         obj.putOnce("Size", size);
 

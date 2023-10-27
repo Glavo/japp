@@ -77,7 +77,7 @@ public final class JAppResourceGroup {
     }
 
     public static JAppResourceGroup fromJson(JSONObject obj, JAppRuntimeContext context) {
-        String name = obj.optString("Name");
+        String name = obj.optString("Name", null);
 
         JAppResourceGroup res = new JAppResourceGroup(name);
 
