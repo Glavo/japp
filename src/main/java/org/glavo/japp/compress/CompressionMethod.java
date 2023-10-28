@@ -1,4 +1,4 @@
-package org.glavo.japp;
+package org.glavo.japp.compress;
 
 public enum CompressionMethod {
     NONE,

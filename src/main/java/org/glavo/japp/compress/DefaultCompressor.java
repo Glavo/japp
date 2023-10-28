@@ -1,6 +1,5 @@
 package org.glavo.japp.compress;
 
-import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
 
 import java.util.HashMap;

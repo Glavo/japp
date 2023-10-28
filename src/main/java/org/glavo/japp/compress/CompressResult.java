@@ -1,7 +1,5 @@
 package org.glavo.japp.compress;
 
-import org.glavo.japp.CompressionMethod;
-
 import java.util.Arrays;
 
 public final class CompressResult {

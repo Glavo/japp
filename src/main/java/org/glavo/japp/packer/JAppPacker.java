@@ -1,6 +1,5 @@
 package org.glavo.japp.packer;
 
-import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
