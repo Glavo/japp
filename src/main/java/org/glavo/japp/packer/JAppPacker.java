@@ -5,6 +5,8 @@ import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.JAppResource;
+import org.glavo.japp.compress.CompressResult;
+import org.glavo.japp.compress.Compressor;
 import org.glavo.japp.launcher.JAppLauncherMetadata;
 import org.glavo.japp.launcher.JAppResourceReference;
 
@@ -38,6 +40,8 @@ public final class JAppPacker {
     private JAppLauncherMetadata current = root;
 
     private final List<JAppResourceGroup> groups = new ArrayList<>();
+
+    private final Compressor compressor = Compressor.DEFAULT;
 
     private long totalBytes = 0L;
 
@@ -158,8 +162,6 @@ public final class JAppPacker {
 
             // Then write all entries
 
-            byte[] buffer = new byte[8192];
-
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
@@ -184,6 +186,19 @@ public final class JAppPacker {
                     }
                 }
 
+                byte[] buffer = new byte[(int) entry.getSize()];
+                try (InputStream in = zipFile.getInputStream(entry)) {
+                    int count = 0;
+                    int n;
+                    while ((n = in.read(buffer, count, buffer.length - count)) > 0) {
+                        count += n;
+                    }
+
+                    assert count == buffer.length;
+                }
+
+                CompressResult result = compressor.compress(buffer, entry);
+
                 if (groupEntries == null) {
                     groupEntries = group.getResources();
                 }
@@ -191,14 +206,9 @@ public final class JAppPacker {
                 groupEntries.put(name, new JAppResource(
                         name, totalBytes, entry.getSize(),
                         entry.getLastAccessTime(), entry.getLastModifiedTime(), entry.getCreationTime(),
-                        CompressionMethod.NONE, entry.getSize()));
+                        result.getMethod(), result.getLength()));
 
-                try (InputStream in = zipFile.getInputStream(entry)) {
-                    int n;
-                    while ((n = in.read(buffer)) > 0) {
-                        writeBytes(buffer, 0, n);
-                    }
-                }
+                writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
             }
         }
     }
@@ -220,13 +230,14 @@ public final class JAppPacker {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 String path = dir.relativize(file).toString().replace('\\', '/');
-                byte[] bytes = Files.readAllBytes(file);
+                byte[] data = Files.readAllBytes(file);
+                CompressResult result = compressor.compress(Files.readAllBytes(file), file, attrs);
                 group.getResources().put(path, new JAppResource(
-                        path, totalBytes, bytes.length,
+                        path, totalBytes, data.length,
                         attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime(),
-                        CompressionMethod.NONE, bytes.length
+                        result.getMethod(), result.getLength()
                 ));
-                writeBytes(bytes);
+                writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
                 return FileVisitResult.CONTINUE;
             }
         });
