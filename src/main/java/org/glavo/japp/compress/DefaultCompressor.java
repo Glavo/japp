@@ -26,7 +26,7 @@ final class DefaultCompressor implements Compressor {
 
     @Override
     public CompressResult compress(byte[] source, String ext) {
-        if (source.length == 0) {
+        if (source.length <= 24) {
             return new CompressResult(CompressionMethod.NONE, source);
         }
 
