@@ -10,10 +10,8 @@ Features implemented:
 * Preserves all `module-info.class`, works well with the JPMS (Java Platform Module System);
 * Includes necessary JVM options (e.g. `--add-opens`/`--enable-native-access`) so no need for user to add them;
 * Includes some default JVM options that can be easily overridden by the user;
-* 
 
 Features being implemented:
-
 
 * Share data between class files to reduce file size;
 * Automatic selection of applicable Java;

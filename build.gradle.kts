@@ -31,14 +31,25 @@ tasks.compileJava {
     sourceCompatibility = "9"
     targetCompatibility = "9"
 
-    options.compilerArgs.addAll(listOf(
-        "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
-        "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
-    ))
+    options.compilerArgs.addAll(
+        listOf(
+            "--add-exports=java.base/jdk.internal.loader=org.glavo.japp",
+            "--add-exports=java.base/jdk.internal.module=org.glavo.japp",
+        )
+    )
 }
 
 tasks.jar {
     doLast {
-        tasks.jar.get().archiveFile.get().asFile.copyTo(project.layout.buildDirectory.get().file("japp.jar").asFile, overwrite = true)
+        tasks.jar.get().archiveFile.get().asFile.copyTo(
+            project.layout.buildDirectory.get().file("japp.jar").asFile,
+            overwrite = true
+        )
+    }
+
+    manifest {
+        attributes(
+            "JApp-Home" to project.layout.projectDirectory.file(".japp").asFile.absolutePath
+        )
     }
 }
