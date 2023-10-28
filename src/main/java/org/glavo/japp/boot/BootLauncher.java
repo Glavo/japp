@@ -161,7 +161,12 @@ public final class BootLauncher {
         String modulePaths = System.getProperty("org.glavo.japp.modulePaths");
         String classPaths = System.getProperty("org.glavo.japp.classPaths");
 
-        String mainClassName = getNecessaryProperty("org.glavo.japp.mainClass");
+        String mainClassName = System.getProperty("org.glavo.japp.mainClass");
+        String mainModuleName = System.getProperty("org.glavo.mainModule");
+
+        if (mainClassName == null && mainModuleName == null) {
+            throw new IllegalStateException("No main class specified");
+        }
 
         FileChannel channel = FileChannel.open(Paths.get(file));
         channel.position(baseOffset + metadataOffset);
@@ -253,9 +258,27 @@ public final class BootLauncher {
         addExportsOrOpens(controller, false);
         enableNativeAccess(controller);
 
-        Class<?> mainClass = Class.forName(mainClassName, false, loader);
-        if (mainClass.getModule().isNamed()) {
-            Modules.addOpens(mainClass.getModule(), mainClass.getPackageName(), BootLauncher.class.getModule());
+        Class<?> mainClass;
+        Module mainModule;
+        if (mainClassName != null) {
+            mainClass = Class.forName(mainClassName, false, loader);
+            mainModule = mainClass.getModule();
+
+            if (mainModuleName != null) {
+                throw new IllegalArgumentException("Class " + mainClassName + " is not in the module " + mainModuleName);
+            }
+        } else {
+            mainModule = controller.layer().findModule(mainModuleName).get();
+            mainClassName = mainModule.getDescriptor().mainClass().orElse(null);
+            if (mainClassName == null) {
+                throw new IllegalArgumentException("Module " + mainModule + " has no main class specified");
+            }
+
+            mainClass = Class.forName(mainClassName, false, mainModule.getClassLoader());
+        }
+
+        if (mainModule.isNamed()) {
+            Modules.addOpens(mainModule, mainClass.getPackageName(), BootLauncher.class.getModule());
         }
 
         return mainClass.getMethod("main", String[].class);
