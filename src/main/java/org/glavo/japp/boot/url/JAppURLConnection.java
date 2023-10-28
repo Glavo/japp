@@ -38,7 +38,7 @@ public class JAppURLConnection extends URLConnection {
                 }
 
                 root = r;
-                group = fullPath.substring(prefix.length(), idx);
+                group = fullPath.substring(prefix.length() + 1, idx);
                 path = fullPath.substring(idx + 1);
                 break;
             }

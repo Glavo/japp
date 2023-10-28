@@ -111,6 +111,6 @@ public class JAppResource {
 
     @Override
     public String toString() {
-        return "JAppResource" + toJson();
+        return getClass().getSimpleName() + toJson();
     }
 }

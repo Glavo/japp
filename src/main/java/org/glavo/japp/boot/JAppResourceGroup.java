@@ -152,7 +152,7 @@ public final class JAppResourceGroup {
 
     @Override
     public String toString() {
-        return toJson().toString();
+        return getClass().getSimpleName() + toJson();
     }
 
 }
