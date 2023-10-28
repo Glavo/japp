@@ -9,13 +9,13 @@ Features implemented:
 * Pack multiple modular or non-modular JARs into one file;
 * Preserves all `module-info.class`, works well with the JPMS (Java Platform Module System);
 * Includes necessary JVM options (e.g. `--add-opens`/`--enable-native-access`) so no need for user to add them;
-* Includes some default JVM options that can be easily overridden by the user;
+* Supports adding shebang to the header of the file, so it can be executed as easily as a script.
 
 Features being implemented:
 
 * Share data between class files to reduce file size;
+* Includes some default JVM options that can be easily overridden by the user;
 * Automatic selection of applicable Java;
-* Supports adding shebang to the header of the file, so it can be executed as easily as a script;
 * Supports adding classpath/module/JVM options conditionally;
 * Support bundling and loading native libraries;
 * Download some dependencies from maven repository (or elsewhere) before running.
@@ -62,9 +62,8 @@ Currently supported options:
 Now you can run it:
 
 ```shell
-./bin/japp-run.sh myapp.japp <args>
+./myapp.japp <args>
 ```
-
 
 ## Thanks
 

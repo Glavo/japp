@@ -303,7 +303,7 @@ public final class JAppPacker {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Throwable {
         Path outputFile = null;
 
         JAppPacker packer = new JAppPacker();
@@ -402,8 +402,20 @@ public final class JAppPacker {
             System.exit(1);
         }
 
+        String self = Paths.get(JAppPacker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toAbsolutePath().toString();
+
+        String header;
+        try (InputStream input = JAppPacker.class.getResourceAsStream("header.sh")) {
+            header = new String(input.readAllBytes(), StandardCharsets.UTF_8)
+                    .replace("%java.home%", System.getProperty("java.home"))
+                    .replace("%japp.launcher%", self);
+        }
+
         try (OutputStream out = Files.newOutputStream(outputFile)) {
+            out.write(header.getBytes(StandardCharsets.UTF_8));
             packer.writeTo(out);
         }
+
+        outputFile.toFile().setExecutable(true);
     }
 }
