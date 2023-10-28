@@ -14,7 +14,6 @@ public final class AndCondition implements Condition {
     public static AndCondition fromJson(JSONObject obj) {
         JSONArray array = obj.getJSONArray("Conditions");
 
-
         ArrayList<Condition> conditions = new ArrayList<>(array.length());
         for (Object condition : array) {
             conditions.add(Condition.fromJson((JSONObject) condition));

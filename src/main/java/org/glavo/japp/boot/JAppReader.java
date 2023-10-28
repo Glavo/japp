@@ -79,42 +79,6 @@ public final class JAppReader implements Closeable {
         return g.getResources().get(path);
     }
 
-    private void getResourceAsByteArrayImpl(JAppResource resource, byte[] res) throws IOException {
-        long offset = resource.getOffset();
-
-        switch (resource.getMethod()) {
-            case NONE: {
-                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(res));
-                break;
-            }
-            case DEFLATE: {
-                byte[] compressed = new byte[(int) resource.getCompressedSize()];
-                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
-
-                Inflater inflater = new Inflater();
-                inflater.setInput(compressed);
-
-                try {
-                    int count = 0;
-                    while (count < res.length) {
-                        if (inflater.finished()) {
-                            throw new IOException("Unexpected end of data");
-                        }
-                        count += inflater.inflate(res);
-                    }
-                } catch (DataFormatException e) {
-                    throw new IOException(e);
-                } finally {
-                    inflater.end();
-                }
-                break;
-            }
-            default: {
-                throw new TODO("Method: " + resource.getMethod());
-            }
-        }
-    }
-
     public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
         long size = resource.getSize();
 
@@ -127,9 +91,41 @@ public final class JAppReader implements Closeable {
             return array;
         }
 
+        long offset = resource.getOffset();
+
         lock.lock();
         try {
-            getResourceAsByteArrayImpl(resource, array);
+            switch (resource.getMethod()) {
+                case NONE: {
+                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(array));
+                    break;
+                }
+                case DEFLATE: {
+                    byte[] compressed = new byte[(int) resource.getCompressedSize()];
+                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
+
+                    Inflater inflater = new Inflater();
+                    inflater.setInput(compressed);
+
+                    try {
+                        int count = 0;
+                        while (count < array.length) {
+                            if (inflater.finished()) {
+                                throw new IOException("Unexpected end of data");
+                            }
+                            count += inflater.inflate(array);
+                        }
+                    } catch (DataFormatException e) {
+                        throw new IOException(e);
+                    } finally {
+                        inflater.end();
+                    }
+                    break;
+                }
+                default: {
+                    throw new TODO("Method: " + resource.getMethod());
+                }
+            }
         } finally {
             lock.unlock();
         }
