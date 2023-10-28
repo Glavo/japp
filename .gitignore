@@ -1,4 +1,5 @@
 *.japp
+/.japp
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar

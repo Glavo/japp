@@ -49,6 +49,7 @@ tasks.jar {
 
     manifest {
         attributes(
+            // In the early stages we isolate the configuration in the project directory
             "JApp-Home" to project.layout.projectDirectory.file(".japp").asFile.absolutePath
         )
     }
