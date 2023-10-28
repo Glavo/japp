@@ -6,10 +6,12 @@ import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceRoot;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -37,6 +39,26 @@ public final class JAppModuleReference extends ModuleReference implements Module
         JAppResource resource = group.getResources().get(name);
         if (resource != null) {
             return Optional.of(JAppResourceRoot.MODULES.toURI(group, resource));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<InputStream> open(String name) throws IOException {
+        JAppResource resource = group.getResources().get(name);
+        if (resource != null) {
+            return Optional.of(reader.getResourceAsInputStream(resource));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<ByteBuffer> read(String name) throws IOException {
+        JAppResource resource = group.getResources().get(name);
+        if (resource != null) {
+            return Optional.of(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)));
         } else {
             return Optional.empty();
         }
