@@ -194,11 +194,45 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
         }
 
 
+
+        boolean scanFiles = false;
+        if (!isModulePath && (path.endsWith("/*") || path.endsWith("\\*"))) {
+            scanFiles = true;
+            path = path.substring(0, path.length() - 2);
+        }
+
         Path p = Paths.get(path);
         BasicFileAttributes attributes = Files.readAttributes(p, BasicFileAttributes.class);
 
+        if (scanFiles && !attributes.isDirectory()) {
+            throw new IllegalArgumentException(path + " is not a directory");
+        }
+
         if (attributes.isDirectory()) {
-            addDir(packer, p, isModulePath);
+            if (isModulePath) {
+                Path mi = p.resolve("module-info.java");
+                if (!Files.exists(mi)) {
+                    scanFiles = true;
+                }
+            }
+
+            if (scanFiles) {
+                if (name != null) {
+                    throw new IllegalArgumentException("Name should not be set for multiple files");
+                }
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {
+                    for (Path file : stream) {
+                        String fileName = file.getFileName().toString();
+
+                        if (Files.isRegularFile(file) && fileName.endsWith(".jar")) {
+                            addJar(packer, file, isModulePath);
+                        }
+                    }
+                }
+            } else {
+                addDir(packer, p, isModulePath);
+            }
         } else if (p.getFileName().toString().endsWith(".jar")) {
             addJar(packer, p, isModulePath);
         } else {
