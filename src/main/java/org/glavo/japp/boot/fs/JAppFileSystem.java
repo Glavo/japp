@@ -20,7 +20,7 @@ public final class JAppFileSystem extends FileSystem {
     private final List<Path> roots = Collections.singletonList(root);
     private static final Set<String> supportedFileAttributeViews = Collections.singleton("basic");
 
-    JAppFileSystem(JAppFileSystemProvider provider, Path file, Map<String, ?> env) throws IOException {
+    JAppFileSystem(JAppFileSystemProvider provider, JAppReader reader) throws IOException {
         this.provider = provider;
         this.reader = JAppReader.getSystemReader();
     }

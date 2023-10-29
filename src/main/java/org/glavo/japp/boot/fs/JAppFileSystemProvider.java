@@ -1,5 +1,7 @@
 package org.glavo.japp.boot.fs;
 
+import org.glavo.japp.boot.JAppReader;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,31 +19,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public final class JAppFileSystemProvider extends FileSystemProvider {
 
-    private final Map<Path, JAppFileSystem> filesystems = new HashMap<>();
+    private final JAppFileSystem fileSystem;
     private final ReentrantLock lock = new ReentrantLock();
 
-    private static Path uriToPath(URI uri) {
-        if (!"japp".equals(uri.getScheme())) {
-            throw new IllegalArgumentException("URI scheme is not 'japp'");
-        }
-        try {
-            String spec = uri.getRawSchemeSpecificPart();
-            int sep = spec.indexOf("!/");
-            if (sep != -1) {
-                spec = spec.substring(0, sep);
-            }
-            return Paths.get(new URI(spec)).toAbsolutePath();
-        } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e.getMessage(), e);
-        }
-    }
-
-    private static JAppPath toJAppPath(Path path) {
-        Objects.requireNonNull(path);
-        if (path instanceof JAppPath) {
-            return (JAppPath) path;
-        }
-        throw new ProviderMismatchException(path.toString());
+    public JAppFileSystemProvider() throws IOException {
+        this.fileSystem = new JAppFileSystem(this, JAppReader.getSystemReader());
     }
 
     @Override
@@ -51,49 +33,13 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-        Path path = uriToPath(uri);
-        Path realPath = path.toRealPath();
-        if (!Files.isRegularFile(path)) {
-            throw new UnsupportedOperationException();
-        }
-
-        lock.lock();
-        try {
-            if (filesystems.containsKey(realPath)) {
-                throw new FileSystemAlreadyExistsException(realPath.toString());
-            }
-
-            JAppFileSystem fs = new JAppFileSystem(this, path, env);
-            filesystems.put(realPath, fs);
-            return fs;
-        } finally {
-            lock.unlock();
-        }
+        throw new FileSystemAlreadyExistsException();
     }
 
     @Override
     public FileSystem getFileSystem(URI uri) {
-        Path realPath;
-        try {
-            realPath = uriToPath(uri).toRealPath();
-        } catch (IOException e) {
-            FileSystemNotFoundException ex = new FileSystemNotFoundException(uri.toString());
-            ex.addSuppressed(e);
-            throw ex;
-        }
-
-        JAppFileSystem fs;
-        lock.lock();
-        try {
-            fs = filesystems.get(realPath);
-        } finally {
-            lock.unlock();
-        }
-
-        if (fs == null) {
-            throw new FileSystemNotFoundException(uri.toString());
-        }
-        return fs;
+        checkUri(uri);
+        return fileSystem;
     }
 
     @Override
@@ -228,4 +174,29 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
             throw new IllegalArgumentException("Fragment component present");
         }
     }
+
+    private static Path uriToPath(URI uri) {
+        if (!"japp".equals(uri.getScheme())) {
+            throw new IllegalArgumentException("URI scheme is not 'japp'");
+        }
+        try {
+            String spec = uri.getRawSchemeSpecificPart();
+            int sep = spec.indexOf("!/");
+            if (sep != -1) {
+                spec = spec.substring(0, sep);
+            }
+            return Paths.get(new URI(spec)).toAbsolutePath();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
+    }
+
+    private static JAppPath toJAppPath(Path path) {
+        Objects.requireNonNull(path);
+        if (path instanceof JAppPath) {
+            return (JAppPath) path;
+        }
+        throw new ProviderMismatchException(path.toString());
+    }
+
 }
