@@ -1,15 +1,23 @@
 package org.glavo.japp.packer;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class ClassPathProcessor {
-    private static final Map<String, ClassPathProcessor> processors = new HashMap<>();
+    private static ClassPathProcessor getProcessor(String type) {
+        if (type == null) {
+            return LocalClassPathProcessor.INSTANCE;
+        }
+        switch (type) {
+            case "maven":
+                return new MavenClassPathProcessor();
+            default:
+                throw new IllegalArgumentException("Unknown type: " + type);
+        }
+    }
 
-    public static void process(JAppPacker packer, String pathList, boolean isModulePath) throws IOException {
+    public static void process(JAppPacker packer, String pathList, boolean isModulePath) throws Throwable {
         if (pathList.isEmpty()) {
             return;
         }
@@ -23,6 +31,7 @@ public abstract class ClassPathProcessor {
 
             if (fullPath.charAt(0) != '[') {
                 LocalClassPathProcessor.INSTANCE.process(packer, fullPath, isModulePath, options);
+                continue;
             }
 
             int endIndex = fullPath.indexOf(']', 1);
@@ -41,21 +50,10 @@ public abstract class ClassPathProcessor {
                 }
             }
 
-            String type = options.get("type");
-
-            ClassPathProcessor processor;
-            if (type != null) {
-                processor = processors.get(type);
-                if (processor == null) {
-                    throw new IllegalArgumentException("Unknown type: " + type);
-                }
-            } else {
-                processor = LocalClassPathProcessor.INSTANCE;
-            }
-
+            ClassPathProcessor processor = getProcessor(options.remove("type"));
             processor.process(packer, path, isModulePath, options);
         }
     }
 
-    public abstract void process(JAppPacker packer, String path, boolean isModulePath, Map<String, String> options) throws IOException;
+    public abstract void process(JAppPacker packer, String path, boolean isModulePath, Map<String, String> options) throws Throwable;
 }

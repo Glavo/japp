@@ -15,6 +15,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
+// TODO: Dependencies should be resolved
 public final class MavenResolver {
 
     public static final String CENTRAL = "central";
@@ -26,6 +27,9 @@ public final class MavenResolver {
     }
 
     public static Path resolve(String repo, String group, String name, String version, String classifier) throws IOException, URISyntaxException {
+        if (repo == null) {
+            repo = CENTRAL;
+        }
         String repoUrl = repos.get(repo);
         if (repoUrl == null) {
             throw new IllegalArgumentException("Unknown repo: " + repo);
@@ -47,16 +51,16 @@ public final class MavenResolver {
         }
 
         String url = repoUrl + "/" + group.replace('.', '/') + "/" + name + "/" + version + "/" + fileName;
-        String sha256Url = url + ".sha256";
+        String sha1Url = url + ".sha1";
 
-        String expectedSha256;
+        String expectedSha1;
         byte[] data;
 
-        URLConnection connection = new URI(sha256Url).toURL().openConnection();
+        URLConnection connection = new URI(sha1Url).toURL().openConnection();
         try (InputStream input = connection.getInputStream()) {
-            expectedSha256 = new String(input.readAllBytes()).trim();
-            if (expectedSha256.length() != 64) {
-                throw new IOException("Invalid SHA-256: " + expectedSha256);
+            expectedSha1 = new String(input.readAllBytes()).trim();
+            if (expectedSha1.length() != 40) {
+                throw new IOException("Invalid SHA-1: " + expectedSha1);
             }
         }
 
@@ -66,17 +70,17 @@ public final class MavenResolver {
         }
 
         try {
-            byte[] digest = MessageDigest.getInstance("SHA-256").digest(data);
+            byte[] digest = MessageDigest.getInstance("SHA-1").digest(data);
 
-            StringBuilder builder = new StringBuilder(64);
+            StringBuilder builder = new StringBuilder(40);
             for (byte b : digest) {
                 builder.append(String.format("%02x", b & 0xff));
             }
 
-            String actualSha256 = builder.toString();
+            String actualSha1 = builder.toString();
 
-            if (!actualSha256.equals(expectedSha256)) {
-                throw new IOException("SHA-256 does not match");
+            if (!actualSha1.equals(expectedSha1)) {
+                throw new IOException("SHA-1 does not match");
             }
         } catch (NoSuchAlgorithmException e) {
             throw new AssertionError(e);

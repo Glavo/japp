@@ -177,10 +177,12 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
         } else {
             packer.current.classPath.add(reference);
         }
-        Files.walkFileTree(dir.toAbsolutePath(), new SimpleFileVisitor<>() {
+
+        Path absoluteDir = dir.toAbsolutePath().normalize();
+        Files.walkFileTree(absoluteDir, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                String path = dir.relativize(file).toString().replace('\\', '/');
+                String path = absoluteDir.relativize(file).toString().replace('\\', '/');
                 byte[] data = Files.readAllBytes(file);
                 CompressResult result = packer.compressor.compress(Files.readAllBytes(file), file, attrs);
                 group.getResources().put(path, new JAppResource(
@@ -201,8 +203,6 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
         if (!options.isEmpty()) {
             throw new IllegalArgumentException("Unrecognized options: " + options.keySet());
         }
-
-
 
         boolean scanFiles = false;
         if (!isModulePath && (path.endsWith("/*") || path.endsWith("\\*"))) {
