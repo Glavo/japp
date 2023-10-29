@@ -1,17 +1,17 @@
 package org.glavo.japp.boot.module;
 
-import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.boot.JAppResource;
-import org.glavo.japp.TODO;
+import org.glavo.japp.boot.JAppResourceGroup;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Supplier;
@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 public final class JAppModuleFinder implements ModuleFinder {
 
     private static final String MODULE_INFO = "module-info.class";
+    private static final String SERVICES_PREFIX = "META-INF/services/";
 
     private final JAppReader reader;
     private final Map<String, JAppResourceGroup> modules;
@@ -38,17 +39,46 @@ public final class JAppModuleFinder implements ModuleFinder {
         return () -> {
             Set<String> packages = new HashSet<>();
             for (String name : group.getResources().keySet()) {
-                if (name.endsWith(".class") && !name.equals(MODULE_INFO) && !name.startsWith("META-INF/") && name.contains("/")) {
+                if (name.endsWith(".class") && !name.startsWith("META-INF/") && name.contains("/")) {
                     int index = name.lastIndexOf("/");
-                    if (index != -1) {
-                        packages.add(name.substring(0, index).replace('/', '.'));
-                    } else {
-                        throw new UncheckedIOException(new IOException(name + " in the unnamed package"));
-                    }
+                    assert index >= 0;
+                    packages.add(name.substring(0, index).replace('/', '.'));
                 }
             }
             return packages;
         };
+    }
+
+    private ModuleDescriptor deriveModuleDescriptor(JAppResourceGroup group) throws IOException {
+        ModuleDescriptor.Builder builder = ModuleDescriptor.newAutomaticModule(group.getName());
+
+        Set<String> packages = new HashSet<>();
+
+        for (String name : group.getResources().keySet()) {
+            if (name.endsWith(".class") && !name.startsWith("META-INF/") && name.contains("/")) {
+                int index = name.lastIndexOf("/");
+                assert index >= 0;
+                packages.add(name.substring(0, index).replace('/', '.'));
+            } else if (name.startsWith(SERVICES_PREFIX)) {
+                String sn = name.substring(SERVICES_PREFIX.length());
+                if (sn.contains("/")) {
+                    continue;
+                }
+
+                List<String> providerClasses = new ArrayList<>();
+                for (String line : new String(reader.getResourceAsByteArray(group.getResources().get(name)), StandardCharsets.UTF_8).split("\\R")) {
+                    if (!line.isEmpty()) {
+                        providerClasses.add(line);
+                    }
+                }
+                if (!providerClasses.isEmpty())
+                    builder.provides(sn, providerClasses);
+            }
+        }
+
+        builder.packages(packages);
+
+        return builder.build();
     }
 
     private ModuleReference load(JAppResourceGroup group) throws IOException {
@@ -57,7 +87,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         if (resource != null) {
             descriptor = ModuleDescriptor.read(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)), packageFinder(group));
         } else {
-            throw new TODO("Automatic module");
+            descriptor = deriveModuleDescriptor(group);
         }
         return new JAppModuleReference(reader, descriptor, group);
     }
