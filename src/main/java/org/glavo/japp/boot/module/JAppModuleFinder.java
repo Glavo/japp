@@ -1,6 +1,5 @@
 package org.glavo.japp.boot.module;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;

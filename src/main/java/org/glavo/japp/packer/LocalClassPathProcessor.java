@@ -9,10 +9,13 @@ import org.glavo.japp.launcher.JAppResourceReference;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -88,7 +91,13 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             }
 
             if (modulePath && moduleName == null) {
-                throw new TODO();
+                Set<ModuleReference> moduleReferences = ModuleFinder.of(jar).findAll();
+                if (moduleReferences.size() != 1) {
+                    throw new AssertionError("ModuleReferences: " + moduleReferences);
+                }
+
+                ModuleReference reference = moduleReferences.iterator().next();
+                moduleName = reference.descriptor().name();
             }
 
             // If the module name is not found, the file name is retained
