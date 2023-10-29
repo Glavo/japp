@@ -96,7 +96,7 @@ public final class Launcher {
 
             if (isFirst) {
                 isFirst = false;
-                builder.append("-Dorg.glavo.japp.modulePaths=");
+                builder.append("-Dorg.glavo.japp.modules=");
             } else {
                 builder.append(',');
             }
@@ -114,7 +114,7 @@ public final class Launcher {
 
             if (isFirst) {
                 isFirst = false;
-                builder.append("-Dorg.glavo.japp.classPaths=");
+                builder.append("-Dorg.glavo.japp.classpath=");
             } else {
                 builder.append(',');
             }

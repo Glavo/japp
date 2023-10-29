@@ -6,7 +6,6 @@ import jdk.internal.module.Modules;
 import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.module.JAppModuleFinder;
-import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
 import org.glavo.japp.util.IOUtils;
 
@@ -26,9 +25,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public final class BootLauncher {
-    private static void addExportsOrOpens(ModuleLayer.Controller controller, boolean opens) {
-        ModuleLayer layer = controller.layer();
-
+    private static void addExportsOrOpens(ModuleLayer layer, boolean opens) {
         String prefix = opens
                 ? "org.glavo.japp.addopens."
                 : "org.glavo.japp.addexports.";
@@ -77,9 +74,7 @@ public final class BootLauncher {
 
     }
 
-    private static void addReads(ModuleLayer.Controller controller) {
-        ModuleLayer layer = controller.layer();
-
+    private static void addReads(ModuleLayer layer) {
         String prefix = "org.glavo.japp.addreads.";
 
         for (int i = 0; ; i++) {
@@ -112,7 +107,7 @@ public final class BootLauncher {
         }
     }
 
-    private static void enableNativeAccess(ModuleLayer.Controller controller) {
+    private static void enableNativeAccess(ModuleLayer layer) {
         String value = System.getProperty("org.glavo.japp.enableNativeAccess");
         if (value == null) {
             return;
@@ -128,7 +123,7 @@ public final class BootLauncher {
         }
 
         for (String m : value.split(",")) {
-            Module module = controller.layer().findModule(m).get();
+            Module module = layer.findModule(m).get();
 
             try {
                 Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module);
@@ -158,8 +153,8 @@ public final class BootLauncher {
 
         long metadataOffset = Long.parseLong(getNecessaryProperty("org.glavo.japp.file.metadataOffset"), 16);
 
-        String modulePaths = System.getProperty("org.glavo.japp.modulePaths");
-        String classPaths = System.getProperty("org.glavo.japp.classPaths");
+        String modulePaths = System.getProperty("org.glavo.japp.modules");
+        String classPaths = System.getProperty("org.glavo.japp.classpath");
 
         String mainClassName = System.getProperty("org.glavo.japp.mainClass");
         String mainModuleName = System.getProperty("org.glavo.mainModule");
@@ -242,21 +237,27 @@ public final class BootLauncher {
         JAppReader reader = new JAppReader(channel, baseOffset, modules, classPath);
         JAppReader.initSystemReader(reader);
 
-        JAppModuleFinder finder = new JAppModuleFinder(reader, modules, externalModules);
+        ModuleLayer layer;
 
-        for (ModuleReference mref : finder.findAll()) {
-            loader.loadModule(mref);
+        if (modules.isEmpty()) {
+            layer = ModuleLayer.boot();
+        } else {
+            JAppModuleFinder finder = new JAppModuleFinder(reader, modules, externalModules);
+
+            for (ModuleReference mref : finder.findAll()) {
+                loader.loadModule(mref);
+            }
+
+            Configuration configuration = ModuleLayer.boot().configuration()
+                    .resolve(finder, ModuleFinder.of(), reader.getRoot(JAppResourceRoot.MODULES).keySet());
+
+            layer = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader).layer();
         }
 
-        Configuration configuration = ModuleLayer.boot().configuration()
-                .resolve(finder, ModuleFinder.of(), reader.getRoot(JAppResourceRoot.MODULES).keySet());
-
-        ModuleLayer.Controller controller = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader);
-
-        addReads(controller);
-        addExportsOrOpens(controller, true);
-        addExportsOrOpens(controller, false);
-        enableNativeAccess(controller);
+        addReads(layer);
+        addExportsOrOpens(layer, true);
+        addExportsOrOpens(layer, false);
+        enableNativeAccess(layer);
 
         Class<?> mainClass;
         Module mainModule;
@@ -264,11 +265,11 @@ public final class BootLauncher {
             mainClass = Class.forName(mainClassName, false, loader);
             mainModule = mainClass.getModule();
 
-            if (mainModuleName != null) {
+            if (mainModuleName != null && !mainModule.getName().equals(mainModuleName)) {
                 throw new IllegalArgumentException("Class " + mainClassName + " is not in the module " + mainModuleName);
             }
         } else {
-            mainModule = controller.layer().findModule(mainModuleName).get();
+            mainModule = layer.findModule(mainModuleName).get();
             mainClassName = mainModule.getDescriptor().mainClass().orElse(null);
             if (mainClassName == null) {
                 throw new IllegalArgumentException("Module " + mainModule + " has no main class specified");
