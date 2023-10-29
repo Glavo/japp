@@ -6,7 +6,6 @@ import org.glavo.japp.compress.Compressor;
 import org.glavo.japp.launcher.JAppLauncherMetadata;
 
 import java.io.*;
-import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -150,12 +149,7 @@ public final class JAppPacker {
                 }
                 case "-module-path":
                 case "--module-path": {
-                    String mp = nextArg(args, i++);
-
-                    String[] elements = mp.split(File.pathSeparator);
-                    for (String element : elements) {
-                        ClassPathProcessor.process(packer, element, true);
-                    }
+                    ClassPathProcessor.process(packer, nextArg(args, i++), true);
                     break;
                 }
                 case "-cp":
@@ -163,12 +157,7 @@ public final class JAppPacker {
                 case "--classpath":
                 case "-class-path":
                 case "--class-path": {
-                    String cp = nextArg(args, i++);
-
-                    String[] elements = cp.split(File.pathSeparator);
-                    for (String element : elements) {
-                        ClassPathProcessor.process(packer, element, false);
-                    }
+                    ClassPathProcessor.process(packer, nextArg(args, i++), false);
                     break;
                 }
                 case "-m": {
