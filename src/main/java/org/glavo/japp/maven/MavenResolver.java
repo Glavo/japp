@@ -38,6 +38,7 @@ public final class MavenResolver {
         String fileName = name + "-" + version + (classifier == null ? "" : "-" + classifier) + ".jar";
         Path cacheDir = JAppRuntimeContext.getHome()
                 .resolve("cache")
+                .resolve("maven")
                 .resolve(repo)
                 .resolve(group)
                 .resolve(name)

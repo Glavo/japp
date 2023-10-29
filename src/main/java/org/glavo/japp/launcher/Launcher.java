@@ -2,6 +2,7 @@ package org.glavo.japp.launcher;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.JAppRuntimeContext;
+import org.glavo.japp.maven.MavenResolver;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -15,6 +16,41 @@ public final class Launcher {
 
     private static Path getBootLauncher() throws URISyntaxException {
         return Paths.get(Launcher.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+    }
+
+    private static void appendReferences(StringBuilder builder, List<JAppResourceReference> references) throws Throwable {
+        boolean isFirst = true;
+
+        for (JAppResourceReference reference : references) {
+            String name = reference.name;
+
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                builder.append(',');
+            }
+
+            String refStr;
+            if (reference instanceof JAppResourceReference.Local) {
+                refStr = Integer.toHexString(((JAppResourceReference.Local) reference).getIndex());
+            } else if (reference instanceof JAppResourceReference.Maven) {
+                JAppResourceReference.Maven maven = (JAppResourceReference.Maven) reference;
+
+                Path file = MavenResolver.resolve(
+                        maven.getRepository(),
+                        maven.getGroup(),
+                        maven.getArtifact(),
+                        maven.getVersion(),
+                        maven.getClassifier()
+                ).toAbsolutePath().normalize();
+
+                refStr = "E" + file;
+            } else {
+                throw new TODO("Type: " + reference.getClass());
+            }
+
+            builder.append(name).append(":").append(refStr);
+        }
     }
 
     public static void main(String[] args) throws Throwable {
@@ -89,39 +125,17 @@ public final class Launcher {
             }
         }
 
-        isFirst = true;
-        builder.setLength(0);
-        for (JAppResourceReference reference : metadata.getModulePath()) {
-            String name = reference.name;
-
-            if (isFirst) {
-                isFirst = false;
-                builder.append("-Dorg.glavo.japp.modules=");
-            } else {
-                builder.append(',');
-            }
-
-            builder.append(name).append(":").append(Integer.toHexString(((JAppResourceReference.Local) reference).getIndex()));
-        }
-        if (!isFirst) {
+        if (!metadata.getModulePath().isEmpty()) {
+            builder.setLength(0);
+            builder.append("-Dorg.glavo.japp.modules=");
+            appendReferences(builder, metadata.getModulePath());
             command.add(builder.toString());
         }
 
-        isFirst = true;
-        builder.setLength(0);
-        for (JAppResourceReference reference : metadata.getClassPath()) {
-            String name = reference.getName();
-
-            if (isFirst) {
-                isFirst = false;
-                builder.append("-Dorg.glavo.japp.classpath=");
-            } else {
-                builder.append(',');
-            }
-
-            builder.append(name != null ? name : "").append(":").append(Integer.toHexString(((JAppResourceReference.Local) reference).getIndex()));
-        }
-        if (!isFirst) {
+        if (!metadata.getClassPath().isEmpty()) {
+            builder.setLength(0);
+            builder.append("-Dorg.glavo.japp.classpath=");
+            appendReferences(builder, metadata.getClassPath());
             command.add(builder.toString());
         }
 

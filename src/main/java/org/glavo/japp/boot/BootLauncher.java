@@ -196,10 +196,13 @@ public final class BootLauncher {
                         throw new AssertionError(group.getName() + " != " + name);
                     }
                     modules.put(name, group);
-                } else {
+                } else if (ch == 'E') {
                     if (externalModules == null) {
                         externalModules = new ArrayList<>();
                     }
+
+                    externalModules.add(Paths.get(index.substring(1)));
+                } else {
                     throw new TODO();
                 }
             }
@@ -232,6 +235,8 @@ public final class BootLauncher {
                     ucp.addURL(JAppResourceRoot.CLASSPATH.toURI(group).toURL());
 
                     classPath.put(name, group);
+                } else if (ch == 'E') {
+                    ucp.addURL(Paths.get(index.substring(1)).toUri().toURL());
                 } else {
                     throw new TODO();
                 }
