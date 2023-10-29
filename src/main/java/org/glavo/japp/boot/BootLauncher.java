@@ -2,6 +2,7 @@ package org.glavo.japp.boot;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.URLClassPath;
+import jdk.internal.module.ModulePath;
 import jdk.internal.module.Modules;
 import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.TODO;
@@ -196,6 +197,9 @@ public final class BootLauncher {
                     }
                     modules.put(name, group);
                 } else {
+                    if (externalModules == null) {
+                        externalModules = new ArrayList<>();
+                    }
                     throw new TODO();
                 }
             }
@@ -239,7 +243,7 @@ public final class BootLauncher {
 
         ModuleLayer layer;
 
-        if (modules.isEmpty()) {
+        if (modules.isEmpty() && externalModules == null) {
             layer = ModuleLayer.boot();
         } else {
             JAppModuleFinder finder = new JAppModuleFinder(reader, modules, externalModules);
