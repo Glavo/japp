@@ -34,34 +34,32 @@ public final class JAppModuleFinder implements ModuleFinder {
         this.externalModulesFinder = externalModules == null ? null : ModuleFinder.of(externalModules.toArray(new Path[0]));
     }
 
-    private ModuleReference load(JAppResourceGroup group) throws IOException {
-        Supplier<Set<String>> packageFinder = () -> {
+    private static Supplier<Set<String>> packageFinder(JAppResourceGroup group) {
+        return () -> {
             Set<String> packages = new HashSet<>();
-            findAllPackage(packages, group.getResources().keySet());
+            for (String name : group.getResources().keySet()) {
+                if (name.endsWith(".class") && !name.equals(MODULE_INFO) && !name.startsWith("META-INF/") && name.contains("/")) {
+                    int index = name.lastIndexOf("/");
+                    if (index != -1) {
+                        packages.add(name.substring(0, index).replace('/', '.'));
+                    } else {
+                        throw new UncheckedIOException(new IOException(name + " in the unnamed package"));
+                    }
+                }
+            }
             return packages;
         };
+    }
 
+    private ModuleReference load(JAppResourceGroup group) throws IOException {
         JAppResource resource = group.getResources().get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
-            descriptor = ModuleDescriptor.read(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)), packageFinder);
+            descriptor = ModuleDescriptor.read(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)), packageFinder(group));
         } else {
             throw new TODO("Automatic module");
         }
         return new JAppModuleReference(reader, descriptor, group);
-    }
-
-    private static void findAllPackage(Set<String> packages, Collection<String> resources) {
-        for (String name : resources) {
-            if (name.endsWith(".class") && !name.equals(MODULE_INFO) && !name.startsWith("META-INF/") && name.contains("/")) {
-                int index = name.lastIndexOf("/");
-                if (index != -1) {
-                    packages.add(name.substring(0, index).replace('/', '.'));
-                } else {
-                    throw new UncheckedIOException(new IOException(name + " in the unnamed package"));
-                }
-            }
-        }
     }
 
     @Override
