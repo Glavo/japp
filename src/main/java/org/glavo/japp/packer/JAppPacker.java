@@ -1,33 +1,26 @@
 package org.glavo.japp.packer;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
-import org.glavo.japp.boot.JAppResource;
-import org.glavo.japp.compress.CompressResult;
 import org.glavo.japp.compress.Compressor;
 import org.glavo.japp.launcher.JAppLauncherMetadata;
-import org.glavo.japp.launcher.JAppResourceReference;
 
 import java.io.*;
 import java.lang.module.ModuleDescriptor;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class JAppPacker {
 
     private static final short MAJOR_VERSION = -1;
     private static final short MINOR_VERSION = 0;
-
-    private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
 
     private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(16 * 1024 * 1024);
     private final byte[] ba = new byte[8];
@@ -36,210 +29,49 @@ public final class JAppPacker {
     private final JAppLauncherMetadata root = new JAppLauncherMetadata();
 
     private ArrayDeque<JAppLauncherMetadata> stack = new ArrayDeque<>();
-    private JAppLauncherMetadata current = root;
+    JAppLauncherMetadata current = root;
 
-    private final List<JAppResourceGroup> groups = new ArrayList<>();
+    final List<JAppResourceGroup> groups = new ArrayList<>();
 
-    private final Compressor compressor = Compressor.DEFAULT;
+    final Compressor compressor = Compressor.DEFAULT;
 
-    private long totalBytes = 0L;
+    long totalBytes = 0L;
 
     private boolean finished = false;
 
     private JAppPacker() {
     }
 
-    private void writeByte(byte b) throws IOException {
+    void writeByte(byte b) throws IOException {
         buffer.write(b & 0xff);
         totalBytes += 1;
     }
 
-    private void writeShort(short s) throws IOException {
+    void writeShort(short s) throws IOException {
         bb.putShort(0, s);
         buffer.write(ba, 0, 2);
         totalBytes += 2;
     }
 
-    private void writeInt(int i) throws IOException {
+    void writeInt(int i) throws IOException {
         bb.putInt(0, i);
         buffer.write(ba, 0, 4);
         totalBytes += 4;
     }
 
-    private void writeLong(long l) throws IOException {
+    void writeLong(long l) throws IOException {
         bb.putLong(0, l);
         buffer.write(ba, 0, 8);
         totalBytes += 8;
     }
 
-    private void writeBytes(byte[] arr) throws IOException {
+    void writeBytes(byte[] arr) throws IOException {
         writeBytes(arr, 0, arr.length);
     }
 
-    private void writeBytes(byte[] arr, int offset, int len) throws IOException {
+    void writeBytes(byte[] arr, int offset, int len) throws IOException {
         buffer.write(arr, offset, len);
         totalBytes += len;
-    }
-
-    private static String readModuleName(InputStream moduleInfo) throws IOException {
-        // TODO: Java 8
-        return ModuleDescriptor.read(moduleInfo).name();
-    }
-
-    public void addJar(Path jar, boolean modulePath) throws IOException {
-        try (ZipFile zipFile = new ZipFile(jar.toFile())) {
-            Attributes attributes = null;
-
-            ZipEntry manifestEntry = zipFile.getEntry("META-INF/MANIFEST.MF");
-            if (manifestEntry != null) {
-                try (InputStream input = zipFile.getInputStream(manifestEntry)) {
-                    attributes = new Manifest(input).getMainAttributes();
-                }
-            }
-
-            boolean multiRelease;
-            String moduleName = null;
-
-            if (attributes != null) {
-                multiRelease = Boolean.parseBoolean(attributes.getValue("Multi-Release"));
-                if (modulePath) {
-                    moduleName = attributes.getValue("Automatic-Module-Name");
-                }
-            } else {
-                multiRelease = false;
-            }
-
-            if (modulePath && moduleName == null) {
-                Enumeration<? extends ZipEntry> entries = zipFile.entries();
-                while (entries.hasMoreElements()) {
-                    ZipEntry entry = entries.nextElement();
-
-                    String name = entry.getName();
-                    if (name.equals("module-info.class")) {
-                        // OK
-                    } else if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX) && name.endsWith("/module-info.class")) {
-                        // e.g. META-INF/versions/9/module-info.class
-                        String[] elements = name.split("/");
-                        if (elements.length != 4) {
-                            continue;
-                        }
-
-                        try {
-                            if (Integer.parseInt(elements[2]) < 9) {
-                                continue;
-                            }
-                        } catch (NumberFormatException ignored) {
-                            continue;
-                        }
-
-                    } else {
-                        continue;
-                    }
-
-                    // parse module-info.class
-
-                    try (InputStream mi = zipFile.getInputStream(entry)) {
-                        moduleName = readModuleName(mi);
-                    }
-                }
-            }
-
-            if (modulePath && moduleName == null) {
-                throw new TODO();
-            }
-
-            // If the module name is not found, the file name is retained
-            JAppResourceGroup group = new JAppResourceGroup(modulePath ? moduleName : jar.getFileName().toString());
-            JAppResourceReference reference = new JAppResourceReference.Local(group.getName(), groups.size());
-
-            groups.add(group);
-            if (modulePath) {
-                this.current.modulePath.add(reference);
-            } else {
-                this.current.classPath.add(reference);
-            }
-
-            // Then write all entries
-
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                String name = entry.getName();
-
-                Map<String, JAppResource> groupEntries = null;
-
-                if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
-                    int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
-
-                    if (idx > MULTI_RELEASE_PREFIX.length() && idx < name.length() - 1) {
-                        String ver = name.substring(MULTI_RELEASE_PREFIX.length(), idx);
-                        try {
-                            int v = Integer.parseInt(ver);
-                            if (v > 9) {
-                                groupEntries = group.getMultiRelease(v);
-                                name = name.substring(idx + 1);
-                            }
-
-                        } catch (NumberFormatException ignored) {
-                        }
-                    }
-                }
-
-                byte[] buffer = new byte[(int) entry.getSize()];
-                try (InputStream in = zipFile.getInputStream(entry)) {
-                    int count = 0;
-                    int n;
-                    while ((n = in.read(buffer, count, buffer.length - count)) > 0) {
-                        count += n;
-                    }
-
-                    assert count == buffer.length;
-                }
-
-                CompressResult result = compressor.compress(buffer, entry);
-
-                if (groupEntries == null) {
-                    groupEntries = group.getResources();
-                }
-
-                groupEntries.put(name, new JAppResource(
-                        name, totalBytes, entry.getSize(),
-                        entry.getLastAccessTime(), entry.getLastModifiedTime(), entry.getCreationTime(),
-                        result.getMethod(), result.getLength()));
-
-                writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
-            }
-        }
-    }
-
-    public void addDir(Path dir, boolean modulePath) throws IOException {
-        if (modulePath) {
-            throw new TODO();
-        }
-
-        JAppResourceGroup group = new JAppResourceGroup(null);
-        JAppResourceReference reference = new JAppResourceReference.Local(null, groups.size());
-        groups.add(group);
-        if (modulePath) {
-            throw new TODO();
-        } else {
-            this.current.classPath.add(reference);
-        }
-        Files.walkFileTree(dir.toAbsolutePath(), new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                String path = dir.relativize(file).toString().replace('\\', '/');
-                byte[] data = Files.readAllBytes(file);
-                CompressResult result = compressor.compress(Files.readAllBytes(file), file, attrs);
-                group.getResources().put(path, new JAppResource(
-                        path, totalBytes, data.length,
-                        attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime(),
-                        result.getMethod(), result.getLength()
-                ));
-                writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
-                return FileVisitResult.CONTINUE;
-            }
-        });
     }
 
     private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
@@ -322,7 +154,7 @@ public final class JAppPacker {
 
                     String[] elements = mp.split(File.pathSeparator);
                     for (String element : elements) {
-                        packer.addJar(Paths.get(element), true);
+                        ClassPathProcessor.process(packer, element, true);
                     }
                     break;
                 }
@@ -335,12 +167,7 @@ public final class JAppPacker {
 
                     String[] elements = cp.split(File.pathSeparator);
                     for (String element : elements) {
-                        Path path = Paths.get(element);
-                        if (Files.isDirectory(path)) {
-                            packer.addDir(path, false);
-                        } else {
-                            packer.addJar(path, false);
-                        }
+                        ClassPathProcessor.process(packer, element, false);
                     }
                     break;
                 }
