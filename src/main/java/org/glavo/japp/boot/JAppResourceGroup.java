@@ -1,6 +1,5 @@
 package org.glavo.japp.boot;
 
-import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.annotation.Visibility;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
@@ -76,7 +75,7 @@ public final class JAppResourceGroup {
         return jsonArray;
     }
 
-    public static JAppResourceGroup fromJson(JSONObject obj, JAppRuntimeContext context) {
+    public static JAppResourceGroup fromJson(JSONObject obj, int release) {
         String name = obj.optString("Name", null);
 
         JAppResourceGroup res = new JAppResourceGroup(name);
@@ -92,16 +91,16 @@ public final class JAppResourceGroup {
             }
             Arrays.sort(keys, Comparator.comparing(Integer::parseInt));
 
-            if (context == null) {
-                for (String release : keys) {
-                    readResources(res.getMultiRelease(Integer.parseInt(release)), multiRelease.getJSONArray(release));
+            if (release < 0) {
+                for (String key : keys) {
+                    readResources(res.getMultiRelease(Integer.parseInt(key)), multiRelease.getJSONArray(key));
                 }
             } else {
-                for (String release : keys) {
-                    if (Integer.parseInt(release) > context.getRelease()) {
+                for (String key : keys) {
+                    if (Integer.parseInt(key) > release) {
                         break;
                     }
-                    readResources(res.resources, multiRelease.getJSONArray(release));
+                    readResources(res.resources, multiRelease.getJSONArray(key));
                 }
             }
         }

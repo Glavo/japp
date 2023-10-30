@@ -1,4 +1,4 @@
-package org.glavo.japp;
+package org.glavo.japp.launcher.condition;
 
 import java.io.IOException;
 import java.io.InputStream;

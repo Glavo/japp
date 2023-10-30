@@ -1,6 +1,6 @@
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.condition.Condition;
+import org.glavo.japp.launcher.condition.Condition;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
 import org.glavo.japp.util.IOUtils;

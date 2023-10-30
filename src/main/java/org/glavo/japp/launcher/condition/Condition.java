@@ -1,6 +1,5 @@
-package org.glavo.japp.condition;
+package org.glavo.japp.launcher.condition;
 
-import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.thirdparty.json.JSONObject;
 
 import java.util.function.Predicate;

@@ -2,9 +2,7 @@ package org.glavo.japp.boot;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.URLClassPath;
-import jdk.internal.module.ModulePath;
 import jdk.internal.module.Modules;
-import org.glavo.japp.JAppRuntimeContext;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.module.JAppModuleFinder;
 import org.glavo.japp.thirdparty.json.JSONObject;
@@ -143,7 +141,7 @@ public final class BootLauncher {
     }
 
     private static Method findMainMethod() throws Throwable {
-        JAppRuntimeContext context = JAppRuntimeContext.fromCurrentEnvironment();
+        @SuppressWarnings("deprecation") int release = Runtime.version().major();
         BuiltinClassLoader loader = (BuiltinClassLoader) ClassLoader.getSystemClassLoader();
         MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(BuiltinClassLoader.class, MethodHandles.lookup());
 
@@ -171,7 +169,7 @@ public final class BootLauncher {
         int size = buffer.rewind().getInt();
         buffer = ByteBuffer.allocate(size);
         IOUtils.readFully(channel, buffer);
-        JAppBootMetadata metadata = JAppBootMetadata.fromJson(new JSONObject(new String(buffer.array(), StandardCharsets.UTF_8)), context);
+        JAppBootMetadata metadata = JAppBootMetadata.fromJson(new JSONObject(new String(buffer.array(), StandardCharsets.UTF_8)), release);
 
         Map<String, JAppResourceGroup> modules = new HashMap<>();
         List<Path> externalModules = null;

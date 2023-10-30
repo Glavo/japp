@@ -1,7 +1,7 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.TODO;
-import org.glavo.japp.JAppRuntimeContext;
+import org.glavo.japp.launcher.condition.JAppRuntimeContext;
 import org.glavo.japp.maven.MavenResolver;
 
 import java.net.URISyntaxException;
