@@ -9,7 +9,8 @@ Features implemented:
 * Pack multiple modular or non-modular JARs into one file;
 * Preserves all `module-info.class`, works well with the JPMS (Java Platform Module System);
 * Includes necessary JVM options (e.g. `--add-opens`/`--enable-native-access`) so no need for user to add them;
-* Supports adding shebang to the header of the file, so it can be executed as easily as a script.
+* Supports adding shebang to the header of the file, so it can be executed as easily as a script;
+* Download some dependencies from maven repository (or elsewhere) before running.
 
 Features being implemented:
 
@@ -17,8 +18,7 @@ Features being implemented:
 * Includes some default JVM options that can be easily overridden by the user;
 * Automatic selection of applicable Java;
 * Supports adding classpath/module/JVM options conditionally;
-* Support bundling and loading native libraries;
-* Download some dependencies from maven repository (or elsewhere) before running.
+* Support bundling and loading native libraries.
 
 More details can be found in the draft (in Chinese): [Draft](draft/design.md).
 
