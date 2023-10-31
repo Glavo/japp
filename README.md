@@ -18,7 +18,8 @@ Features being implemented:
 * Includes some default JVM options that can be easily overridden by the user;
 * Automatic selection of applicable Java;
 * Supports adding classpath/module/JVM options conditionally;
-* Support bundling and loading native libraries.
+* Support bundling and loading native libraries;
+* Build time optimization.
 
 More details can be found in the draft (in Chinese): [Draft](draft/design.md).
 
