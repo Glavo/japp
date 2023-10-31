@@ -9,6 +9,7 @@ import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -19,11 +20,13 @@ import java.util.Map;
 public final class MavenResolver {
 
     public static final String CENTRAL = "central";
+    public static final String LOCAL = "local";
 
     private static final Map<String, String> repos = new HashMap<>();
 
     static {
         repos.put(CENTRAL, "https://repo1.maven.org/maven2");
+        repos.put(LOCAL, Paths.get("user.home", ".m2", ".repository").toUri().toString());
     }
 
     public static Path resolve(String repo, String group, String name, String version, String classifier) throws IOException, URISyntaxException {
@@ -36,6 +39,15 @@ public final class MavenResolver {
         }
 
         String fileName = name + "-" + version + (classifier == null ? "" : "-" + classifier) + ".jar";
+        String url = repoUrl + "/" + group.replace('.', '/') + "/" + name + "/" + version + "/" + fileName;
+        if (url.startsWith("file:")) {
+            Path path = Paths.get(new URI(url));
+            if (!Files.isRegularFile(path)) {
+                throw new IOException(path + " is not a regular file");
+            }
+            return path;
+        }
+
         Path cacheDir = JAppRuntimeContext.getHome()
                 .resolve("cache")
                 .resolve("maven")
@@ -51,7 +63,6 @@ public final class MavenResolver {
             return file;
         }
 
-        String url = repoUrl + "/" + group.replace('.', '/') + "/" + name + "/" + version + "/" + fileName;
         String sha1Url = url + ".sha1";
 
         String expectedSha1;
