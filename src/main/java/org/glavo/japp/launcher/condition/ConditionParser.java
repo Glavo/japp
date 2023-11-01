@@ -1,5 +1,8 @@
 package org.glavo.japp.launcher.condition;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ConditionParser {
     private final String source;
     private final int end;
@@ -8,6 +11,11 @@ public class ConditionParser {
     private Token nextToken;
 
     private int status;
+
+    public ConditionParser(String source) {
+        this.source = source;
+        this.end = source.length();
+    }
 
     private static boolean isCommonChar(char ch) {
         switch (ch) {
@@ -41,17 +49,32 @@ public class ConditionParser {
         }
 
         if (ch == '(') {
-            index++;
             nextToken = Token.LEFT;
+            index++;
         } else if (ch == ')') {
-            index++;
             nextToken = Token.RIGHT;
+            index++;
         } else if (ch == ':') {
-            index++;
             nextToken = Token.COLON;
-        } else if (ch == ',') {
             index++;
+        } else if (ch == ',') {
             nextToken = Token.COMMA;
+            index++;
+        } else if (ch == '!') {
+            nextToken = Token.NOT;
+            index++;
+        } else if (ch == '&') {
+            if (index == end - 1 || source.charAt(index + 1) != '&') {
+                throw new IllegalArgumentException("Unknown token starting from " + index);
+            }
+            nextToken = Token.AND;
+            index += 2;
+        } else if (ch == '|') {
+            if (index == end - 1 || source.charAt(index + 1) != '|') {
+                throw new IllegalArgumentException("Unknown token starting from " + index);
+            }
+            nextToken = Token.OR;
+            index += 2;
         } else if (isCommonChar(ch)) {
             StringBuilder builder = new StringBuilder();
             while (index < end && isCommonChar(ch = source.charAt(index))) {
@@ -65,8 +88,8 @@ public class ConditionParser {
                 throw new IllegalArgumentException();
             }
 
-            index = endIndex + 1;
             nextToken = new Token(source.substring(index + 1, endIndex));
+            index = endIndex + 1;
         } else {
             throw new IllegalArgumentException("Invalid condition: " + source);
         }
@@ -84,10 +107,13 @@ public class ConditionParser {
         return token;
     }
 
-
-    public ConditionParser(String source) {
-        this.source = source;
-        this.end = source.length();
+    public List<Token> tokens() {
+        List<Token> tokens = new ArrayList<>();
+        Token token;
+        while ((token = next()) != null) {
+            tokens.add(token);
+        }
+        return tokens;
     }
 
     public static final class Token {
