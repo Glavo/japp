@@ -65,13 +65,13 @@ public class ConditionParser {
             index++;
         } else if (ch == '&') {
             if (index == end - 1 || source.charAt(index + 1) != '&') {
-                throw new IllegalArgumentException("Unknown token starting from " + index);
+                throw new IllegalArgumentException("Unknown token: " + index + ":" + index);
             }
             nextToken = Token.AND;
             index += 2;
         } else if (ch == '|') {
             if (index == end - 1 || source.charAt(index + 1) != '|') {
-                throw new IllegalArgumentException("Unknown token starting from " + index);
+                throw new IllegalArgumentException("Unknown token: " + index + ":" + index);
             }
             nextToken = Token.OR;
             index += 2;
@@ -91,7 +91,7 @@ public class ConditionParser {
             nextToken = new Token(source.substring(index + 1, endIndex));
             index = endIndex + 1;
         } else {
-            throw new IllegalArgumentException("Invalid condition: " + source);
+            throw new IllegalArgumentException("Unknown token: " + index + ":" + index);
         }
     }
 
