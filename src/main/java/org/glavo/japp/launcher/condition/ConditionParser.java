@@ -1,23 +1,64 @@
 package org.glavo.japp.launcher.condition;
 
+import org.glavo.japp.TODO;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ConditionParser {
+
+    public static Condition parse(String str) {
+        ConditionParser parser = new ConditionParser(str);
+        if (parser.peek() == null) {
+            throw new IllegalArgumentException("Condition cannot be empty");
+        }
+
+        throw new TODO();
+    }
+
+    public static final class Token {
+        static final Token AND = new Token("&&", 20);
+        static final Token OR = new Token("||", 10);
+        static final Token NOT = new Token("!", 30);
+        static final Token LEFT = new Token("(", -1);
+        static final Token RIGHT = new Token(")", -1);
+        static final Token COLON = new Token(":", -1);
+        static final Token COMMA = new Token(",", -1);
+
+        final String value;
+        final int precedence;
+        final boolean isLiteral;
+
+        private Token(String value) {
+            this.value = value;
+            this.precedence = -1;
+            this.isLiteral = true;
+        }
+
+        private Token(String value, int precedence) {
+            this.value = value;
+            this.precedence = precedence;
+            this.isLiteral = false;
+        }
+
+        @Override
+        public String toString() {
+            return isLiteral ? "Literal[" + value + "]" : value;
+        }
+    }
+
     private final String source;
     private final int end;
     private int index;
 
     private Token nextToken;
 
-    private int status;
-
     public ConditionParser(String source) {
         this.source = source;
         this.end = source.length();
     }
 
-    private static boolean isCommonChar(char ch) {
+    private static boolean isLiteralStar(char ch) {
         switch (ch) {
             case '*':
             case '^':
@@ -33,6 +74,10 @@ public class ConditionParser {
             default:
                 return Character.isJavaIdentifierPart(ch);
         }
+    }
+
+    private static boolean isLiteralPart(char ch) {
+        return ch == '|' || ch == '&' || ch == '!' || isLiteralStar(ch);
     }
 
     private void scanToken() {
@@ -75,9 +120,13 @@ public class ConditionParser {
             }
             nextToken = Token.OR;
             index += 2;
-        } else if (isCommonChar(ch)) {
+        } else if (isLiteralStar(ch)) {
             StringBuilder builder = new StringBuilder();
-            while (index < end && isCommonChar(ch = source.charAt(index))) {
+
+            builder.append(ch);
+            index++;
+
+            while (index < end && isLiteralPart(ch = source.charAt(index))) {
                 builder.append(ch);
                 index++;
             }
@@ -114,26 +163,5 @@ public class ConditionParser {
             tokens.add(token);
         }
         return tokens;
-    }
-
-    public static final class Token {
-        static final Token AND = new Token("&&");
-        static final Token OR = new Token("||");
-        static final Token NOT = new Token("!");
-        static final Token LEFT = new Token("(");
-        static final Token RIGHT = new Token(")");
-        static final Token COLON = new Token(":");
-        static final Token COMMA = new Token(",");
-
-        final String value;
-
-        private Token(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return "Token[" + value + "]";
-        }
     }
 }
