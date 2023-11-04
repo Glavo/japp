@@ -27,7 +27,10 @@ public final class JAppRuntimeContext {
     }
 
     public static JAppRuntimeContext fromCurrentEnvironment() {
-        return new JAppRuntimeContext(Integer.getInteger("java.version"),
+        @SuppressWarnings("deprecation")
+        int release = Runtime.version().major();
+
+        return new JAppRuntimeContext(release,
                 System.getProperty("os.name"), System.getProperty("os.arch"));
     }
 
