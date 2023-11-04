@@ -116,10 +116,9 @@ public final class JAppLauncherMetadata {
     public final List<String> addOpens = new ArrayList<>();
     public final List<String> enableNativeAccess = new ArrayList<>();
 
-    public SubMode subMode;
-    public final List<JAppLauncherMetadata> subMetadata =  new ArrayList<>();
+    public String condition;
 
-    public Condition condition;
+    public final List<JAppLauncherMetadata> subMetadata =  new ArrayList<>();
 
     public String mainClass;
     public String mainModule;
@@ -201,6 +200,7 @@ public final class JAppLauncherMetadata {
         readJsonArray(metadata.addOpens, obj, "Add-Opens");
         readJsonArray(metadata.enableNativeAccess, obj, "Enable-Native-Access");
 
+        metadata.condition = obj.optString("Condition", null);
         metadata.mainClass = obj.optString("Main-Class", null);
         metadata.mainModule = obj.optString("Main-Module", null);
 
@@ -229,6 +229,8 @@ public final class JAppLauncherMetadata {
         putJsonArray(res, "Add-Exports", addExports);
         putJsonArray(res, "Add-Opens", addOpens);
         putJsonArray(res, "Enable-Native-Access", enableNativeAccess);
+
+        res.putOpt("Condition", condition);
 
         res.putOpt("Main-Class", mainClass);
         res.putOpt("Main-Module", mainModule);

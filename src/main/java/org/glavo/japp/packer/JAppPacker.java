@@ -4,6 +4,7 @@ import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.compress.Compressor;
 import org.glavo.japp.launcher.JAppLauncherMetadata;
+import org.glavo.japp.launcher.condition.ConditionParser;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -178,6 +179,18 @@ public final class JAppPacker {
                 }
                 case "--enable-native-access": {
                     packer.current.enableNativeAccess.add(nextArg(args, i++));
+                    break;
+                }
+                case "--condition": {
+                    packer.current.condition = nextArg(args, i++);
+
+                    try {
+                        ConditionParser.parse(packer.current.condition);
+                    } catch (IllegalArgumentException e) {
+                        System.err.println("Illegal condition: " + packer.current.condition);
+                        System.exit(1);
+                    }
+
                     break;
                 }
                 default: {
