@@ -94,6 +94,8 @@ public final class Launcher {
             command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
         }
 
+        boolean enablePreview = false;
+
         boolean isFirst = true;
         StringBuilder builder = new StringBuilder(80);
         if (!metadata.getEnableNativeAccess().isEmpty()) {
@@ -123,6 +125,14 @@ public final class Launcher {
                     command.add(builder.toString());
                 }
             }
+
+            if (release <= 21) {
+                enablePreview = true;
+            }
+        }
+
+        if (enablePreview) {
+            command.add("--enable-preview");
         }
 
         if (!metadata.getModulePath().isEmpty()) {
