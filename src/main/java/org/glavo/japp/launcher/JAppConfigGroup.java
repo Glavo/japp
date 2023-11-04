@@ -1,6 +1,8 @@
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.launcher.condition.Condition;
+import org.glavo.japp.annotation.Visibility;
+import org.glavo.japp.launcher.condition.ConditionParser;
+import org.glavo.japp.launcher.condition.JAppRuntimeContext;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
 import org.glavo.japp.util.IOUtils;
@@ -14,7 +16,7 @@ import java.util.*;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public final class JAppLauncherMetadata {
+public final class JAppConfigGroup {
 
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
@@ -23,7 +25,7 @@ public final class JAppLauncherMetadata {
 
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
-    public static JAppLauncherMetadata readFile(Path file) throws IOException {
+    public static JAppConfigGroup readFile(Path file) throws IOException {
         try (FileChannel channel = FileChannel.open(file)) {
             long fileSize = channel.size();
 
@@ -90,18 +92,11 @@ public final class JAppLauncherMetadata {
                 json = new String(metadataBuffer.array(), UTF_8);
             }
 
-            JAppLauncherMetadata metadata = JAppLauncherMetadata.fromJson(new JSONObject(json));
+            JAppConfigGroup metadata = JAppConfigGroup.fromJson(new JSONObject(json));
             metadata.baseOffset = baseOffset;
             metadata.bootMetadataOffset = bootMetadataOffset;
             return metadata;
         }
-    }
-
-    public enum SubMode {
-        DEFAULT,
-        FORCE,
-        SWITCH,
-        IGNORE
     }
 
     private long baseOffset;
@@ -118,7 +113,7 @@ public final class JAppLauncherMetadata {
 
     public String condition;
 
-    public final List<JAppLauncherMetadata> subMetadata =  new ArrayList<>();
+    public final List<JAppConfigGroup> subConfigs =  new ArrayList<>();
 
     public String mainClass;
     public String mainModule;
@@ -188,23 +183,30 @@ public final class JAppLauncherMetadata {
         }
     }
 
-    public static JAppLauncherMetadata fromJson(JSONObject obj) throws IOException {
-        JAppLauncherMetadata metadata = new JAppLauncherMetadata();
+    public static JAppConfigGroup fromJson(JSONObject obj) throws IOException {
+        JAppConfigGroup config = new JAppConfigGroup();
 
-        metadata.readReferences(false, obj.optJSONArray("Class-Path"));
-        metadata.readReferences(true, obj.optJSONArray("Module-Path"));
+        config.readReferences(false, obj.optJSONArray("Class-Path"));
+        config.readReferences(true, obj.optJSONArray("Module-Path"));
 
-        readJsonArray(metadata.jvmProperties, obj, "Properties");
-        readJsonArray(metadata.addReads, obj, "Add-Reads");
-        readJsonArray(metadata.addExports, obj, "Add-Exports");
-        readJsonArray(metadata.addOpens, obj, "Add-Opens");
-        readJsonArray(metadata.enableNativeAccess, obj, "Enable-Native-Access");
+        readJsonArray(config.jvmProperties, obj, "Properties");
+        readJsonArray(config.addReads, obj, "Add-Reads");
+        readJsonArray(config.addExports, obj, "Add-Exports");
+        readJsonArray(config.addOpens, obj, "Add-Opens");
+        readJsonArray(config.enableNativeAccess, obj, "Enable-Native-Access");
 
-        metadata.condition = obj.optString("Condition", null);
-        metadata.mainClass = obj.optString("Main-Class", null);
-        metadata.mainModule = obj.optString("Main-Module", null);
+        config.condition = obj.optString("Condition", null);
+        config.mainClass = obj.optString("Main-Class", null);
+        config.mainModule = obj.optString("Main-Module", null);
 
-        return metadata;
+        JSONArray subGroups = obj.optJSONArray("Groups");
+        if (subGroups != null) {
+            for (Object group : subGroups) {
+                config.subConfigs.add(fromJson((JSONObject) group));
+            }
+        }
+
+        return config;
     }
 
     public JSONObject toJson() {
@@ -235,6 +237,14 @@ public final class JAppLauncherMetadata {
         res.putOpt("Main-Class", mainClass);
         res.putOpt("Main-Module", mainModule);
 
+        if (!subConfigs.isEmpty()) {
+            JSONArray arr = new JSONArray();
+            for (JAppConfigGroup config : subConfigs) {
+                arr.put(config.toJson());
+            }
+            res.put("Groups", arr);
+        }
+
         return res;
     }
 
@@ -247,6 +257,58 @@ public final class JAppLauncherMetadata {
             arr.put(s);
         }
         obj.put(key, arr);
+    }
+
+    @Visibility(Visibility.Context.LAUNCHER)
+    public boolean canApply(JAppRuntimeContext context) {
+        return condition == null || ConditionParser.parse(condition).test(context);
+    }
+
+    private void addOrReplace(List<JAppResourceReference> target, List<JAppResourceReference> source) {
+        loop:
+        for (JAppResourceReference reference : source) {
+            if (reference.name != null) {
+                for (int i = 0; i < target.size(); i++) {
+                    if (reference.name.equals(target.get(i).name)) {
+                        target.set(i, reference);
+                        continue loop;
+                    }
+                }
+            }
+            target.add(reference);
+        }
+    }
+
+    @Visibility(Visibility.Context.LAUNCHER)
+    private void resolve(JAppRuntimeContext context, JAppConfigGroup source) {
+        if (source.canApply(context)) {
+            addOrReplace(modulePath, source.modulePath);
+            addOrReplace(classPath, source.classPath);
+            jvmProperties.addAll(source.jvmProperties);
+            addReads.addAll(source.addReads);
+            addExports.addAll(source.addExports);
+            addOpens.addAll(source.addOpens);
+            enableNativeAccess.addAll(source.enableNativeAccess);
+
+            if (source.mainModule != null) {
+                mainModule = source.mainModule;
+            }
+
+            if (source.mainClass != null) {
+                mainClass = source.mainClass;
+            }
+
+            for (JAppConfigGroup subConfig : source.subConfigs) {
+                resolve(context, subConfig);
+            }
+        }
+    }
+
+    @Visibility(Visibility.Context.LAUNCHER)
+    public void resolve(JAppRuntimeContext context) {
+        for (JAppConfigGroup group : subConfigs) {
+            resolve(context, group);
+        }
     }
 
     @Override

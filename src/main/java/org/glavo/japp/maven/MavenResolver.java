@@ -16,7 +16,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-// TODO: Dependencies should be resolved
 public final class MavenResolver {
 
     public static final String CENTRAL = "central";

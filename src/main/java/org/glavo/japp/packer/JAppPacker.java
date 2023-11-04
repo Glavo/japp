@@ -3,7 +3,7 @@ package org.glavo.japp.packer;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.compress.Compressor;
-import org.glavo.japp.launcher.JAppLauncherMetadata;
+import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.condition.ConditionParser;
 
 import java.io.*;
@@ -26,10 +26,10 @@ public final class JAppPacker {
     private final byte[] ba = new byte[8];
     private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
 
-    private final JAppLauncherMetadata root = new JAppLauncherMetadata();
+    private final JAppConfigGroup root = new JAppConfigGroup();
 
-    private ArrayDeque<JAppLauncherMetadata> stack = new ArrayDeque<>();
-    JAppLauncherMetadata current = root;
+    private ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
+    JAppConfigGroup current = root;
 
     final List<JAppResourceGroup> groups = new ArrayList<>();
 
@@ -193,6 +193,23 @@ public final class JAppPacker {
 
                     break;
                 }
+                case "--group": {
+                    JAppConfigGroup group = new JAppConfigGroup();
+                    packer.stack.push(group);
+                    packer.current.subConfigs.add(group);
+                    packer.current = group;
+                    break;
+                }
+                case "--end-group": {
+                    if (packer.stack.isEmpty()) {
+                        System.err.println("Error: no open group");
+                        System.exit(1);
+                    }
+
+                    packer.stack.pop();
+                    packer.current = packer.stack.isEmpty() ? packer.root : packer.stack.peek();
+                    break;
+                }
                 default: {
                     if (arg.startsWith("-D")) {
                         String property = arg.substring("-D".length());
@@ -226,6 +243,11 @@ public final class JAppPacker {
             }
         }
 
+        if (!packer.stack.isEmpty()) {
+            System.err.println("Error: group not ended");
+            System.exit(1);
+        }
+
         if (outputFile == null) {
             System.err.println("Error: miss output file");
             System.exit(1);
@@ -236,7 +258,6 @@ public final class JAppPacker {
         String header;
         try (InputStream input = JAppPacker.class.getResourceAsStream("header.sh")) {
             header = new String(input.readAllBytes(), StandardCharsets.UTF_8)
-                    .replace("%java.home%", System.getProperty("java.home"))
                     .replace("%japp.launcher%", self);
         }
 
