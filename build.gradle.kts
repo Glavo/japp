@@ -26,6 +26,11 @@ allprojects {
     }
 }
 
+
+dependencies {
+    testImplementation("org.lz4:lz4-java:1.8.0")
+}
+
 tasks.compileJava {
     // TODO: Java 8
     sourceCompatibility = "9"
