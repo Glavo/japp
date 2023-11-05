@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.jar.Manifest;
 
 public final class JAppRuntimeContext {
@@ -22,6 +23,29 @@ public final class JAppRuntimeContext {
         HOME = Paths.get(manifest.getMainAttributes().getValue("JApp-Home"));
     }
 
+    private static String normalizeArch(String arch) {
+        switch (arch) {
+            case "x64":
+            case "amd64":
+                return "x86-64";
+            default:
+                return arch;
+        }
+    }
+
+    private static String normalizeOS(String os) {
+        if (os.startsWith("Windows")) {
+            return "windows";
+        }
+        if (os.contains("mac")) {
+            return "macos";
+        }
+        if (os.contains("linux")) {
+            return "linux";
+        }
+        return os.toLowerCase(Locale.ROOT);
+    }
+
     public static Path getHome() {
         return HOME;
     }
@@ -31,7 +55,8 @@ public final class JAppRuntimeContext {
         int release = Runtime.version().major();
 
         return new JAppRuntimeContext(release,
-                System.getProperty("os.name"), System.getProperty("os.arch"));
+                normalizeOS(System.getProperty("os.name")),
+                normalizeArch(System.getProperty("os.arch")));
     }
 
     private final int release;
