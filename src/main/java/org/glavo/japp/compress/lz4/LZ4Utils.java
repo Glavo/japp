@@ -16,6 +16,10 @@ package org.glavo.japp.compress.lz4;
  * limitations under the License.
  */
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static org.glavo.japp.compress.lz4.LZ4Constants.*;
 
 final class LZ4Utils {
@@ -42,6 +46,12 @@ final class LZ4Utils {
         }
     }
 
+    private static final boolean USE_VAR_HANDLE = true;
+    private static final VarHandle SHORT_ARRAY = MethodHandles.byteArrayViewVarHandle(short[].class, LITTLE_ENDIAN);
+    private static final VarHandle INT_ARRAY = MethodHandles.byteArrayViewVarHandle(int[].class, LITTLE_ENDIAN);
+    private static final VarHandle LONG_ARRAY = MethodHandles.byteArrayViewVarHandle(long[].class, LITTLE_ENDIAN);
+
+
     public static byte readByte(byte[] src, int srcOff) {
         return src[srcOff];
     }
@@ -55,6 +65,9 @@ final class LZ4Utils {
     }
 
     public static short readShort(byte[] src, int srcOff) {
+        if (USE_VAR_HANDLE) {
+            return (short) SHORT_ARRAY.get(src, srcOff);
+        }
         return (short) ((src[srcOff] & 0xFF) + (src[srcOff + 1] << 8));
     }
 
@@ -62,9 +75,17 @@ final class LZ4Utils {
         return src[srcOff];
     }
 
-    public static void writeShort(byte[] buf, int off, int v) {
-        buf[off] = (byte) v;
-        buf[off + 1] = (byte) (v >>> 8);
+    public static void writeShort(byte[] dest, int destOffset, short value) {
+        if (USE_VAR_HANDLE) {
+            SHORT_ARRAY.set(dest, destOffset, (short) value);
+            return;
+        }
+        dest[destOffset] = (byte) value;
+        dest[destOffset + 1] = (byte) (value >>> 8);
+    }
+
+    public static void writeShort(byte[] dest, int destOffset, int value) {
+        writeShort(dest, destOffset, (short) value);
     }
 
     public static void writeShort(short[] dest, int destOff, int value) {
@@ -72,6 +93,10 @@ final class LZ4Utils {
     }
 
     public static int readInt(byte[] src, int srcOff) {
+        if (USE_VAR_HANDLE) {
+            return (int) INT_ARRAY.get(src, srcOff);
+        }
+
         return (src[srcOff] & 0xFF) | ((src[srcOff + 1] & 0xFF) << 8) | ((src[srcOff + 2] & 0xFF) << 16) | ((src[srcOff + 3] & 0xFF) << 24);
     }
 
@@ -80,6 +105,10 @@ final class LZ4Utils {
     }
 
     public static void writeInt(byte[] dest, int destOff, int value) {
+        if (USE_VAR_HANDLE) {
+            INT_ARRAY.set(dest, destOff, value);
+            return;
+        }
         dest[destOff] = (byte) (value);
         dest[destOff + 1] = (byte) (value >>> 8);
         dest[destOff + 2] = (byte) (value >>> 16);
@@ -91,6 +120,10 @@ final class LZ4Utils {
     }
 
     public static long readLong(byte[] src, int srcOff) {
+        if (USE_VAR_HANDLE) {
+            return (long) LONG_ARRAY.get(src, srcOff);
+        }
+
         return (src[srcOff] & 0xFFL)
                + ((src[srcOff + 1] & 0xFFL) << 8)
                + ((src[srcOff + 2] & 0xFFL) << 16)
@@ -102,6 +135,10 @@ final class LZ4Utils {
     }
 
     public static void writeLong(byte[] dest, int destOff, long value) {
+        if (USE_VAR_HANDLE) {
+            LONG_ARRAY.set(dest, destOff, value);
+            return;
+        }
         dest[destOff] = (byte) (value);
         dest[destOff + 1] = (byte) (value >>> 8);
         dest[destOff + 2] = (byte) (value >>> 16);
