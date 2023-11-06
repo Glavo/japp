@@ -1,28 +1,22 @@
 package org.glavo.japp.compress;
 
-import org.glavo.japp.TODO;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.Deflater;
 
 final class DefaultCompressor implements Compressor {
 
     private final Map<String, CompressionMethod> map = new HashMap<>();
 
     public DefaultCompressor() {
-        String[] none = {
+        for (String ext : new String[]{
                 "png", "apng", "jpg", "jpeg", "webp", "heic", "heif", "avif",
                 "aac", "flac", "mp3",
                 "mp4", "mkv", "webm",
                 "gz", "tgz", "xz", "br", "zst", "bz2", "tbz2"
-        };
-
-        for (String ext : none) {
+        }) {
             map.put(ext, CompressionMethod.NONE);
         }
     }
-
 
     @Override
     public CompressResult compress(byte[] source, String ext) {
@@ -35,31 +29,10 @@ final class DefaultCompressor implements Compressor {
             method = CompressionMethod.DEFLATE;
         }
 
-        if (method == CompressionMethod.NONE) {
-            return new CompressResult(method, source);
+        CompressResult result = method.compress(source);
+        if (result.getLength() < source.length) {
+            return result;
         }
-
-        if (method == CompressionMethod.DEFLATE) {
-            Deflater deflater = new Deflater();
-            deflater.setInput(source);
-            deflater.finish();
-
-            byte[] res = new byte[source.length];
-            int count = 0;
-
-            while (!deflater.finished() && count < res.length) {
-                count += deflater.deflate(res, count, res.length - count);
-            }
-
-            deflater.end();
-
-            if (count < res.length) {
-                return new CompressResult(method, res, 0, count);
-            }
-        } else {
-            throw new TODO("Method: " + method);
-        }
-
-        return new CompressResult(method, source);
+        return new CompressResult(CompressionMethod.NONE, source);
     }
 }

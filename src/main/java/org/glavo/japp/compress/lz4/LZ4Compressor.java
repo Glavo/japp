@@ -39,7 +39,7 @@ public abstract class LZ4Compressor {
      * @param length the input size in bytes
      * @return the maximum compressed length in bytes
      */
-    public final int maxCompressedLength(int length) {
+    public static int maxCompressedLength(int length) {
         return LZ4Utils.maxCompressedLength(length);
     }
 

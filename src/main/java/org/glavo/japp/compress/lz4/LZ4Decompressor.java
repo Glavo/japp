@@ -124,7 +124,6 @@ public final class LZ4Decompressor {
             dOff = matchCopyEnd;
         }
 
-
         return sOff - srcOff;
 
     }
