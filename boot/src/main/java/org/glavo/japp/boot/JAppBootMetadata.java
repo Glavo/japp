@@ -1,6 +1,5 @@
 package org.glavo.japp.boot;
 
-import org.glavo.japp.launcher.condition.JAppRuntimeContext;
 import org.glavo.japp.thirdparty.json.JSONArray;
 import org.glavo.japp.thirdparty.json.JSONObject;
 

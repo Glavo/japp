@@ -2,4 +2,4 @@
 
 project_dir=$(realpath $(dirname $(realpath "$0"))/..)
 
-java --module-path "$project_dir/build/japp.jar" --module org.glavo.japp/org.glavo.japp.packer.JAppPacker "$@"
+$project_dir/gradlew -p $project_dir -q --console plain && java -jar "$project_dir/build/packer.jar" "$@"

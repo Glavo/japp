@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.Manifest;
 
 public final class JAppPacker {
 
@@ -253,12 +254,12 @@ public final class JAppPacker {
             System.exit(1);
         }
 
-        String self = Paths.get(JAppPacker.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toAbsolutePath().toString();
-
         String header;
         try (InputStream input = JAppPacker.class.getResourceAsStream("header.sh")) {
             header = new String(input.readAllBytes(), StandardCharsets.UTF_8)
-                    .replace("%japp.launcher%", self);
+                    .replace("%japp.launcher%", new Manifest(JAppPacker.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
+                            .getMainAttributes()
+                            .getValue("JApp-Launcher"));
         }
 
         try (OutputStream out = Files.newOutputStream(outputFile)) {

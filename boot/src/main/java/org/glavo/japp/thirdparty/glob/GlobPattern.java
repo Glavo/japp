@@ -243,20 +243,20 @@ public class GlobPattern {
         // If the pattern is empty ... they gave us an empty string so short cut it.
         if (length == 0) {
             // specifically: ''
-            return org.glavo.japp.thirdparty.glob.EmptyOnlyEngine.EMPTY_ONLY_ENGINE;
+            return EmptyOnlyEngine.EMPTY_ONLY_ENGINE;
         }
 
         // If our pattern is just one character long, and its a wildcard then this will match everything
         //  so return the Match Everything Engine.
         if (length == 1 && wildcard[0]) {
             // specifically: '%'
-            return org.glavo.japp.thirdparty.glob.EverythingEngine.EVERYTHING_ENGINE;
+            return EverythingEngine.EVERYTHING_ENGINE;
         }
 
         // If there are no wildcards then this is a simple equal to engine
         if (wildcardCount == 0) {
             // ex: 'foo'
-            return new org.glavo.japp.thirdparty.glob.EqualToEngine(lowerCase, upperCase, matchOne, length);
+            return new EqualToEngine(lowerCase, upperCase, matchOne, length);
         }
 
         // If there is only one wildcard and it is at either the start or end then return
@@ -264,22 +264,22 @@ public class GlobPattern {
         if (wildcardCount == 1) {
             if (wildcard[0]) {
                 // ex: '%foo'
-                return new org.glavo.japp.thirdparty.glob.EndsWithEngine(lowerCase, upperCase, matchOne, length);
+                return new EndsWithEngine(lowerCase, upperCase, matchOne, length);
             }
             if (wildcard[length-1]) {
                 // ex: 'foo%'
-                return new org.glavo.japp.thirdparty.glob.StartsWithEngine(lowerCase, upperCase, matchOne, length);
+                return new StartsWithEngine(lowerCase, upperCase, matchOne, length);
             }
         }
 
         // If there are two wildcards and they are at the start AND end then this is a contains
         if (wildcardCount == 2 && wildcard[0] && wildcard[length-1]) {
             // ex: '%foo%'
-            return new org.glavo.japp.thirdparty.glob.ContainsEngine(lowerCase, upperCase, matchOne, length);
+            return new ContainsEngine(lowerCase, upperCase, matchOne, length);
         }
 
         // No other shortcuts so fall back to the glob engine
-        return new org.glavo.japp.thirdparty.glob.GlobEngine(lowerCase, upperCase, wildcard, matchOne, length);
+        return new GlobEngine(lowerCase, upperCase, wildcard, matchOne, length);
     }
 
     private static boolean has(int flags, int feature) {

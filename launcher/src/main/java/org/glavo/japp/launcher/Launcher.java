@@ -4,18 +4,22 @@ import org.glavo.japp.TODO;
 import org.glavo.japp.launcher.condition.JAppRuntimeContext;
 import org.glavo.japp.maven.MavenResolver;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.Manifest;
 
 public final class Launcher {
-    private static final String BOOT_LAUNCHER_MODULE = "org.glavo.japp";
+    private static final String BOOT_LAUNCHER_MODULE = "org.glavo.japp.boot";
 
-    private static Path getBootLauncher() throws URISyntaxException {
-        return Paths.get(Launcher.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+    private static Path getBootLauncher() throws IOException {
+        return Paths.get(new Manifest(Launcher.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
+                .getMainAttributes()
+                .getValue("JApp-Boot"));
     }
 
     private static void appendReferences(StringBuilder builder, List<JAppResourceReference> references) throws Throwable {
