@@ -51,7 +51,6 @@ final class LZ4Utils {
     private static final VarHandle INT_ARRAY = MethodHandles.byteArrayViewVarHandle(int[].class, LITTLE_ENDIAN);
     private static final VarHandle LONG_ARRAY = MethodHandles.byteArrayViewVarHandle(long[].class, LITTLE_ENDIAN);
 
-
     public static byte readByte(byte[] src, int srcOff) {
         return src[srcOff];
     }
