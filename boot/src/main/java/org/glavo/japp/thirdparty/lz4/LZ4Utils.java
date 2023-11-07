@@ -59,19 +59,11 @@ final class LZ4Utils {
         dest[destOff] = value;
     }
 
-    public static void writeByte(byte[] dest, int off, int i) {
-        dest[off] = (byte) i;
-    }
-
     public static short readShort(byte[] src, int srcOff) {
         if (USE_VAR_HANDLE) {
             return (short) SHORT_ARRAY.get(src, srcOff);
         }
         return (short) ((src[srcOff] & 0xFF) + (src[srcOff + 1] << 8));
-    }
-
-    public static int readShort(short[] src, int srcOff) {
-        return src[srcOff];
     }
 
     public static void writeShort(byte[] dest, int destOffset, short value) {
@@ -83,24 +75,12 @@ final class LZ4Utils {
         dest[destOffset + 1] = (byte) (value >>> 8);
     }
 
-    public static void writeShort(byte[] dest, int destOffset, int value) {
-        writeShort(dest, destOffset, (short) value);
-    }
-
-    public static void writeShort(short[] dest, int destOff, int value) {
-        dest[destOff] = (short) value;
-    }
-
     public static int readInt(byte[] src, int srcOff) {
         if (USE_VAR_HANDLE) {
             return (int) INT_ARRAY.get(src, srcOff);
         }
 
         return (src[srcOff] & 0xFF) | ((src[srcOff + 1] & 0xFF) << 8) | ((src[srcOff + 2] & 0xFF) << 16) | ((src[srcOff + 3] & 0xFF) << 24);
-    }
-
-    public static int readInt(int[] src, int srcOff) {
-        return src[srcOff];
     }
 
     public static void writeInt(byte[] dest, int destOff, int value) {
@@ -112,10 +92,6 @@ final class LZ4Utils {
         dest[destOff + 1] = (byte) (value >>> 8);
         dest[destOff + 2] = (byte) (value >>> 16);
         dest[destOff + 3] = (byte) (value >>> 24);
-    }
-
-    public static void writeInt(int[] dest, int destOff, int value) {
-        dest[destOff] = value;
     }
 
     public static long readLong(byte[] src, int srcOff) {
@@ -147,8 +123,6 @@ final class LZ4Utils {
         dest[destOff + 6] = (byte) (value >>> 48);
         dest[destOff + 7] = (byte) (value >>> 56);
     }
-
-    private static final int MAX_INPUT_SIZE = 0x7E000000;
 
     static void safeArraycopy(byte[] src, int srcOff, byte[] dest, int destOff, int len) {
         final int fastLen = len & 0xFFFFFFF8;
