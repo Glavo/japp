@@ -1,4 +1,4 @@
-package org.glavo.japp.compress.lz4;
+package org.glavo.japp.thirdparty.lz4;
 
 /*
  * Copyright 2020 Adrien Grand and the lz4-java contributors.
@@ -20,7 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
-import static org.glavo.japp.compress.lz4.LZ4Constants.*;
+import static org.glavo.japp.thirdparty.lz4.LZ4Constants.COPY_LENGTH;
 
 final class LZ4Utils {
     private LZ4Utils() {
@@ -151,27 +151,6 @@ final class LZ4Utils {
 
     private static final int MAX_INPUT_SIZE = 0x7E000000;
 
-    static int maxCompressedLength(int length) {
-        if (length < 0) {
-            throw new IllegalArgumentException("length must be >= 0, got " + length);
-        } else if (length >= MAX_INPUT_SIZE) {
-            throw new IllegalArgumentException("length must be < " + MAX_INPUT_SIZE);
-        }
-        return length + length / 255 + 16;
-    }
-
-    static int hash(int i) {
-        return (i * -1640531535) >>> ((MIN_MATCH * 8) - HASH_LOG);
-    }
-
-    static int hash64k(int i) {
-        return (i * -1640531535) >>> ((MIN_MATCH * 8) - HASH_LOG_64K);
-    }
-
-    static int hashHC(int i) {
-        return (i * -1640531535) >>> ((MIN_MATCH * 8) - HASH_LOG_HC);
-    }
-
     static void safeArraycopy(byte[] src, int srcOff, byte[] dest, int destOff, int len) {
         final int fastLen = len & 0xFFFFFFF8;
         wildArraycopy(src, srcOff, dest, destOff, fastLen);
@@ -237,102 +216,5 @@ final class LZ4Utils {
             dest[dOff + i] = dest[matchOff + i];
             writeByte(dest, dOff + i, readByte(dest, matchOff + i));
         }
-    }
-
-    static boolean readIntEquals(byte[] src, int ref, int sOff) {
-        return readInt(src, ref) == readInt(src, sOff);
-    }
-
-    static int commonBytes(byte[] src, int ref, int sOff, int srcLimit) {
-        int matchLen = 0;
-        while (sOff <= srcLimit - 8) {
-            if (readLong(src, sOff) == readLong(src, ref)) {
-                matchLen += 8;
-                ref += 8;
-                sOff += 8;
-            } else {
-                final int zeroBits = Long.numberOfTrailingZeros(readLong(src, sOff) ^ readLong(src, ref));
-                return matchLen + (zeroBits >>> 3);
-            }
-        }
-        while (sOff < srcLimit && readByte(src, ref++) == readByte(src, sOff++)) {
-            ++matchLen;
-        }
-        return matchLen;
-    }
-
-    static int writeLen(int len, byte[] dest, int dOff) {
-        while (len >= 0xFF) {
-            writeByte(dest, dOff++, 0xFF);
-            len -= 0xFF;
-        }
-        writeByte(dest, dOff++, len);
-        return dOff;
-    }
-
-    static int encodeSequence(byte[] src, int anchor, int matchOff, int matchRef, int matchLen, byte[] dest, int dOff, int destEnd) {
-        final int runLen = matchOff - anchor;
-        final int tokenOff = dOff++;
-        int token;
-
-        if (runLen >= RUN_MASK) {
-            token = (byte) (RUN_MASK << ML_BITS);
-            dOff = writeLen(runLen - RUN_MASK, dest, dOff);
-        } else {
-            token = runLen << ML_BITS;
-        }
-
-        // copy literals
-        wildArraycopy(src, anchor, dest, dOff, runLen);
-        dOff += runLen;
-
-        // encode offset
-        final int matchDec = matchOff - matchRef;
-        dest[dOff++] = (byte) matchDec;
-        dest[dOff++] = (byte) (matchDec >>> 8);
-
-        // encode match len
-        matchLen -= 4;
-        if (dOff + (1 + LAST_LITERALS) + (matchLen >>> 8) > destEnd) {
-            throw new LZ4Exception("maxDestLen is too small");
-        }
-        if (matchLen >= ML_MASK) {
-            token |= ML_MASK;
-            dOff = writeLen(matchLen - RUN_MASK, dest, dOff);
-        } else {
-            token |= matchLen;
-        }
-
-        dest[tokenOff] = (byte) token;
-
-        return dOff;
-    }
-
-    static int commonBytesBackward(byte[] b, int o1, int o2, int l1, int l2) {
-        int count = 0;
-        while (o1 > l1 && o2 > l2 && readByte(b, --o1) == readByte(b, --o2)) {
-            ++count;
-        }
-        return count;
-    }
-
-    static int lastLiterals(byte[] src, int sOff, int srcLen, byte[] dest, int dOff, int destEnd) {
-        final int runLen = srcLen;
-
-        if (dOff + runLen + 1 + (runLen + 255 - RUN_MASK) / 255 > destEnd) {
-            throw new LZ4Exception();
-        }
-
-        if (runLen >= RUN_MASK) {
-            dest[dOff++] = (byte) (RUN_MASK << ML_BITS);
-            dOff = writeLen(runLen - RUN_MASK, dest, dOff);
-        } else {
-            dest[dOff++] = (byte) (runLen << ML_BITS);
-        }
-        // copy literals
-        System.arraycopy(src, sOff, dest, dOff, runLen);
-        dOff += runLen;
-
-        return dOff;
     }
 }

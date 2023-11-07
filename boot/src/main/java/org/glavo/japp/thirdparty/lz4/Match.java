@@ -1,4 +1,4 @@
-package org.glavo.japp.compress.lz4;
+package org.glavo.japp.thirdparty.lz4;
 
 final class Match {
     int start, ref, len;

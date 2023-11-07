@@ -1,4 +1,4 @@
-package org.glavo.japp.compress.lz4;
+package org.glavo.japp.thirdparty.lz4;
 
 import net.jpountz.lz4.LZ4Factory;
 import org.junit.jupiter.api.Assertions;
@@ -11,51 +11,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class LZ4Test {
-
-    private static void testCompress(LZ4Compressor compressor, byte[] bytes) {
-        byte[] compressed = compressor.compress(bytes);
-        byte[] decompressed = LZ4Factory.fastestInstance().fastDecompressor().decompress(compressed, bytes.length);
-
-        Assertions.assertArrayEquals(bytes, decompressed);
-    }
-
-    private static void testCompress(LZ4Compressor compressor) throws Throwable {
-        for (int len = 0; len < 100; len++) {
-            for (int seed = 0; seed < 100; seed++) {
-                byte[] bytes = new byte[len];
-                new Random(0).nextBytes(bytes);
-                try {
-                    testCompress(compressor, bytes);
-                } catch (Throwable e) {
-                    throw new AssertionError(String.format("seed=%s, len=%s", seed, len), e);
-                }
-            }
-        }
-
-        try (ZipFile zf = new ZipFile(Paths.get(LZ4Factory.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toFile())) {
-            for (ZipEntry entry : Collections.list(zf.entries())) {
-                if (!entry.isDirectory()) {
-                    try {
-                        testCompress(compressor, zf.getInputStream(entry).readAllBytes());
-
-                    } catch (Throwable e) {
-                        throw new AssertionError("entry=" + entry.getName());
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
-    void testFastCompressor() throws Throwable {
-        testCompress(LZ4Compressor.getFast());
-    }
-
-    @Test
-    void testHCCompressor() throws Throwable {
-        testCompress(LZ4Compressor.getHC());
-    }
-
 
     private static void testDecompress(byte[] bytes) throws Throwable {
         byte[] compressed = LZ4Factory.fastestInstance().highCompressor().compress(bytes);

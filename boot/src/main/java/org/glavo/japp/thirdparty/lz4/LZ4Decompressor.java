@@ -1,4 +1,4 @@
-package org.glavo.japp.compress.lz4;
+package org.glavo.japp.thirdparty.lz4;
 
 /*
  * Copyright 2020 Adrien Grand and the lz4-java contributors.
@@ -15,9 +15,6 @@ package org.glavo.japp.compress.lz4;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import static org.glavo.japp.compress.lz4.LZ4Constants.*;
-import static org.glavo.japp.compress.lz4.LZ4Constants.COPY_LENGTH;
 
 /**
  * LZ4 decompressor that requires the size of the original input to be known.
@@ -65,8 +62,8 @@ public final class LZ4Decompressor {
             ++sOff;
 
             // literals
-            int literalLen = token >>> ML_BITS;
-            if (literalLen == RUN_MASK) {
+            int literalLen = token >>> LZ4Constants.ML_BITS;
+            if (literalLen == LZ4Constants.RUN_MASK) {
                 byte len = (byte) 0xFF;
                 while ((len = LZ4Utils.readByte(src, sOff++)) == (byte) 0xFF) {
                     literalLen += 0xFF;
@@ -76,7 +73,7 @@ public final class LZ4Decompressor {
 
             final int literalCopyEnd = dOff + literalLen;
 
-            if (literalCopyEnd > destEnd - COPY_LENGTH) {
+            if (literalCopyEnd > destEnd - LZ4Constants.COPY_LENGTH) {
                 if (literalCopyEnd != destEnd) {
                     throw new LZ4Exception("Malformed input at " + sOff);
 
@@ -101,19 +98,19 @@ public final class LZ4Decompressor {
                 throw new LZ4Exception("Malformed input at " + sOff);
             }
 
-            int matchLen = token & ML_MASK;
-            if (matchLen == ML_MASK) {
+            int matchLen = token & LZ4Constants.ML_MASK;
+            if (matchLen == LZ4Constants.ML_MASK) {
                 byte len = (byte) 0xFF;
                 while ((len = LZ4Utils.readByte(src, sOff++)) == (byte) 0xFF) {
                     matchLen += 0xFF;
                 }
                 matchLen += len & 0xFF;
             }
-            matchLen += MIN_MATCH;
+            matchLen += LZ4Constants.MIN_MATCH;
 
             final int matchCopyEnd = dOff + matchLen;
 
-            if (matchCopyEnd > destEnd - COPY_LENGTH) {
+            if (matchCopyEnd > destEnd - LZ4Constants.COPY_LENGTH) {
                 if (matchCopyEnd > destEnd) {
                     throw new LZ4Exception("Malformed input at " + sOff);
                 }

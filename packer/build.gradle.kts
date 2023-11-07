@@ -7,6 +7,8 @@ plugins {
 dependencies {
     implementation(project(":boot"))
     implementation(project(":launcher"))
+
+    implementation(Deps.LZ4)
 }
 
 tasks.jar {
@@ -26,4 +28,3 @@ tasks.shadowJar {
         }
     }
 }
-

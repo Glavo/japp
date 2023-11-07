@@ -3,8 +3,8 @@ package org.glavo.japp.packer;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
-import org.glavo.japp.compress.CompressResult;
 import org.glavo.japp.launcher.JAppResourceReference;
+import org.glavo.japp.packer.compressor.CompressResult;
 
 import java.io.IOException;
 import java.io.InputStream;

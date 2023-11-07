@@ -1,4 +1,6 @@
-package org.glavo.japp.compress;
+package org.glavo.japp.packer.compressor;
+
+import org.glavo.japp.boot.CompressionMethod;
 
 import java.util.Arrays;
 

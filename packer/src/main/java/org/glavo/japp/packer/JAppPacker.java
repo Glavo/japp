@@ -2,9 +2,9 @@ package org.glavo.japp.packer;
 
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
-import org.glavo.japp.compress.Compressor;
 import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.condition.ConditionParser;
+import org.glavo.japp.packer.compressor.Compressor;
 
 import java.io.*;
 import java.nio.ByteBuffer;

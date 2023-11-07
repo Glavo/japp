@@ -38,7 +38,7 @@ and I will gradually address them in the future.
 To try this project, you first need to compile it:
 
 ```shell
-./gradlew jar
+./gradlew
 ```
 
 (The current prototype only supports Java 9+, it will be compatible with Java 8 in the future.

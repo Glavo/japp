@@ -1,4 +1,7 @@
-package org.glavo.japp.compress;
+package org.glavo.japp.packer.compressor;
+
+import org.glavo.japp.TODO;
+import org.glavo.japp.boot.CompressionMethod;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,12 +27,22 @@ final class DefaultCompressor implements Compressor {
             return new CompressResult(CompressionMethod.NONE, source);
         }
 
-        CompressionMethod method = map.get(ext);
-        if (method == null) {
-            method = CompressionMethod.DEFLATE;
+        CompressionMethod method = map.getOrDefault(ext, CompressionMethod.DEFLATE);
+        CompressResult result;
+        switch (method) {
+            case NONE:
+                result = new CompressResult(CompressionMethod.NONE, source);
+                break;
+            case DEFLATE:
+                result = Compressor.DEFLATE.compress(source);
+                break;
+            case LZ4:
+                result = Compressor.LZ4.compress(source);
+                break;
+            default:
+                throw new TODO("Method: " + method);
         }
 
-        CompressResult result = method.compress(source);
         if (result.getLength() < source.length) {
             return result;
         }
