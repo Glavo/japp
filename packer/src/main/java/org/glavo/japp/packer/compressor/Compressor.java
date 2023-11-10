@@ -14,14 +14,14 @@ public interface Compressor {
 
     Compressor DEFAULT = new DefaultCompressor();
 
-    Compressor LZ4 = (source, ext) -> {
+    Compressor LZ4 = source -> {
         LZ4Compressor compressor = LZ4Factory.fastestJavaInstance().highCompressor();
         byte[] result = new byte[compressor.maxCompressedLength(source.length)];
         int len = compressor.compress(source, result);
         return new CompressResult(CompressionMethod.LZ4, result, 0, len);
     };
 
-    Compressor DEFLATE = (source, ext) -> {
+    Compressor DEFLATE = source -> {
         Deflater deflater = new Deflater();
         deflater.setInput(source);
         deflater.finish();
@@ -38,10 +38,10 @@ public interface Compressor {
         return new CompressResult(CompressionMethod.DEFLATE, res, 0, count);
     };
 
-    CompressResult compress(byte[] source, String ext);
+    CompressResult compress(byte[] source);
 
-    default CompressResult compress(byte[] source) {
-        return compress(source, (String) null);
+    default CompressResult compress(byte[] source, String ext) {
+        return compress(source);
     }
 
     default CompressResult compress(byte[] source, Path file, BasicFileAttributes attributes) {
