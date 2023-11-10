@@ -6,6 +6,7 @@ import org.glavo.japp.boot.CompressionMethod;
 
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 
@@ -29,7 +30,11 @@ public interface Compressor {
         byte[] res = new byte[source.length];
         int count = 0;
 
-        while (!deflater.finished() && count < res.length) {
+        while (!deflater.finished()) {
+            if (count == res.length) {
+                res = Arrays.copyOf(res, res.length * 2);
+            }
+
             count += deflater.deflate(res, count, res.length - count);
         }
 
