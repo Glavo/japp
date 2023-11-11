@@ -1,4 +1,4 @@
-package org.glavo.japp.thirdparty.lz4;
+package org.glavo.japp.boot.decompressor.lz4;
 
 /*
  * Copyright 2020 Adrien Grand and the lz4-java contributors.
@@ -20,7 +20,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
-import static org.glavo.japp.thirdparty.lz4.LZ4Constants.COPY_LENGTH;
+import static org.glavo.japp.boot.decompressor.lz4.LZ4Constants.COPY_LENGTH;
 
 final class LZ4Utils {
     private LZ4Utils() {

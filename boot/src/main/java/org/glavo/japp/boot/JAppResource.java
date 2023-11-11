@@ -1,5 +1,6 @@
 package org.glavo.japp.boot;
 
+import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.thirdparty.json.JSONObject;
 
 import java.nio.file.attribute.FileTime;

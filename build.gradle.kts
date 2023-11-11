@@ -41,7 +41,7 @@ allprojects {
 
 tasks.create("buildAll") {
     dependsOn(
-        ":boot:jar", ":launcher:shadowJar", ":packer:shadowJar"
+        ":boot:bootJar", ":launcher:shadowJar", ":packer:shadowJar"
     )
 }
 

@@ -1,4 +1,4 @@
-package org.glavo.japp.thirdparty.lz4;
+package org.glavo.japp.boot.decompressor.lz4;
 
 /*
  * Copyright 2020 Adrien Grand and the lz4-java contributors.

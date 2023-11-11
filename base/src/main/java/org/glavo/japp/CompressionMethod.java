@@ -1,4 +1,4 @@
-package org.glavo.japp.boot;
+package org.glavo.japp;
 
 public enum CompressionMethod {
     NONE,

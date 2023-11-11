@@ -1,6 +1,7 @@
 package org.glavo.japp.thirdparty.lz4;
 
 import net.jpountz.lz4.LZ4Factory;
+import org.glavo.japp.boot.decompressor.lz4.LZ4Decompressor;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

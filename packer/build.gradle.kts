@@ -5,6 +5,7 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":base"))
     implementation(project(":boot"))
     implementation(project(":launcher"))
 
@@ -19,12 +20,12 @@ tasks.jar {
 }
 
 tasks.shadowJar {
-    outputs.file(rootProject.layout.buildDirectory.file("packer.jar"))
+    outputs.file(rootProject.layout.buildDirectory.file("japp-packer.jar"))
     doLast {
         copy {
             from(this@shadowJar.archiveFile)
             into(rootProject.layout.buildDirectory)
-            rename(".*", "packer.jar")
+            rename(".*", "japp-packer.jar")
         }
     }
 }

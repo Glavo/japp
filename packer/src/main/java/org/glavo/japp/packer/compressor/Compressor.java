@@ -2,7 +2,7 @@ package org.glavo.japp.packer.compressor;
 
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
-import org.glavo.japp.boot.CompressionMethod;
+import org.glavo.japp.CompressionMethod;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -1,12 +1,12 @@
 package org.glavo.japp.packer.compressor;
 
 import org.glavo.japp.TODO;
-import org.glavo.japp.boot.CompressionMethod;
+import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.zip.ZipEntry;
 
 final class DefaultCompressor implements Compressor {
 
@@ -24,12 +24,12 @@ final class DefaultCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(byte[] source) {
+    public CompressResult compress(byte[] source) throws IOException {
         return compress(source, (String) null);
     }
 
     @Override
-    public CompressResult compress(byte[] source, String ext) {
+    public CompressResult compress(byte[] source, String ext) throws IOException {
         if (source.length <= 16) {
             return new CompressResult(CompressionMethod.NONE, source);
         }
