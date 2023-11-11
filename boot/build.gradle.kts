@@ -1,5 +1,7 @@
+import org.glavo.mic.tasks.CompileModuleInfo
+
 plugins {
-    id("org.glavo.compile-module-info-plugin") version "2.0"
+    id("org.glavo.compile-module-info-plugin") version "2.0" apply false
 }
 
 dependencies {
@@ -16,6 +18,13 @@ tasks.compileJava {
     )
 }
 
+val compileModuleInfo = tasks.create<CompileModuleInfo>("compileModuleInfo") {
+    sourceFile.set(layout.projectDirectory.file("src/main/module-info/module-info.java"));
+    targetFile.set(layout.buildDirectory.file("classes/module-info/main/module-info.class"));
+}
+
+tasks.classes.get().dependsOn(compileModuleInfo)
+
 tasks.create<Jar>("bootJar") {
     destinationDirectory.set(rootProject.layout.buildDirectory)
     archiveFileName.set("japp-boot.jar")
@@ -24,4 +33,8 @@ tasks.create<Jar>("bootJar") {
 
     from(sourceSets.main.get().output)
     from(configurations.runtimeClasspath.get().map { zipTree(it) })
+}
+
+tasks.withType<Jar> {
+    from(compileModuleInfo.targetFile)
 }
