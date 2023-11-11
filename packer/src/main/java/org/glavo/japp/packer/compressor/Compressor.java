@@ -4,6 +4,7 @@ import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import org.glavo.japp.boot.CompressionMethod;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
@@ -43,13 +44,13 @@ public interface Compressor {
         return new CompressResult(CompressionMethod.DEFLATE, res, 0, count);
     };
 
-    CompressResult compress(byte[] source);
+    CompressResult compress(byte[] source) throws IOException;
 
-    default CompressResult compress(byte[] source, String ext) {
+    default CompressResult compress(byte[] source, String ext) throws IOException {
         return compress(source);
     }
 
-    default CompressResult compress(byte[] source, Path file, BasicFileAttributes attributes) {
+    default CompressResult compress(byte[] source, Path file, BasicFileAttributes attributes) throws IOException {
         String fileName = file.getFileName().toString();
         int idx = fileName.lastIndexOf('.');
 
@@ -57,7 +58,7 @@ public interface Compressor {
         return compress(source, ext);
     }
 
-    default CompressResult compress(byte[] source, ZipEntry entry) {
+    default CompressResult compress(byte[] source, ZipEntry entry) throws IOException {
         int idx = entry.getName().lastIndexOf('.');
 
         String ext;

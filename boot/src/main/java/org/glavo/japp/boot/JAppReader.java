@@ -1,6 +1,7 @@
 package org.glavo.japp.boot;
 
 import org.glavo.japp.TODO;
+import org.glavo.japp.boot.decompressor.ClassFileDecompressor;
 import org.glavo.japp.thirdparty.lz4.LZ4Decompressor;
 import org.glavo.japp.util.IOUtils;
 
@@ -101,10 +102,11 @@ public final class JAppReader implements Closeable {
                     IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(array));
                     break;
                 }
-                case LZ4: {
-                    byte[] compressed = new byte[(int) resource.getCompressedSize()];
-                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
-                    LZ4Decompressor.decompress(compressed, array);
+                case CLASSFILE: {
+                    ByteBuffer compressed = ByteBuffer.allocate((int) resource.getCompressedSize());
+                    IOUtils.readFully(channel.position(offset + baseOffset), compressed);
+                    compressed.flip();
+                    ClassFileDecompressor.decompress(compressed, array);
                     break;
                 }
                 case DEFLATE: {
@@ -127,6 +129,12 @@ public final class JAppReader implements Closeable {
                     } finally {
                         inflater.end();
                     }
+                    break;
+                }
+                case LZ4: {
+                    byte[] compressed = new byte[(int) resource.getCompressedSize()];
+                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
+                    LZ4Decompressor.decompress(compressed, array);
                     break;
                 }
                 default: {
