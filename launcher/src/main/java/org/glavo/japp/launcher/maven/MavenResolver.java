@@ -1,4 +1,4 @@
-package org.glavo.japp.maven;
+package org.glavo.japp.launcher.maven;
 
 import org.glavo.japp.launcher.condition.JAppRuntimeContext;
 

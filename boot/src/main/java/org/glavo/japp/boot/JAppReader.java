@@ -1,7 +1,7 @@
 package org.glavo.japp.boot;
 
 import org.glavo.japp.TODO;
-import org.glavo.japp.boot.decompressor.ClassFileDecompressor;
+import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.lz4.LZ4Decompressor;
 import org.glavo.japp.util.IOUtils;
 

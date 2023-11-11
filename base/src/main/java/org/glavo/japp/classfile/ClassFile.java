@@ -1,10 +1,7 @@
-package org.glavo.japp.boot.decompressor;
+package org.glavo.japp.classfile;
 
-import org.glavo.japp.TODO;
+public final class ClassFile {
 
-import java.nio.ByteBuffer;
-
-public final class ClassFileDecompressor {
     public static final byte CONSTANT_Utf8 = 1;
     public static final byte CONSTANT_Integer = 3;
     public static final byte CONSTANT_Float = 4;
@@ -23,7 +20,6 @@ public final class ClassFileDecompressor {
     public static final byte CONSTANT_Module = 19;
     public static final byte CONSTANT_Package = 20;
 
-    public static byte[] decompress(ByteBuffer compressed, byte[] output) {
-        throw new TODO();
+    private ClassFile() {
     }
 }

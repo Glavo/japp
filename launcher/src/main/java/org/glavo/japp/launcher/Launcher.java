@@ -2,10 +2,9 @@ package org.glavo.japp.launcher;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.launcher.condition.JAppRuntimeContext;
-import org.glavo.japp.maven.MavenResolver;
+import org.glavo.japp.launcher.maven.MavenResolver;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
