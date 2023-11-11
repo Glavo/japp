@@ -1,4 +1,4 @@
-package org.glavo.japp.thirdparty.json;
+package org.glavo.japp.json;
 
 import java.io.IOException;
 import java.util.Collection;

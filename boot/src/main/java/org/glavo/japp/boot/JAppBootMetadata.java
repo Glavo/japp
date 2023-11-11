@@ -1,7 +1,7 @@
 package org.glavo.japp.boot;
 
-import org.glavo.japp.thirdparty.json.JSONArray;
-import org.glavo.japp.thirdparty.json.JSONObject;
+import org.glavo.japp.json.JSONArray;
+import org.glavo.japp.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.List;

@@ -3,8 +3,8 @@ package org.glavo.japp.launcher;
 import org.glavo.japp.annotation.Visibility;
 import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.launcher.condition.JAppRuntimeContext;
-import org.glavo.japp.thirdparty.json.JSONArray;
-import org.glavo.japp.thirdparty.json.JSONObject;
+import org.glavo.japp.json.JSONArray;
+import org.glavo.japp.json.JSONObject;
 import org.glavo.japp.util.IOUtils;
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.glavo.japp.thirdparty.json;
+package org.glavo.japp.json;
 
 import static java.lang.String.format;
 

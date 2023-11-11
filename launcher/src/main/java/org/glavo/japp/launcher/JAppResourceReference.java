@@ -1,6 +1,6 @@
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.thirdparty.json.JSONObject;
+import org.glavo.japp.json.JSONObject;
 
 public abstract class JAppResourceReference {
 
