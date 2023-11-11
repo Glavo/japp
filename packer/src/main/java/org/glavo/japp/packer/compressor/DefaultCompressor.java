@@ -2,9 +2,11 @@ package org.glavo.japp.packer.compressor;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.CompressionMethod;
+import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
 
 final class DefaultCompressor implements Compressor {
 
@@ -22,8 +24,13 @@ final class DefaultCompressor implements Compressor {
     }
 
     @Override
+    public CompressResult compress(byte[] source) {
+        return compress(source, (String) null);
+    }
+
+    @Override
     public CompressResult compress(byte[] source, String ext) {
-        if (source.length <= 24) {
+        if (source.length <= 16) {
             return new CompressResult(CompressionMethod.NONE, source);
         }
 
@@ -32,6 +39,15 @@ final class DefaultCompressor implements Compressor {
         switch (method) {
             case NONE:
                 result = new CompressResult(CompressionMethod.NONE, source);
+                break;
+            case CLASSFILE:
+                try {
+                    result = ClassFileCompressor.INSTANCE.compress(source);
+                } catch (Throwable e) {
+                    // Malformed class file
+                    e.printStackTrace(); // TODO
+                    result = Compressor.DEFLATE.compress(source);
+                }
                 break;
             case DEFLATE:
                 result = Compressor.DEFLATE.compress(source);
