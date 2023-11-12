@@ -8,16 +8,13 @@ import org.glavo.japp.packer.compressor.Compressor;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 public final class ClassFileCompressor implements Compressor {
 
     public static final ClassFileCompressor INSTANCE = new ClassFileCompressor();
 
-    private static final byte DESCRIPTOR_MARK = -1;
-
     private static int maxCompressedSize(int input) {
-        return input + input / 255 + 16;
+        return input + input / 2 + 16;
     }
 
     @Override
@@ -63,7 +60,7 @@ public final class ClassFileCompressor implements Compressor {
                         throw new IOException("Constant #" + descriptorIndex + " is not CONSTANT_Utf8");
                     }
 
-                    tags[descriptorIndex] = DESCRIPTOR_MARK;
+                    tags[descriptorIndex] = ClassFile.CONSTANT_EXTERNAL_Utf8;
                 } else {
                     if (tag == ClassFile.CONSTANT_Long || tag == ClassFile.CONSTANT_Double) {
                         i++;
@@ -104,11 +101,17 @@ public final class ClassFileCompressor implements Compressor {
                 buffer.get(mutf8);
 
                 int index = context.getPool().addString(mutf8);
-                // TODO
 
-            } else if (tag == DESCRIPTOR_MARK) {
+                outputBuffer.put(ClassFile.CONSTANT_EXTERNAL_Utf8);
+
+
+            } else if (tag == ClassFile.CONSTANT_EXTERNAL_Descriptor) {
                 // TODO
             } else {
+                if (tag < 0) {
+                    throw new AssertionError("Tag: " + tag);
+                }
+                outputBuffer.put(tag);
                 outputBuffer.put(buffer.array(), arrayOffset + positions[i], ClassFile.CONSTANT_SIZE[tag]);
             }
 

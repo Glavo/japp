@@ -22,6 +22,9 @@ public final class ClassFile {
     public static final byte CONSTANT_Module = 19;
     public static final byte CONSTANT_Package = 20;
 
+    public static final byte CONSTANT_EXTERNAL_Utf8 = -1;
+    public static final byte CONSTANT_EXTERNAL_Descriptor = -2;
+
     public static final byte[] CONSTANT_SIZE = new byte[32];
     static {
         CONSTANT_SIZE[CONSTANT_Integer] = 4;
