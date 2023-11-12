@@ -16,14 +16,14 @@ public interface Compressor {
 
     Compressor DEFAULT = new DefaultCompressor();
 
-    Compressor LZ4 = source -> {
+    Compressor LZ4 = (context, source) -> {
         LZ4Compressor compressor = LZ4Factory.fastestJavaInstance().highCompressor();
         byte[] result = new byte[compressor.maxCompressedLength(source.length)];
         int len = compressor.compress(source, result);
         return new CompressResult(CompressionMethod.LZ4, result, 0, len);
     };
 
-    Compressor DEFLATE = source -> {
+    Compressor DEFLATE = (context, source) -> {
         Deflater deflater = new Deflater();
         deflater.setInput(source);
         deflater.finish();
@@ -44,21 +44,21 @@ public interface Compressor {
         return new CompressResult(CompressionMethod.DEFLATE, res, 0, count);
     };
 
-    CompressResult compress(byte[] source) throws IOException;
+    CompressResult compress(CompressContext context, byte[] source) throws IOException;
 
-    default CompressResult compress(byte[] source, String ext) throws IOException {
-        return compress(source);
+    default CompressResult compress(CompressContext context, byte[] source, String ext) throws IOException {
+        return compress(context, source);
     }
 
-    default CompressResult compress(byte[] source, Path file, BasicFileAttributes attributes) throws IOException {
+    default CompressResult compress(CompressContext context, byte[] source, Path file, BasicFileAttributes attributes) throws IOException {
         String fileName = file.getFileName().toString();
         int idx = fileName.lastIndexOf('.');
 
         String ext = idx > 0 ? fileName.substring(idx + 1) : "";
-        return compress(source, ext);
+        return compress(context, source, ext);
     }
 
-    default CompressResult compress(byte[] source, ZipEntry entry) throws IOException {
+    default CompressResult compress(CompressContext context, byte[] source, ZipEntry entry) throws IOException {
         int idx = entry.getName().lastIndexOf('.');
 
         String ext;
@@ -73,6 +73,6 @@ public interface Compressor {
             ext = "";
         }
 
-        return compress(source, ext);
+        return compress(context, source, ext);
     }
 }

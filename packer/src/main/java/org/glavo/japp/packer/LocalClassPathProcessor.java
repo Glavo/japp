@@ -148,7 +148,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     assert count == buffer.length;
                 }
 
-                CompressResult result = packer.compressor.compress(buffer, entry);
+                CompressResult result = packer.compressor.compress(null, buffer, entry);
 
                 if (groupEntries == null) {
                     groupEntries = group.getResources();
@@ -184,7 +184,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 String path = absoluteDir.relativize(file).toString().replace('\\', '/');
                 byte[] data = Files.readAllBytes(file);
-                CompressResult result = packer.compressor.compress(Files.readAllBytes(file), file, attrs);
+                CompressResult result = packer.compressor.compress(null, Files.readAllBytes(file), file, attrs);
                 group.getResources().put(path, new JAppResource(
                         path, packer.totalBytes, data.length,
                         attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime(),

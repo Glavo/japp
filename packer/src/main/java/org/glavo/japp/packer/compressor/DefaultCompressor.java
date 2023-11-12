@@ -24,12 +24,12 @@ final class DefaultCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(byte[] source) throws IOException {
-        return compress(source, (String) null);
+    public CompressResult compress(CompressContext context, byte[] source) throws IOException {
+        return compress(context, source, (String) null);
     }
 
     @Override
-    public CompressResult compress(byte[] source, String ext) throws IOException {
+    public CompressResult compress(CompressContext context, byte[] source, String ext) throws IOException {
         if (source.length <= 16) {
             return new CompressResult(CompressionMethod.NONE, source);
         }
@@ -42,18 +42,18 @@ final class DefaultCompressor implements Compressor {
                 break;
             case CLASSFILE:
                 try {
-                    result = ClassFileCompressor.INSTANCE.compress(source);
+                    result = ClassFileCompressor.INSTANCE.compress(context, source);
                 } catch (Throwable e) {
                     // Malformed class file
                     e.printStackTrace(); // TODO
-                    result = Compressor.DEFLATE.compress(source);
+                    result = Compressor.DEFLATE.compress(context, source);
                 }
                 break;
             case DEFLATE:
-                result = Compressor.DEFLATE.compress(source);
+                result = Compressor.DEFLATE.compress(context, source);
                 break;
             case LZ4:
-                result = Compressor.LZ4.compress(source);
+                result = Compressor.LZ4.compress(context, source);
                 break;
             default:
                 throw new TODO("Method: " + method);
