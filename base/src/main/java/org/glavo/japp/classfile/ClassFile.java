@@ -39,6 +39,7 @@ public final class ClassFile {
         CONSTANT_SIZE[CONSTANT_NameAndType] = 4;
         CONSTANT_SIZE[CONSTANT_MethodHandle] = 3;
         CONSTANT_SIZE[CONSTANT_MethodType] = 2;
+        CONSTANT_SIZE[CONSTANT_Dynamic] = 4;
         CONSTANT_SIZE[CONSTANT_InvokeDynamic] = 4;
         CONSTANT_SIZE[CONSTANT_Module] = 2;
         CONSTANT_SIZE[CONSTANT_Package] = 2;
