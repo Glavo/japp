@@ -2,7 +2,7 @@ package org.glavo.japp.packer.compressor.classfile;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.classfile.ClassFile;
-import org.glavo.japp.classfile.CompressedNumber;
+import org.glavo.japp.util.CompressedNumber;
 import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.packer.compressor.CompressResult;
 import org.glavo.japp.packer.compressor.Compressor;

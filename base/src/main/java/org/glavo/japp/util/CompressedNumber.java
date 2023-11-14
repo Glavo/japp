@@ -1,4 +1,4 @@
-package org.glavo.japp.classfile;
+package org.glavo.japp.util;
 
 import java.nio.ByteBuffer;
 
@@ -37,7 +37,7 @@ public final class CompressedNumber {
         }
 
         int b = Byte.toUnsignedInt(in.get());
-        int bv = b & VALUE_MASK;
+        int bv = b & TAIL_VALUE_MASK;
         if (b != bv) {
             throw new AssertionError();
         }

@@ -1,4 +1,4 @@
-package org.glavo.japp.classfile;
+package org.glavo.japp.util;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
