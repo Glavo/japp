@@ -4,6 +4,7 @@ import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.condition.ConditionParser;
+import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.packer.compressor.Compressor;
 
 import java.io.*;
@@ -35,6 +36,7 @@ public final class JAppPacker {
     final List<JAppResourceGroup> groups = new ArrayList<>();
 
     final Compressor compressor = Compressor.DEFAULT;
+    final CompressContext compressContext = new CompressContext();
 
     long totalBytes = 0L;
 

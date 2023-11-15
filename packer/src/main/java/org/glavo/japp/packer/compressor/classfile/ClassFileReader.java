@@ -6,6 +6,8 @@ import org.glavo.japp.util.MUTF8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.glavo.japp.classfile.ClassFile.*;
+
 final class ClassFileReader {
     private final ByteBuffer buffer;
     final byte[] tags;
@@ -72,23 +74,43 @@ final class ClassFileReader {
     }
 
     private void markString(int index, byte tag) throws IOException {
-        if (tags[index] != 0 && tags[index] != ClassFile.CONSTANT_Utf8 && tags[index] != tag) {
+        byte oldTag = tags[index];
+
+        if (oldTag > 0 && oldTag != CONSTANT_Utf8) {
             throw notUtf8(index);
         }
 
-        tags[index] = tag;
+        boolean update;
+        if (oldTag < 0 && oldTag != tag) {
+            if (oldTag == CONSTANT_EXTERNAL_STRING_Class && tag == CONSTANT_EXTERNAL_STRING_Descriptor) {
+                // array type
+                update = true;
+            } else if (oldTag == CONSTANT_EXTERNAL_STRING_Descriptor) {
+                update = false;
+            } else if (oldTag == CONSTANT_EXTERNAL_STRING_Signature && tag == CONSTANT_EXTERNAL_STRING_Descriptor) {
+                update = true;
+            } else {
+                throw new IOException(String.format("index: %d, old: %s, new: %s", index, oldTag, tag));
+            }
+        } else {
+            update = oldTag != tag;
+        }
+
+        if (update) {
+            tags[index] = tag;
+        }
     }
 
     private void markDescriptor(int descriptorIndex) throws IOException {
-        markString(descriptorIndex, ClassFile.CONSTANT_EXTERNAL_STRING_Descriptor);
+        markString(descriptorIndex, CONSTANT_EXTERNAL_STRING_Descriptor);
     }
 
     private void markSignature(int signatureIndex) throws IOException {
-        markString(signatureIndex, ClassFile.CONSTANT_EXTERNAL_STRING_Signature);
+        markString(signatureIndex, CONSTANT_EXTERNAL_STRING_Signature);
     }
 
     private void markClass(int classIndex) throws IOException {
-        markString(classIndex, ClassFile.CONSTANT_EXTERNAL_STRING_Class);
+        markString(classIndex, CONSTANT_EXTERNAL_STRING_Class);
     }
 
     private void skip(int n) {
@@ -97,7 +119,7 @@ final class ClassFileReader {
 
     private String getString(int cpIndex) throws IOException {
         byte tag = tags[cpIndex];
-        if (tag != ClassFile.CONSTANT_Utf8 && tag >= 0) {
+        if (tag != CONSTANT_Utf8 && tag >= 0) {
             throw notUtf8(cpIndex);
         }
 
@@ -119,34 +141,34 @@ final class ClassFileReader {
 
             if (tags[i] == 0) {
                 tags[i] = tag;
-            } else if (tag != ClassFile.CONSTANT_Utf8) {
+            } else if (tag != CONSTANT_Utf8) {
                 throw notUtf8(i);
             }
 
             switch (tag) {
-                case ClassFile.CONSTANT_Utf8:
+                case CONSTANT_Utf8:
                     int strLen = readU2();
                     strings[i] = MUTF8.stringFromMUTF8(buffer.array(), buffer.arrayOffset() + buffer.position(), strLen);
                     skip(strLen);
                     break;
-                case ClassFile.CONSTANT_NameAndType: {
+                case CONSTANT_NameAndType: {
                     int nameIndex = readU2();
                     int descriptorIndex = readU2();
                     markDescriptor(descriptorIndex);
                     break;
                 }
-                case ClassFile.CONSTANT_MethodType: {
+                case CONSTANT_MethodType: {
                     int descriptorIndex = readU2();
                     markDescriptor(descriptorIndex);
                     break;
                 }
-                case ClassFile.CONSTANT_Class: {
+                case CONSTANT_Class: {
                     int nameIndex = readU2();
                     markClass(nameIndex);
                     break;
                 }
-                case ClassFile.CONSTANT_Long:
-                case ClassFile.CONSTANT_Double: {
+                case CONSTANT_Long:
+                case CONSTANT_Double: {
                     i++;
                     buffer.getLong();
                     break;

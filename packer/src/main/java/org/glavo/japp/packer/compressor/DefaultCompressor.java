@@ -13,6 +13,8 @@ final class DefaultCompressor implements Compressor {
     private final Map<String, CompressionMethod> map = new HashMap<>();
 
     public DefaultCompressor() {
+        // map.put("class", CompressionMethod.CLASSFILE);
+
         for (String ext : new String[]{
                 "png", "apng", "jpg", "jpeg", "webp", "heic", "heif", "avif",
                 "aac", "flac", "mp3",
@@ -45,7 +47,9 @@ final class DefaultCompressor implements Compressor {
                     result = ClassFileCompressor.INSTANCE.compress(context, source);
                 } catch (Throwable e) {
                     // Malformed class file
-                    e.printStackTrace(); // TODO
+
+                    // TODO: Test ClassFileCompressor
+                    e.printStackTrace();
                     result = Compressor.DEFLATE.compress(context, source);
                 }
                 break;
