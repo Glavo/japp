@@ -14,11 +14,6 @@ allprojects {
         mavenCentral()
     }
 
-    dependencies {
-        testImplementation(platform("org.junit:junit-bom:5.10.1"))
-        testImplementation("org.junit.jupiter:junit-jupiter")
-    }
-
     tasks.test {
         useJUnitPlatform()
     }
@@ -46,3 +41,15 @@ tasks.create("buildAll") {
 }
 
 defaultTasks("buildAll")
+
+dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+
+    testImplementation(Deps.LZ4)
+
+    testImplementation(project(":base"))
+    testImplementation(project(":boot"))
+    testImplementation(project(":launcher"))
+    testImplementation(project(":packer"))
+}
