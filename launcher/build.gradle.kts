@@ -12,3 +12,14 @@ tasks.jar {
         "JApp-Boot" to project(":boot").tasks.getByName<Jar>("bootJar").archiveFile.get().asFile.absolutePath
     )
 }
+
+tasks.shadowJar {
+    outputs.file(rootProject.layout.buildDirectory.file("japp-launcher.jar"))
+    doLast {
+        copy {
+            from(this@shadowJar.archiveFile)
+            into(rootProject.layout.buildDirectory)
+            rename(".*", "japp-launcher.jar")
+        }
+    }
+}

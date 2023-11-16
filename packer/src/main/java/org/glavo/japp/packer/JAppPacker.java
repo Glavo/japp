@@ -263,9 +263,9 @@ public final class JAppPacker {
         String header;
         try (InputStream input = JAppPacker.class.getResourceAsStream("header.sh")) {
             header = new String(input.readAllBytes(), StandardCharsets.UTF_8)
-                    .replace("%japp.launcher%", new Manifest(JAppPacker.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
+                    .replace("%japp.project.directory%", new Manifest(JAppPacker.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
                             .getMainAttributes()
-                            .getValue("JApp-Launcher"));
+                            .getValue("Project-Directory"));
         }
 
         try (OutputStream out = Files.newOutputStream(outputFile)) {

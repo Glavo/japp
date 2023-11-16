@@ -9,6 +9,7 @@ import java.util.jar.Manifest;
 
 public final class JAppRuntimeContext {
 
+    private static final Path PROJECT_DIRECTORY;
     private static final Path HOME;
 
     static {
@@ -20,7 +21,8 @@ public final class JAppRuntimeContext {
             throw new Error(e);
         }
 
-        HOME = Paths.get(manifest.getMainAttributes().getValue("JApp-Home"));
+        PROJECT_DIRECTORY = Paths.get(manifest.getMainAttributes().getValue("Project-Directory"));
+        HOME = PROJECT_DIRECTORY.resolve(".japp");
     }
 
     private static String normalizeArch(String arch) {
