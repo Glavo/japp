@@ -8,10 +8,10 @@ import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
 
 public final class ByteArrayPool {
-    private final byte[] bytes;
+    private final ByteBuffer bytes;
     private final long[] offsetAndSize;
 
-    private ByteArrayPool(byte[] bytes, long[] offsetAndSize) {
+    private ByteArrayPool(ByteBuffer bytes, long[] offsetAndSize) {
         this.bytes = bytes;
         this.offsetAndSize = offsetAndSize;
     }
@@ -23,19 +23,21 @@ public final class ByteArrayPool {
         int size = headerBuffer.getInt();
         int bytesSize = headerBuffer.getInt();
 
-        byte[] bytes = new byte[bytesSize];
-        ByteBuffer bytesBuffer = ByteBuffer.wrap(bytes);
-        IOUtils.readFully(channel, bytesBuffer);
-
         long[] offsetAndSize = new long[size];
 
-        bytesBuffer.flip();
+        int offset = 0;
+        ByteBuffer sizes = ByteBuffer.allocate(size * 2).order(ByteOrder.LITTLE_ENDIAN);
+        IOUtils.readFully(channel, sizes);
+        sizes.flip();
         for (int i = 0; i < size; i++) {
-            int o = bytesBuffer.position();
-            int s = Short.toUnsignedInt(bytesBuffer.getShort());
-
-            offsetAndSize[i] = (((long) s) << 32) | (long) o;
+            int s = Short.toUnsignedInt(sizes.getShort());
+            offsetAndSize[i] = (((long) s) << 32) | (long) offset;
+            offset += s;
         }
+
+        ByteBuffer bytes = ByteBuffer.allocate(bytesSize);
+        IOUtils.readFully(channel, bytes);
+        bytes.flip();
 
         return new ByteArrayPool(bytes, offsetAndSize);
     }
@@ -45,7 +47,7 @@ public final class ByteArrayPool {
         int offset = (int) (l & 0xffff_ffffL);
         int size = (int) (l >>> 32);
 
-        return ByteBuffer.wrap(bytes, offset, size);
+        return bytes.slice().limit(offset + size).position(offset);
     }
 
     public int get(int index, byte[] out, int outOffset) {
@@ -53,7 +55,7 @@ public final class ByteArrayPool {
         int offset = (int) (l & 0xffff_ffffL);
         int size = (int) (l >>> 32);
 
-        System.arraycopy(bytes, offset, out, outOffset, size);
+        bytes.slice().limit(offset + size).position(offset).get(out, outOffset, size);
         return size;
     }
 
