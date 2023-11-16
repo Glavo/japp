@@ -1,6 +1,5 @@
 package org.glavo.japp.boot.decompressor.classfile;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.classfile.ClassFile;
 import org.glavo.japp.util.CompressedNumber;
@@ -86,7 +85,7 @@ public final class ClassFileDecompressor {
                 default: {
                     byte size = CONSTANT_SIZE[tag];
                     if (size == 0) {
-                        throw new IOException();
+                        throw new IOException(String.format("Unknown tag: %02x", Byte.toUnsignedInt(tag)));
                     }
 
                     outputBuffer.put(compressed.array(), compressed.arrayOffset() + compressed.position(), size);
@@ -94,6 +93,10 @@ public final class ClassFileDecompressor {
             }
         }
 
-        throw new TODO();
+        if (compressed.remaining() != outputBuffer.remaining()) {
+            throw new IOException();
+        }
+
+        outputBuffer.put(compressed);
     }
 }
