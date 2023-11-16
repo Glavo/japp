@@ -1,11 +1,11 @@
 package org.glavo.japp.packer.compressor;
 
-import org.glavo.japp.packer.compressor.classfile.StringPoolBuilder;
+import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 
 public final class CompressContext {
-    private final StringPoolBuilder pool = new StringPoolBuilder();
+    private final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
 
-    public StringPoolBuilder getPool() {
+    public ByteArrayPoolBuilder getPool() {
         return pool;
     }
 }

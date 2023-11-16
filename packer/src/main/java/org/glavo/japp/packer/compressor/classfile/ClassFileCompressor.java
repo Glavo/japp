@@ -64,7 +64,7 @@ public final class ClassFileCompressor implements Compressor {
 
     private static void putConstantUTF8(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         outputBuffer.put(ClassFile.CONSTANT_EXTERNAL_STRING);
-        CompressedNumber.putInt(outputBuffer, context.getPool().addString(mutf8));
+        CompressedNumber.putInt(outputBuffer, context.getPool().add(mutf8));
     }
 
     private static void putConstantDescriptor(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
@@ -80,8 +80,9 @@ public final class ClassFileCompressor implements Compressor {
             return;
         }
 
-        outputBuffer.put(ClassFile.CONSTANT_EXTERNAL_STRING_Descriptor);
-        outputBuffer.put(mutf8, 0, offset);
+
+        ByteBuffer descriptorBuffer = ByteBuffer.allocate(mutf8.length * 2);
+        descriptorBuffer.put(mutf8, 0, offset);
 
         for (; offset < mutf8.length; offset++) {
             byte b = mutf8[offset];
@@ -115,13 +116,17 @@ public final class ClassFileCompressor implements Compressor {
                     classNameBytes = Arrays.copyOfRange(mutf8, offset + 1, semicolon);
                 }
 
-                outputBuffer.put(b);
-                CompressedNumber.putInt(outputBuffer, context.getPool().addString(packageBytes));
-                CompressedNumber.putInt(outputBuffer, context.getPool().addString(classNameBytes));
+                descriptorBuffer.put(b);
+                CompressedNumber.putInt(descriptorBuffer, context.getPool().add(packageBytes));
+                CompressedNumber.putInt(descriptorBuffer, context.getPool().add(classNameBytes));
                 offset = semicolon + 1;
             } else {
-                outputBuffer.put(b);
+                descriptorBuffer.put(b);
             }
         }
+
+        int index = context.getPool().add(Arrays.copyOf(descriptorBuffer.array(), descriptorBuffer.position()));
+        outputBuffer.put(ClassFile.CONSTANT_EXTERNAL_STRING_Descriptor);
+        CompressedNumber.putInt(outputBuffer, index);
     }
 }

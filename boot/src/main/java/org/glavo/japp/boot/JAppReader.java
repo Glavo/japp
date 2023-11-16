@@ -2,6 +2,7 @@ package org.glavo.japp.boot;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
+import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.lz4.LZ4Decompressor;
 import org.glavo.japp.util.IOUtils;
 
@@ -59,6 +60,10 @@ public final class JAppReader implements Closeable {
         channel.close();
     }
 
+    public ByteArrayPool getPool() {
+        throw new TODO();
+    }
+
     public Map<String, JAppResourceGroup> getRoot(JAppResourceRoot root) {
         switch (root) {
             case MODULES:
@@ -106,7 +111,7 @@ public final class JAppReader implements Closeable {
                     ByteBuffer compressed = ByteBuffer.allocate((int) resource.getCompressedSize());
                     IOUtils.readFully(channel.position(offset + baseOffset), compressed);
                     compressed.flip();
-                    ClassFileDecompressor.decompress(compressed, array);
+                    ClassFileDecompressor.decompress(this, compressed, array);
                     break;
                 }
                 case DEFLATE: {

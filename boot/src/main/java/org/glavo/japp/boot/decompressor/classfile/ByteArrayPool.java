@@ -5,18 +5,18 @@ import org.glavo.japp.util.IOUtils;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 
-public final class StringPool {
+public final class ByteArrayPool {
     private final byte[] bytes;
     private final long[] offsetAndSize;
 
-    private StringPool(byte[] bytes, long[] offsetAndSize) {
+    private ByteArrayPool(byte[] bytes, long[] offsetAndSize) {
         this.bytes = bytes;
         this.offsetAndSize = offsetAndSize;
     }
 
-    public static StringPool readStringPool(FileChannel channel) throws IOException {
+    public static ByteArrayPool readPool(ReadableByteChannel channel) throws IOException {
         ByteBuffer headerBuffer = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
         IOUtils.readFully(channel, headerBuffer);
 
@@ -37,15 +37,29 @@ public final class StringPool {
             offsetAndSize[i] = (((long) s) << 32) | (long) o;
         }
 
-        return new StringPool(bytes, offsetAndSize);
+        return new ByteArrayPool(bytes, offsetAndSize);
     }
 
-    public int getMUTF8(int index, byte[] out, int outOffset) {
+    public ByteBuffer get(int index) {
+        long l = offsetAndSize[index];
+        int offset = (int) (l & 0xffff_ffffL);
+        int size = (int) (l >>> 32);
+
+        return ByteBuffer.wrap(bytes, offset, size);
+    }
+
+    public int get(int index, byte[] out, int outOffset) {
         long l = offsetAndSize[index];
         int offset = (int) (l & 0xffff_ffffL);
         int size = (int) (l >>> 32);
 
         System.arraycopy(bytes, offset, out, outOffset, size);
         return size;
+    }
+
+    public int get(int index, ByteBuffer output) {
+        int len = get(index, output.array(), output.arrayOffset() + output.position());
+        output.position(output.position() + len);
+        return len;
     }
 }
