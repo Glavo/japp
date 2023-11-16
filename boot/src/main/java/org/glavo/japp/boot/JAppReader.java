@@ -1,5 +1,6 @@
 package org.glavo.japp.boot;
 
+import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
@@ -86,66 +87,80 @@ public final class JAppReader implements Closeable {
         return g.getResources().get(path);
     }
 
-    public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
-        long size = resource.getSize();
+    private void getResourceAsByteArrayImpl(
+            CompressionMethod method,
+            long offset,
+            int size, int compressedSize,
+            byte[] output) throws IOException {
+        switch (method) {
+            case NONE: {
+                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(output));
+                break;
+            }
+            case CLASSFILE: {
+                ByteBuffer compressed = ByteBuffer.allocate(compressedSize);
+                IOUtils.readFully(channel.position(offset + baseOffset), compressed);
+                compressed.flip();
+                ClassFileDecompressor.decompress(this, compressed, output);
+                break;
+            }
+            case DEFLATE: {
+                byte[] compressed = new byte[compressedSize];
+                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
 
-        if (size > MAX_ARRAY_LENGTH || size < 0) {
-            throw new OutOfMemoryError("Resource is too large");
+                Inflater inflater = new Inflater();
+                inflater.setInput(compressed);
+
+                try {
+                    int count = 0;
+                    while (count < output.length) {
+                        if (inflater.finished()) {
+                            throw new IOException("Unexpected end of data");
+                        }
+                        count += inflater.inflate(output);
+                    }
+                } catch (DataFormatException e) {
+                    throw new IOException(e);
+                } finally {
+                    inflater.end();
+                }
+                break;
+            }
+            case LZ4: {
+                byte[] compressed = new byte[compressedSize];
+                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
+                LZ4Decompressor.decompress(compressed, output);
+                break;
+            }
+            default: {
+                throw new TODO("Method: " + method);
+            }
         }
+    }
+
+    private int castArrayLength(long value) {
+        if (value > MAX_ARRAY_LENGTH || value < 0) {
+            throw new OutOfMemoryError("Value is too large");
+        }
+
+        return (int) value;
+    }
+
+    public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
+        int size = castArrayLength(resource.getSize());
 
         byte[] array = new byte[(int) size];
         if (size == 0) {
             return array;
         }
 
+        CompressionMethod method = resource.getMethod();
         long offset = resource.getOffset();
+        int compressedSize = castArrayLength(resource.getCompressedSize());
 
         lock.lock();
         try {
-            switch (resource.getMethod()) {
-                case NONE: {
-                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(array));
-                    break;
-                }
-                case CLASSFILE: {
-                    ByteBuffer compressed = ByteBuffer.allocate((int) resource.getCompressedSize());
-                    IOUtils.readFully(channel.position(offset + baseOffset), compressed);
-                    compressed.flip();
-                    ClassFileDecompressor.decompress(this, compressed, array);
-                    break;
-                }
-                case DEFLATE: {
-                    byte[] compressed = new byte[(int) resource.getCompressedSize()];
-                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
-
-                    Inflater inflater = new Inflater();
-                    inflater.setInput(compressed);
-
-                    try {
-                        int count = 0;
-                        while (count < array.length) {
-                            if (inflater.finished()) {
-                                throw new IOException("Unexpected end of data");
-                            }
-                            count += inflater.inflate(array);
-                        }
-                    } catch (DataFormatException e) {
-                        throw new IOException(e);
-                    } finally {
-                        inflater.end();
-                    }
-                    break;
-                }
-                case LZ4: {
-                    byte[] compressed = new byte[(int) resource.getCompressedSize()];
-                    IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
-                    LZ4Decompressor.decompress(compressed, array);
-                    break;
-                }
-                default: {
-                    throw new TODO("Method: " + resource.getMethod());
-                }
-            }
+            getResourceAsByteArrayImpl(method, offset, size, compressedSize, array);
         } finally {
             lock.unlock();
         }
