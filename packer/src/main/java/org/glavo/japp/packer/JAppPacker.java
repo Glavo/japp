@@ -4,8 +4,8 @@ import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.condition.ConditionParser;
-import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.packer.compressor.Compressor;
+import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -36,13 +36,17 @@ public final class JAppPacker {
     final List<JAppResourceGroup> groups = new ArrayList<>();
 
     final Compressor compressor = Compressor.DEFAULT;
-    final CompressContext compressContext = new CompressContext();
+    final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
 
     long totalBytes = 0L;
 
     private boolean finished = false;
 
     private JAppPacker() {
+    }
+
+    public ByteArrayPoolBuilder getPool() {
+        return pool;
     }
 
     void writeByte(byte b) throws IOException {
@@ -116,7 +120,7 @@ public final class JAppPacker {
             finished = true;
 
             long bootMetadataOffset = totalBytes;
-            byte[] bootMetadata = new JAppBootMetadata(groups).toJson().toString().getBytes(StandardCharsets.UTF_8);
+            byte[] bootMetadata = JAppBootMetadata.toJson(groups, pool.toByteArray()).toString().getBytes(StandardCharsets.UTF_8);
             writeInt(bootMetadata.length);
             writeBytes(bootMetadata);
 

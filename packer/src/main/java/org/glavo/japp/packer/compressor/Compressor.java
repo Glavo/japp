@@ -3,6 +3,7 @@ package org.glavo.japp.packer.compressor;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import org.glavo.japp.CompressionMethod;
+import org.glavo.japp.packer.JAppPacker;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -44,21 +45,21 @@ public interface Compressor {
         return new CompressResult(CompressionMethod.DEFLATE, res, 0, count);
     };
 
-    CompressResult compress(CompressContext context, byte[] source) throws IOException;
+    CompressResult compress(JAppPacker packer, byte[] source) throws IOException;
 
-    default CompressResult compress(CompressContext context, byte[] source, String ext) throws IOException {
-        return compress(context, source);
+    default CompressResult compress(JAppPacker packer, byte[] source, String ext) throws IOException {
+        return compress(packer, source);
     }
 
-    default CompressResult compress(CompressContext context, byte[] source, Path file, BasicFileAttributes attributes) throws IOException {
+    default CompressResult compress(JAppPacker packer, byte[] source, Path file, BasicFileAttributes attributes) throws IOException {
         String fileName = file.getFileName().toString();
         int idx = fileName.lastIndexOf('.');
 
         String ext = idx > 0 ? fileName.substring(idx + 1) : "";
-        return compress(context, source, ext);
+        return compress(packer, source, ext);
     }
 
-    default CompressResult compress(CompressContext context, byte[] source, ZipEntry entry) throws IOException {
+    default CompressResult compress(JAppPacker packer, byte[] source, ZipEntry entry) throws IOException {
         int idx = entry.getName().lastIndexOf('.');
 
         String ext;
@@ -73,6 +74,6 @@ public interface Compressor {
             ext = "";
         }
 
-        return compress(context, source, ext);
+        return compress(packer, source, ext);
     }
 }

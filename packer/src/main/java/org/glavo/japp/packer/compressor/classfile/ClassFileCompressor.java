@@ -2,8 +2,8 @@ package org.glavo.japp.packer.compressor.classfile;
 
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.classfile.ClassFile;
+import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.util.CompressedNumber;
-import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.packer.compressor.CompressResult;
 import org.glavo.japp.packer.compressor.Compressor;
 
@@ -20,7 +20,7 @@ public final class ClassFileCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(CompressContext context, byte[] source) throws IOException {
+    public CompressResult compress(JAppPacker packer, byte[] source) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(source);
 
         ClassFileReader reader = new ClassFileReader(buffer);
@@ -46,10 +46,10 @@ public final class ClassFileCompressor implements Compressor {
                 buffer.get(mutf8);
 
                 if (tag == ClassFile.CONSTANT_EXTERNAL_STRING_Descriptor) {
-                    putConstantDescriptor(context, mutf8, outputBuffer);
+                    putConstantDescriptor(packer, mutf8, outputBuffer);
                 } else {
                     // TODO: Class and Signature
-                    putConstantUTF8(context, mutf8, outputBuffer);
+                    putConstantUTF8(packer, mutf8, outputBuffer);
                 }
             } else {
                 outputBuffer.put(tag);
@@ -62,12 +62,12 @@ public final class ClassFileCompressor implements Compressor {
         return new CompressResult(CompressionMethod.CLASSFILE, output, 0, outputBuffer.position());
     }
 
-    private static void putConstantUTF8(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+    private static void putConstantUTF8(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         outputBuffer.put(ClassFile.CONSTANT_EXTERNAL_STRING);
-        CompressedNumber.putInt(outputBuffer, context.getPool().add(mutf8));
+        CompressedNumber.putInt(outputBuffer, packer.getPool().add(mutf8));
     }
 
-    private static void putConstantDescriptor(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+    private static void putConstantDescriptor(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         int offset = 0;
         for (; offset < mutf8.length; offset++) {
             if (mutf8[offset] == 'L') {
@@ -76,10 +76,9 @@ public final class ClassFileCompressor implements Compressor {
         }
 
         if (offset == mutf8.length) {
-            putConstantUTF8(context, mutf8, outputBuffer);
+            putConstantUTF8(packer, mutf8, outputBuffer);
             return;
         }
-
 
         ByteBuffer descriptorBuffer = ByteBuffer.allocate(mutf8.length * 2);
         descriptorBuffer.put(mutf8, 0, offset);
@@ -117,15 +116,15 @@ public final class ClassFileCompressor implements Compressor {
                 }
 
                 descriptorBuffer.put(b);
-                CompressedNumber.putInt(descriptorBuffer, context.getPool().add(packageBytes));
-                CompressedNumber.putInt(descriptorBuffer, context.getPool().add(classNameBytes));
+                CompressedNumber.putInt(descriptorBuffer, packer.getPool().add(packageBytes));
+                CompressedNumber.putInt(descriptorBuffer, packer.getPool().add(classNameBytes));
                 offset = semicolon + 1;
             } else {
                 descriptorBuffer.put(b);
             }
         }
 
-        int index = context.getPool().add(Arrays.copyOf(descriptorBuffer.array(), descriptorBuffer.position()));
+        int index = packer.getPool().add(Arrays.copyOf(descriptorBuffer.array(), descriptorBuffer.position()));
         outputBuffer.put(ClassFile.CONSTANT_EXTERNAL_STRING_Descriptor);
         CompressedNumber.putInt(outputBuffer, index);
     }

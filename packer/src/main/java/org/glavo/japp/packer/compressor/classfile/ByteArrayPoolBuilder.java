@@ -1,6 +1,5 @@
 package org.glavo.japp.packer.compressor.classfile;
 
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;

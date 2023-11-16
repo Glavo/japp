@@ -2,6 +2,7 @@ package org.glavo.japp.packer.compressor;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.CompressionMethod;
+import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
 import java.io.IOException;
@@ -26,12 +27,12 @@ final class DefaultCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(CompressContext context, byte[] source) throws IOException {
-        return compress(context, source, (String) null);
+    public CompressResult compress(JAppPacker packer, byte[] source) throws IOException {
+        return compress(packer, source, (String) null);
     }
 
     @Override
-    public CompressResult compress(CompressContext context, byte[] source, String ext) throws IOException {
+    public CompressResult compress(JAppPacker packer, byte[] source, String ext) throws IOException {
         if (source.length <= 16) {
             return new CompressResult(CompressionMethod.NONE, source);
         }
@@ -44,20 +45,20 @@ final class DefaultCompressor implements Compressor {
                 break;
             case CLASSFILE:
                 try {
-                    result = ClassFileCompressor.INSTANCE.compress(context, source);
+                    result = ClassFileCompressor.INSTANCE.compress(packer, source);
                 } catch (Throwable e) {
                     // Malformed class file
 
                     // TODO: Test ClassFileCompressor
                     e.printStackTrace();
-                    result = Compressor.DEFLATE.compress(context, source);
+                    result = Compressor.DEFLATE.compress(packer, source);
                 }
                 break;
             case DEFLATE:
-                result = Compressor.DEFLATE.compress(context, source);
+                result = Compressor.DEFLATE.compress(packer, source);
                 break;
             case LZ4:
-                result = Compressor.LZ4.compress(context, source);
+                result = Compressor.LZ4.compress(packer, source);
                 break;
             default:
                 throw new TODO("Method: " + method);
