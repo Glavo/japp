@@ -5,7 +5,6 @@ import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -30,10 +29,7 @@ public class ByteArrayPoolTest {
             assertEquals(i, builder.add(testString(i)));
         }
 
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        builder.writeTo(output);
-
-        ReadableByteChannel input = Channels.newChannel(new ByteArrayInputStream(output.toByteArray()));
+        ReadableByteChannel input = Channels.newChannel(new ByteArrayInputStream(builder.toByteArray()));
         ByteArrayPool pool = ByteArrayPool.readPool(input);
 
         for (int i = 0; i < 10; i++) {

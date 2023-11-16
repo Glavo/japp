@@ -1,9 +1,6 @@
 package org.glavo.japp.packer.compressor.classfile;
 
-import org.glavo.japp.util.CompressedNumber;
-
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
@@ -43,9 +40,7 @@ public final class ByteArrayPoolBuilder {
         if (bytes.remaining() < s) {
             int position = bytes.position();
             int nextLen = Math.max(bytes.limit() * 2, position + s);
-            bytes = ByteBuffer.wrap(Arrays.copyOf(bytes.array(), nextLen))
-                    .position(position)
-                    .order(ByteOrder.LITTLE_ENDIAN);
+            bytes = ByteBuffer.wrap(Arrays.copyOf(bytes.array(), nextLen)).position(position);
         }
 
         if (!sizes.hasRemaining()) {
@@ -76,16 +71,16 @@ public final class ByteArrayPoolBuilder {
         return index;
     }
 
-    public void writeTo(OutputStream out) throws IOException {
+    public byte[] toByteArray() {
+        byte[] res = new byte[8 + sizes.position() + bytes.position()];
+        ByteBuffer buffer = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN);
+
         int size = map.size();
         int bytesSize = bytes.position();
-
-        ByteBuffer headerBuffer = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
-        headerBuffer.putInt(size);
-        headerBuffer.putInt(bytesSize);
-
-        out.write(headerBuffer.array());
-        out.write(sizes.array(), 0, sizes.position());
-        out.write(bytes.array(), 0, bytes.position());
+        buffer.putInt(size);
+        buffer.putInt(bytesSize);
+        buffer.put(sizes.array(), 0, sizes.position());
+        buffer.put(bytes.array(), 0, bytes.position());
+        return res;
     }
 }

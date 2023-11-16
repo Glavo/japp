@@ -30,7 +30,7 @@ public final class JAppPacker {
 
     private final JAppConfigGroup root = new JAppConfigGroup();
 
-    private ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
+    private final ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
     JAppConfigGroup current = root;
 
     final List<JAppResourceGroup> groups = new ArrayList<>();
