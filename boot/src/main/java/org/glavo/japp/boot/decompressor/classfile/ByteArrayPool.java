@@ -19,6 +19,7 @@ public final class ByteArrayPool {
     public static ByteArrayPool readPool(ReadableByteChannel channel) throws IOException {
         ByteBuffer headerBuffer = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
         IOUtils.readFully(channel, headerBuffer);
+        headerBuffer.flip();
 
         int size = headerBuffer.getInt();
         int bytesSize = headerBuffer.getInt();
