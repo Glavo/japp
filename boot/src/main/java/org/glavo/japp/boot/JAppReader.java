@@ -48,9 +48,14 @@ public final class JAppReader implements Closeable {
     private final Map<String, JAppResourceGroup> classpath;
     private final Map<String, JAppResourceGroup> resources;
 
-    public JAppReader(FileChannel channel, long baseOffset, Map<String, JAppResourceGroup> modules, Map<String, JAppResourceGroup> classpath) throws IOException {
+    private final ByteArrayPool pool;
+
+    public JAppReader(FileChannel channel, long baseOffset,
+                      ByteArrayPool pool,
+                      Map<String, JAppResourceGroup> modules, Map<String, JAppResourceGroup> classpath) throws IOException {
         this.channel = channel;
         this.baseOffset = baseOffset;
+        this.pool = pool;
         this.modules = modules;
         this.classpath = classpath;
         this.resources = new LinkedHashMap<>();
@@ -62,7 +67,7 @@ public final class JAppReader implements Closeable {
     }
 
     public ByteArrayPool getPool() {
-        throw new TODO();
+        return pool;
     }
 
     public Map<String, JAppResourceGroup> getRoot(JAppResourceRoot root) {

@@ -241,7 +241,7 @@ public final class BootLauncher {
             }
         }
 
-        JAppReader reader = new JAppReader(channel, baseOffset, modules, classPath);
+        JAppReader reader = new JAppReader(channel, baseOffset, metadata.getPool(), modules, classPath);
         JAppReader.initSystemReader(reader);
 
         ModuleLayer layer;
