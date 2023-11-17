@@ -117,7 +117,7 @@ public final class ClassFileCompressor implements Compressor {
                 descriptorBuffer.put(b);
                 CompressedNumber.putInt(descriptorBuffer, packer.getPool().add(packageBytes));
                 CompressedNumber.putInt(descriptorBuffer, packer.getPool().add(classNameBytes));
-                offset = semicolon + 1;
+                offset = semicolon;
             } else {
                 descriptorBuffer.put(b);
             }

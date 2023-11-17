@@ -74,6 +74,7 @@ public final class ClassFileDecompressor {
                             }
 
                             pool.get(classIndex, outputBuffer);
+                            outputBuffer.put((byte) ';');
                         }
                     }
 
@@ -92,6 +93,7 @@ public final class ClassFileDecompressor {
                     }
 
                     outputBuffer.put(compressed.array(), compressed.arrayOffset() + compressed.position(), size);
+                    compressed.position(compressed.position() + size);
                 }
             }
         }
