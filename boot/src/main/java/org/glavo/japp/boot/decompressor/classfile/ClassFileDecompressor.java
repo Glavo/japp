@@ -89,7 +89,7 @@ public final class ClassFileDecompressor {
 
                     byte size = CONSTANT_SIZE[tag];
                     if (size == 0) {
-                        throw new IOException(String.format("Unknown tag: %02x", Byte.toUnsignedInt(tag)));
+                        throw new IOException(String.format("Unknown tag: 0x%02x", Byte.toUnsignedInt(tag)));
                     }
 
                     outputBuffer.put(compressed.array(), compressed.arrayOffset() + compressed.position(), size);
@@ -99,7 +99,8 @@ public final class ClassFileDecompressor {
         }
 
         if (compressed.remaining() != outputBuffer.remaining()) {
-            throw new IOException();
+            throw new IOException(String.format("The remaining bytes do not match: %d != %d",
+                    compressed.remaining(), outputBuffer.remaining()));
         }
 
         outputBuffer.put(compressed);
