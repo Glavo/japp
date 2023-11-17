@@ -3,6 +3,7 @@ package org.glavo.japp.boot.decompressor.classfile;
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.classfile.ClassFile;
 import org.glavo.japp.util.CompressedNumber;
+import org.glavo.japp.util.MUTF8;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -53,6 +54,21 @@ public final class ClassFileDecompressor {
                     outputBuffer.position(position + 2);
                     int len = pool.get(index, outputBuffer);
                     outputBuffer.putShort(position, (short) len);
+                    break;
+                }
+                case CONSTANT_EXTERNAL_STRING_Class: {
+                    int packageIndex = CompressedNumber.getInt(compressed);
+                    int classIndex = CompressedNumber.getInt(compressed);
+
+                    int position = outputBuffer.position();
+                    outputBuffer.position(position + 2);
+                    if (pool.get(packageIndex, outputBuffer) > 0) {
+                        outputBuffer.put((byte) '/');
+                    }
+
+                    pool.get(classIndex, outputBuffer);
+
+                    outputBuffer.putShort(position, (short) (outputBuffer.position() - position - 2));
                     break;
                 }
                 case CONSTANT_EXTERNAL_STRING_Descriptor: {
