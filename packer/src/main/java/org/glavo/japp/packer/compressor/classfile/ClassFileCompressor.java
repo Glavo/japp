@@ -51,8 +51,9 @@ public final class ClassFileCompressor implements Compressor {
                     putConstantClassName(packer, mutf8, outputBuffer);
                 } else if (tag == CONSTANT_EXTERNAL_STRING_Descriptor) {
                     putConstantDescriptor(packer, mutf8, outputBuffer);
-                } else {
-                    // TODO: Class and Signature
+                } else if (tag == CONSTANT_EXTERNAL_STRING_Signature) {
+                    putConstantSignature(packer, mutf8, outputBuffer);
+                }  else {
                     putConstantUTF8(packer, mutf8, outputBuffer);
                 }
             } else {
@@ -133,6 +134,46 @@ public final class ClassFileCompressor implements Compressor {
 
         int index = packer.getPool().add(Arrays.copyOf(descriptorBuffer.array(), descriptorBuffer.position()));
         outputBuffer.put(CONSTANT_EXTERNAL_STRING_Descriptor);
+        CompressedNumber.putInt(outputBuffer, index);
+    }
+
+    private static void putConstantSignature(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+        ByteBuffer signatureBuffer = ByteBuffer.allocate(mutf8.length * 2);
+
+        for (int offset = 0; offset < mutf8.length; offset++) {
+            byte b = mutf8[offset];
+            if (b == 'L') {
+                int lastSlash = -1;
+                int end = -1;
+                byte endChar = 0;
+
+                for (int offset2 = offset + 1; offset2 < mutf8.length; offset2++) {
+                    byte b2 = mutf8[offset2];
+
+                    if (b2 == '/') {
+                        lastSlash = offset2;
+                    } else if (b2 == ';' || b2 == ':' || b2 == '<') {
+                        end = offset2;
+                        endChar = b2;
+                        break;
+                    }
+                }
+
+                if (end < 0 || lastSlash == offset + 1) {
+                    throw new IOException("Invalid signature: " + MUTF8.stringFromMUTF8(mutf8));
+                }
+
+                signatureBuffer.put(b);
+                writeClassName(packer, mutf8, offset + 1, end, lastSlash, signatureBuffer);
+                signatureBuffer.put(endChar);
+                offset = end;
+            } else {
+                signatureBuffer.put(b);
+            }
+        }
+
+        int index = packer.getPool().add(Arrays.copyOf(signatureBuffer.array(), signatureBuffer.position()));
+        outputBuffer.put(CONSTANT_EXTERNAL_STRING_Signature);
         CompressedNumber.putInt(outputBuffer, index);
     }
 

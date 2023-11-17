@@ -98,6 +98,33 @@ public final class ClassFileDecompressor {
                     outputBuffer.putShort(lengthPosition, (short) len);
                     break;
                 }
+                case CONSTANT_EXTERNAL_STRING_Signature: {
+                    int index = CompressedNumber.getInt(compressed);
+                    ByteBuffer compressedSignature = pool.get(index);
+
+                    int lengthPosition = outputBuffer.position();
+                    outputBuffer.position(lengthPosition + 2);
+
+                    while (compressedSignature.hasRemaining()) {
+                        byte b = compressedSignature.get();
+                        outputBuffer.put(b);
+                        if (b == 'L') {
+                            int p = outputBuffer.position();
+                            int packageIndex = CompressedNumber.getInt(compressedSignature);
+                            int classIndex = CompressedNumber.getInt(compressedSignature);
+
+                            if (pool.get(packageIndex, outputBuffer) > 0) {
+                                outputBuffer.put((byte) '/');
+                            }
+
+                            pool.get(classIndex, outputBuffer);
+                        }
+                    }
+
+                    int len = outputBuffer.position() - lengthPosition - 2;
+                    outputBuffer.putShort(lengthPosition, (short) len);
+                    break;
+                }
                 default: {
                     if (tag == CONSTANT_Long || tag == CONSTANT_Double) {
                         i++;
