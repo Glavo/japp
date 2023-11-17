@@ -11,6 +11,10 @@ public final class CompressResult {
     private final int offset;
     private final int length;
 
+    public CompressResult(byte[] compressedData) {
+        this(CompressionMethod.NONE, compressedData, 0, compressedData.length);
+    }
+
     public CompressResult(CompressionMethod method, byte[] compressedData) {
         this(method, compressedData, 0, compressedData.length);
     }

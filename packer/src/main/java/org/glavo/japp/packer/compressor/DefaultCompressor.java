@@ -34,14 +34,14 @@ final class DefaultCompressor implements Compressor {
     @Override
     public CompressResult compress(JAppPacker packer, byte[] source, String ext) throws IOException {
         if (source.length <= 16) {
-            return new CompressResult(CompressionMethod.NONE, source);
+            return new CompressResult(source);
         }
 
         CompressionMethod method = map.getOrDefault(ext, CompressionMethod.DEFLATE);
         CompressResult result;
         switch (method) {
             case NONE:
-                result = new CompressResult(CompressionMethod.NONE, source);
+                result = new CompressResult(source);
                 break;
             case CLASSFILE:
                 try {
@@ -67,6 +67,6 @@ final class DefaultCompressor implements Compressor {
         if (result.getLength() < source.length) {
             return result;
         }
-        return new CompressResult(CompressionMethod.NONE, source);
+        return new CompressResult(source);
     }
 }
