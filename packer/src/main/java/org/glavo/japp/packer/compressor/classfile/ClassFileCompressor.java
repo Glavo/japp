@@ -55,7 +55,6 @@ public final class ClassFileCompressor implements Compressor {
                 outputBuffer.put(tag);
                 outputBuffer.put(buffer.array(), arrayOffset + reader.positions[i], ClassFile.CONSTANT_SIZE[tag]);
             }
-
         }
 
         outputBuffer.put(buffer.array(), buffer.arrayOffset() + reader.tailPosition, reader.tailLen);

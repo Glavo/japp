@@ -166,6 +166,8 @@ public final class JAppReader implements Closeable {
         lock.lock();
         try {
             getResourceAsByteArrayImpl(method, offset, size, compressedSize, array);
+        } catch (Throwable e) {
+            e.printStackTrace(); // TODO: DEBUG
         } finally {
             lock.unlock();
         }

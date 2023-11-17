@@ -30,13 +30,12 @@ public final class ClassFileDecompressor {
 
         for (int i = 1; i < constantPoolCount; i++) {
             byte tag = compressed.get();
-
             if (tag > 0) {
                 outputBuffer.put(tag);
             } else if (tag < 0) {
                 outputBuffer.put(CONSTANT_Utf8);
             } else {
-                throw new IOException();
+                throw new IOException("tag is 0");
             }
 
             switch (tag) {
@@ -83,6 +82,10 @@ public final class ClassFileDecompressor {
                     break;
                 }
                 default: {
+                    if (tag == CONSTANT_Long || tag == CONSTANT_Double) {
+                        i++;
+                    }
+
                     byte size = CONSTANT_SIZE[tag];
                     if (size == 0) {
                         throw new IOException(String.format("Unknown tag: %02x", Byte.toUnsignedInt(tag)));

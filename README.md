@@ -21,8 +21,6 @@ Features being implemented:
 * Support bundling and loading native libraries;
 * Build time optimization.
 
-<!-- More details can be found in the draft (in Chinese): [Draft](draft/design.md). -->
-
 Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
 
 ## Try it
