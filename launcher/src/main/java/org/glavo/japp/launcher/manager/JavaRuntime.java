@@ -85,7 +85,16 @@ public final class JavaRuntime {
         }
     }
 
-    public static OperatingSystem parseOperatingSystemName(String name) {
+    public enum LibC {
+        DEFAULT, MUSL;
+
+        @Override
+        public String toString() {
+            return name().toLowerCase(Locale.ROOT);
+        }
+    }
+
+    public static OperatingSystem parseOperatingSystem(String name) {
         name = name.trim().toLowerCase(Locale.ROOT);
 
         if (name.contains("win"))
@@ -98,7 +107,7 @@ public final class JavaRuntime {
             throw new IllegalArgumentException(name);
     }
 
-    public static Architecture parseArchName(String value) {
+    public static Architecture parseArchitecture(String value) {
         value = value.trim().toLowerCase(Locale.ROOT);
 
         switch (value) {
@@ -186,19 +195,29 @@ public final class JavaRuntime {
         throw new IllegalArgumentException();
     }
 
+    public static LibC parseLibC(String value) {
+        switch (value) {
+            case "":
+            case "default":
+            case "gnu":
+                return LibC.DEFAULT;
+            case "musl":
+                return LibC.MUSL;
+            default:
+                throw new IllegalArgumentException(value);
+        }
+    }
+
     private static final JavaRuntime CURRENT;
 
     static {
-        OperatingSystem os = parseOperatingSystemName(System.getProperty("os.name"));
-        Architecture arch = parseArchName(System.getProperty("os.arch"));
-        Path exec;
+        JavaRuntime current = null;
         try {
-            exec = os.findJavaExecutable(Paths.get(System.getProperty("java.home")));
+            current = fromDir(Paths.get(System.getProperty("java.home")));
         } catch (IOException e) {
-            exec = null;
         }
 
-        CURRENT = new JavaRuntime(exec, Runtime.version(), os, arch);
+        CURRENT = current;
     }
 
     public static JavaRuntime fromCurrent() {
@@ -241,39 +260,49 @@ public final class JavaRuntime {
 
         OperatingSystem os;
         Architecture arch;
+        LibC libc;
         Runtime.Version version;
 
         String osName = release.get("OS_NAME");
         if (osName != null) {
-            os = parseOperatingSystemName(osName);
+            os = parseOperatingSystem(osName);
         } else {
             os = CURRENT.operatingSystem;
         }
 
         String osArch = release.get("OS_ARCH");
         if (osArch != null) {
-            arch = parseArchName(osArch);
+            arch = parseArchitecture(osArch);
         } else {
             arch = CURRENT.getArchitecture();
+        }
+
+        String libcName = release.get("LIBC");
+        if (libcName != null) {
+            libc = parseLibC(libcName);
+        } else {
+            libc = LibC.DEFAULT;
         }
 
         String javaVersion = release.get("JAVA_VERSION");
         version = Runtime.Version.parse(javaVersion);
 
         Path exec = os.findJavaExecutable(dir);
-        return new JavaRuntime(exec, version, os, arch);
+        return new JavaRuntime(exec, version, os, arch, libc);
     }
 
     private final Path exec;
     private final Runtime.Version version;
     private final OperatingSystem operatingSystem;
     private final Architecture architecture;
+    private final LibC libc;
 
-    public JavaRuntime(Path exec, Runtime.Version version, OperatingSystem operatingSystem, Architecture architecture) {
+    public JavaRuntime(Path exec, Runtime.Version version, OperatingSystem operatingSystem, Architecture architecture, LibC libc) {
         this.exec = exec;
         this.version = version;
         this.operatingSystem = operatingSystem;
         this.architecture = architecture;
+        this.libc = libc;
     }
 
     public Path getExec() {
@@ -292,8 +321,13 @@ public final class JavaRuntime {
         return architecture;
     }
 
+    public LibC getLibC() {
+        return libc;
+    }
+
     @Override
     public String toString() {
-        return String.format("JavaRuntime[exec=%s, version=%s, os=%s, arch=%s]", exec, version, operatingSystem, architecture);
+        return String.format("JavaRuntime[exec=%s, version=%s, os=%s, arch=%s, libc=%s]",
+                exec, version, operatingSystem, architecture, libc);
     }
 }
