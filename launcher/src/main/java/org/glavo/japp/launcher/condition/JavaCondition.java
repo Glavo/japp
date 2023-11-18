@@ -30,16 +30,17 @@ public final class JavaCondition implements Condition {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean test(JAppRuntimeContext context) {
-        if (version != null && context.getRelease() < version) {
+        if (version != null && context.getJava().getVersion().major() < version) {
             return false;
         }
 
-        if (os != null && !os.test(context.getOS())) {
+        if (os != null && !os.test(context.getJava().getOperatingSystem().getCheckedName())) {
             return false;
         }
 
-        if (arch != null && !arch.test(context.getArch())) {
+        if (arch != null && !arch.test(context.getJava().getArchitecture().getCheckedName())) {
             return false;
         }
 

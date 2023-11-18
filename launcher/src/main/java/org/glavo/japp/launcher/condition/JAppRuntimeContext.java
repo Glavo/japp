@@ -1,5 +1,7 @@
 package org.glavo.japp.launcher.condition;
 
+import org.glavo.japp.launcher.JAppConfigGroup;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -25,61 +27,29 @@ public final class JAppRuntimeContext {
         HOME = PROJECT_DIRECTORY.resolve(".japp");
     }
 
-    private static String normalizeArch(String arch) {
-        switch (arch) {
-            case "x64":
-            case "amd64":
-                return "x86-64";
-            default:
-                return arch;
-        }
-    }
-
-    private static String normalizeOS(String os) {
-        if (os.startsWith("Windows")) {
-            return "windows";
-        }
-        if (os.contains("mac")) {
-            return "macos";
-        }
-        if (os.contains("linux")) {
-            return "linux";
-        }
-        return os.toLowerCase(Locale.ROOT);
-    }
 
     public static Path getHome() {
         return HOME;
     }
 
-    public static JAppRuntimeContext fromCurrentEnvironment() {
-        @SuppressWarnings("deprecation")
-        int release = Runtime.version().major();
+    public static JAppRuntimeContext search(JAppConfigGroup config) {
+        for (JavaRuntime java : JavaRuntime.getAllJava()) {
+            JAppRuntimeContext context = new JAppRuntimeContext(java);
+            if (config.canApply(context)) {
+                return context;
+            }
+        }
 
-        return new JAppRuntimeContext(release,
-                normalizeOS(System.getProperty("os.name")),
-                normalizeArch(System.getProperty("os.arch")));
+        return null;
     }
 
-    private final int release;
-    private final String os;
-    private final String arch;
+    private final JavaRuntime java;
 
-    public JAppRuntimeContext(int release, String os, String arch) {
-        this.release = release;
-        this.os = os;
-        this.arch = arch;
+    public JAppRuntimeContext(JavaRuntime java) {
+        this.java = java;
     }
 
-    public int getRelease() {
-        return release;
-    }
-
-    public String getOS() {
-        return os;
-    }
-
-    public String getArch() {
-        return arch;
+    public JavaRuntime getJava() {
+        return java;
     }
 }

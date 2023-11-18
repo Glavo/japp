@@ -1,7 +1,10 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.TODO;
+import org.glavo.japp.launcher.condition.Condition;
+import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.launcher.condition.JAppRuntimeContext;
+import org.glavo.japp.launcher.condition.JavaRuntime;
 import org.glavo.japp.launcher.maven.MavenResolver;
 
 import java.io.IOException;
@@ -63,12 +66,16 @@ public final class Launcher {
 
         String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";
 
-        JAppRuntimeContext context = JAppRuntimeContext.fromCurrentEnvironment(); // TODO
-
         JAppConfigGroup config = JAppConfigGroup.readFile(Paths.get(args[0]));
+        JAppRuntimeContext context = JAppRuntimeContext.search(config);
+        if (context == null) {
+            System.err.println("Error: Unable to find suitable Java (condition: " + ConditionParser.parse(config.condition) + ")");
+            System.err.println("Java:");
 
-        if (!config.canApply(context)) {
-            System.err.println("Error: No matching Java");
+            for (JavaRuntime java : JavaRuntime.getAllJava()) {
+                System.err.println("  - " + java);
+            }
+
             System.exit(1);
         }
 
@@ -109,7 +116,8 @@ public final class Launcher {
         boolean isFirst = true;
         StringBuilder builder = new StringBuilder(80);
         if (!config.getEnableNativeAccess().isEmpty()) {
-            int release = context.getRelease();
+            @SuppressWarnings("deprecation")
+            int release = context.getJava().getVersion().major();
 
             if (release == 16) {
                 command.add("-Dforeign.restricted=permit");

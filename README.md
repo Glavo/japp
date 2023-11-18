@@ -12,12 +12,13 @@ Features implemented:
 * Supports adding shebang to the header of the file, so it can be executed as easily as a script;
 * Supports adding classpath/module/JVM options conditionally;
 * Download some dependencies from maven repository (or elsewhere) before running;
-* Share data between class files to reduce file size.
+* Share data between class files to reduce file size;
+* * Automatic selection of applicable Java.
 
 Features being implemented:
 
 * Includes some default JVM options that can be easily overridden by the user;
-* Automatic selection of applicable Java;
+
 * Support bundling and loading native libraries;
 * Build time optimization.
 

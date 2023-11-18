@@ -1,11 +1,13 @@
-package org.glavo.japp.launcher.manager;
+package org.glavo.japp.launcher.condition;
+
+import org.glavo.japp.TODO;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.LinkedHashMap;
-import java.util.Locale;
+import java.util.*;
 
 public final class JavaRuntime {
 
@@ -37,6 +39,11 @@ public final class JavaRuntime {
                 return javaHome.resolve("bin/java");
             }
         }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
     }
 
     public enum Architecture {
@@ -67,7 +74,7 @@ public final class JavaRuntime {
         private final boolean is64Bit;
 
         Architecture(boolean is64Bit, String displayName) {
-            this.checkedName = this.toString().toLowerCase(Locale.ROOT);
+            this.checkedName = this.name().toLowerCase(Locale.ROOT).replace("_", "-");
             this.displayName = displayName;
             this.is64Bit = is64Bit;
         }
@@ -81,6 +88,11 @@ public final class JavaRuntime {
         }
 
         public String getDisplayName() {
+            return displayName;
+        }
+
+        @Override
+        public String toString() {
             return displayName;
         }
     }
@@ -208,20 +220,52 @@ public final class JavaRuntime {
         }
     }
 
-    private static final JavaRuntime CURRENT;
+    private static final Map<Path, JavaRuntime> runtimes = new HashMap<>();
 
-    static {
-        JavaRuntime current = null;
+    private static void tryAddJava(Path javaHome) {
         try {
-            current = fromDir(Paths.get(System.getProperty("java.home")));
-        } catch (IOException e) {
-        }
+            Path realJavaHome = javaHome.toRealPath();
+            if (runtimes.containsKey(realJavaHome)) {
+                return;
+            }
 
-        CURRENT = current;
+            JavaRuntime java = fromDir(realJavaHome);
+            runtimes.put(realJavaHome, java);
+
+        } catch (IOException ignored) {
+        }
     }
 
-    public static JavaRuntime fromCurrent() {
-        return CURRENT;
+    private static void searchIn(Path dir) {
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+            for (Path path : stream) {
+                if (!Files.isDirectory(path)) {
+                    continue;
+                }
+
+                tryAddJava(dir);
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    static {
+        if (parseOperatingSystem(System.getProperty("os.name")) == OperatingSystem.LINUX) {
+            searchIn(Paths.get("/usr/lib/jvm"));
+            searchIn(JAppRuntimeContext.getHome().resolve("jvm"));
+            tryAddJava(Paths.get(System.getProperty("java.home")));
+        } else {
+            throw new TODO("Currently only supports Linux");
+        }
+
+    }
+
+    public static Collection<JavaRuntime> getAllJava() {
+        return runtimes.values();
     }
 
     public static JavaRuntime fromDir(Path dir) throws IOException {
@@ -263,19 +307,11 @@ public final class JavaRuntime {
         LibC libc;
         Runtime.Version version;
 
-        String osName = release.get("OS_NAME");
-        if (osName != null) {
-            os = parseOperatingSystem(osName);
-        } else {
-            os = CURRENT.operatingSystem;
-        }
+        String osName = release.getOrDefault("OS_NAME", System.getProperty("os.name"));
+        os = parseOperatingSystem(osName);
 
-        String osArch = release.get("OS_ARCH");
-        if (osArch != null) {
-            arch = parseArchitecture(osArch);
-        } else {
-            arch = CURRENT.getArchitecture();
-        }
+        String osArch = release.getOrDefault("OS_ARCH", System.getProperty("os.arch"));
+        arch = parseArchitecture(osArch);
 
         String libcName = release.get("LIBC");
         if (libcName != null) {
