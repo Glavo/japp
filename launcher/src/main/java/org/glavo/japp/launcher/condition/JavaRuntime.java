@@ -246,8 +246,7 @@ public final class JavaRuntime {
                 if (!Files.isDirectory(path)) {
                     continue;
                 }
-
-                tryAddJava(dir);
+                tryAddJava(path);
             }
         } catch (IOException ignored) {
         }
