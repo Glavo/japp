@@ -8,6 +8,7 @@ public final class JavaCondition implements Condition {
         String version = options.remove("version");
         String os = options.remove("os");
         String arch = options.remove("arch");
+        String libc = options.remove("libc");
 
         if (!options.isEmpty()) {
             throw new IllegalArgumentException("Unknown options: " + options.keySet());
@@ -15,18 +16,20 @@ public final class JavaCondition implements Condition {
 
         return new JavaCondition(
                 version == null ? null : Integer.parseInt(version),
-                MatchList.of(os), MatchList.of(arch)
+                MatchList.of(os), MatchList.of(arch), MatchList.of(libc)
         );
     }
 
     private final Integer version;
     private final MatchList os;
     private final MatchList arch;
+    private final MatchList libc;
 
-    private JavaCondition(Integer version, MatchList os, MatchList arch) {
+    private JavaCondition(Integer version, MatchList os, MatchList arch, MatchList libc) {
         this.version = version;
         this.os = os;
         this.arch = arch;
+        this.libc = libc;
     }
 
     @Override
@@ -44,15 +47,15 @@ public final class JavaCondition implements Condition {
             return false;
         }
 
+        if (libc != null && !libc.test(context.getJava().getLibC().toString())) {
+            return false;
+        }
+
         return true;
     }
 
     @Override
     public String toString() {
-        return "java(" +
-               "version=" + version +
-               ", os=" + os +
-               ", arch=" + arch +
-               ')';
+        return String.format("java(version=%d, os=%s, arch=%s, libc=%s)", version, os, arch, libc);
     }
 }
