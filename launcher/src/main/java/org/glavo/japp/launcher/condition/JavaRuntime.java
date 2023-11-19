@@ -54,10 +54,10 @@ public final class JavaRuntime {
         SPARCV9(true, "SPARC V9"),
         ARM(false, "ARM"),
         AARCH64(true, "AArch64"),
-        MIPS(false, "MIPS"),
-        MIPS64(true, "MIPS64"),
-        MIPSEL(false, "MIPSel"),
-        MIPS64EL(true, "MIPS64el"),
+        MIPS(false, "MIPS (Big-Endian)"),
+        MIPS64(true, "MIPS64 (Big-Endian)"),
+        MIPSEL(false, "MIPS (Little-Endian)"),
+        MIPS64EL(true, "MIPS64 (Little-Endian)"),
         PPC(false, "PowerPC (Big-Endian)"),
         PPC64(true, "PowerPC-64 (Big-Endian)"),
         PPCLE(false, "PowerPC (Little-Endian)"),
@@ -159,6 +159,8 @@ public final class JavaRuntime {
             case "mipsel":
             case "mips32el":
                 return Architecture.MIPSEL;
+            case "riscv32":
+                return Architecture.RISCV32;
             case "riscv64":
                 return Architecture.RISCV64;
             case "ia64":
