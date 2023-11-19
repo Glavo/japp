@@ -1,3 +1,16 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.glavo.japp.boot.decompressor.zstd;
 
 import static org.glavo.japp.boot.decompressor.zstd.Constants.SIZE_OF_SHORT;
@@ -71,22 +84,6 @@ final class Util {
     public static int get24BitLittleEndian(Object inputBase, long inputAddress) {
         return (UnsafeUtil.getShort(inputBase, inputAddress) & 0xFFFF)
                | ((UnsafeUtil.getByte(inputBase, inputAddress + SIZE_OF_SHORT) & 0xFF) << Short.SIZE);
-    }
-
-    public static void put24BitLittleEndian(Object outputBase, long outputAddress, int value) {
-        UnsafeUtil.putShort(outputBase, outputAddress, (short) value);
-        UnsafeUtil.putByte(outputBase, outputAddress + SIZE_OF_SHORT, (byte) (value >>> Short.SIZE));
-    }
-
-    // provides the minimum logSize to safely represent a distribution
-    public static int minTableLog(int inputSize, int maxSymbolValue) {
-        if (inputSize <= 1) {
-            throw new IllegalArgumentException("Not supported. RLE should be used instead"); // TODO
-        }
-
-        int minBitsSrc = highestBit((inputSize - 1)) + 1;
-        int minBitsSymbols = highestBit(maxSymbolValue) + 2;
-        return Math.min(minBitsSrc, minBitsSymbols);
     }
 }
 

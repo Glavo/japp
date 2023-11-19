@@ -1,13 +1,24 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.glavo.japp.boot.decompressor.zstd;
 
 import java.util.Objects;
 import java.util.StringJoiner;
 
-import static java.lang.Math.min;
-import static java.lang.Math.toIntExact;
 import static org.glavo.japp.boot.decompressor.zstd.Util.checkState;
 
-class FrameHeader {
+final class FrameHeader {
     final long headerSize;
     final int windowSize;
     final long contentSize;
@@ -21,16 +32,6 @@ class FrameHeader {
         this.contentSize = contentSize;
         this.dictionaryId = dictionaryId;
         this.hasChecksum = hasChecksum;
-    }
-
-    public int computeRequiredOutputBufferLookBackSize() {
-        if (contentSize < 0) {
-            return windowSize;
-        }
-        if (windowSize < 0) {
-            return toIntExact(contentSize);
-        }
-        return toIntExact(min(windowSize, contentSize));
     }
 
     @Override
