@@ -52,8 +52,8 @@ public final class JavaRuntime {
         IA64(true, "IA-64"),
         SPARC(false, "SPARC"),
         SPARCV9(true, "SPARC V9"),
-        ARM32(false, "ARM32"),
-        ARM64(true, "ARM64"),
+        ARM(false, "ARM"),
+        AARCH64(true, "AArch64"),
         MIPS(false, "MIPS"),
         MIPS64(true, "MIPS64"),
         MIPSEL(false, "MIPSel"),
@@ -111,7 +111,7 @@ public final class JavaRuntime {
 
         if (name.contains("win"))
             return OperatingSystem.WINDOWS;
-        else if (name.contains("mac"))
+        else if (name.contains("mac") || name.contains("darwin"))
             return OperatingSystem.MACOS;
         else if (name.contains("linux"))
             return OperatingSystem.LINUX;
@@ -145,10 +145,10 @@ public final class JavaRuntime {
                 return Architecture.X86;
             case "arm64":
             case "aarch64":
-                return Architecture.ARM64;
+                return Architecture.AARCH64;
             case "arm":
             case "arm32":
-                return Architecture.ARM32;
+                return Architecture.ARM;
             case "mips64":
                 return Architecture.MIPS64;
             case "mips64el":
@@ -197,10 +197,10 @@ public final class JavaRuntime {
                 return Architecture.LOONGARCH64;
             default:
                 if (value.startsWith("armv7")) {
-                    return Architecture.ARM32;
+                    return Architecture.ARM;
                 }
                 if (value.startsWith("armv8") || value.startsWith("armv9")) {
-                    return Architecture.ARM64;
+                    return Architecture.AARCH64;
                 }
         }
 
