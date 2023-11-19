@@ -14,10 +14,6 @@ allprojects {
         mavenCentral()
     }
 
-    tasks.test {
-        useJUnitPlatform()
-    }
-
     tasks.compileJava {
         // TODO: Java 8
         sourceCompatibility = "9"
@@ -47,9 +43,21 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 
     testImplementation(Deps.LZ4)
+    testImplementation(Deps.AIRCOMPRESSOR)
 
     testImplementation(project(":base"))
     testImplementation(project(":boot"))
     testImplementation(project(":launcher"))
     testImplementation(project(":packer"))
+}
+
+tasks.compileTestJava {
+    options.compilerArgs.add("--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    jvmArgs = listOf(
+        "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
+    )
 }
