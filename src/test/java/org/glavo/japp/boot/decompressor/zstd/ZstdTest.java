@@ -19,8 +19,9 @@ public class ZstdTest {
         int len = compressor.compress(bytes, 0, bytes.length, compressed, 0, compressed.length);
 
         byte[] decompressed = new byte[bytes.length];
-        ZstdUtils.decompress(compressed, 0, len, decompressed, 0, decompressed.length);
+        int decompressedLen = ZstdUtils.decompress(compressed, 0, len, decompressed, 0, decompressed.length);
         Assertions.assertArrayEquals(bytes, decompressed);
+        Assertions.assertEquals(bytes.length, decompressedLen);
     }
 
     @Test
