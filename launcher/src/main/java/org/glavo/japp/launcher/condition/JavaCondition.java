@@ -1,5 +1,7 @@
 package org.glavo.japp.launcher.condition;
 
+import org.glavo.japp.util.ToStringBuilder;
+
 import java.util.Map;
 
 public final class JavaCondition implements Condition {
@@ -56,6 +58,11 @@ public final class JavaCondition implements Condition {
 
     @Override
     public String toString() {
-        return String.format("java(version=%d, os=%s, arch=%s, libc=%s)", version, os, arch, libc);
+        return new ToStringBuilder("java", "(", ")")
+                .appendIfNotNull("version", version)
+                .appendIfNotNull("os", os)
+                .appendIfNotNull("arch", arch)
+                .appendIfNotNull("libc", libc)
+                .build();
     }
 }
