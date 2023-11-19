@@ -178,6 +178,7 @@ public final class Launcher {
                 getBootLauncher(),
                 "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
+                "--add-exports=java.base/jdk.internal.misc=" + BOOT_LAUNCHER_MODULE,
                 "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-opens=java.base/java.lang=" + BOOT_LAUNCHER_MODULE,
                 "--module",
