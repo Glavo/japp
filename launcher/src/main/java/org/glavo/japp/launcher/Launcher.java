@@ -69,7 +69,8 @@ public final class Launcher {
         JAppConfigGroup config = JAppConfigGroup.readFile(Paths.get(args[0]));
         JAppRuntimeContext context = JAppRuntimeContext.search(config);
         if (context == null) {
-            System.err.println("Error: Unable to find suitable Java (condition: " + ConditionParser.parse(config.condition) + ")");
+            System.err.println("Error: Unable to find suitable Java");
+            System.err.println("Condition: " + ConditionParser.parse(config.condition));
             System.err.println("Java:");
 
             for (JavaRuntime java : JavaRuntime.getAllJava()) {

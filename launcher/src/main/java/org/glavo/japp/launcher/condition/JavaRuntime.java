@@ -362,7 +362,7 @@ public final class JavaRuntime {
 
     @Override
     public String toString() {
-        return String.format("JavaRuntime[exec=%s, version=%s, os=%s, arch=%s, libc=%s]",
+        return String.format("%s (version=%s, os=%s, arch=%s, libc=%s)",
                 exec, version, operatingSystem, architecture, libc);
     }
 }
