@@ -1,7 +1,6 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.TODO;
-import org.glavo.japp.launcher.condition.Condition;
 import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.launcher.condition.JAppRuntimeContext;
 import org.glavo.japp.launcher.condition.JavaRuntime;
@@ -18,10 +17,10 @@ import java.util.jar.Manifest;
 public final class Launcher {
     private static final String BOOT_LAUNCHER_MODULE = "org.glavo.japp.boot";
 
-    private static Path getBootLauncher() throws IOException {
-        return Paths.get(new Manifest(Launcher.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
+    private static String getBootLauncher() throws IOException {
+        return new Manifest(Launcher.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
                 .getMainAttributes()
-                .getValue("JApp-Boot"));
+                .getValue("JApp-Boot");
     }
 
     private static void appendReferences(StringBuilder builder, List<JAppResourceReference> references) throws Throwable {
@@ -64,8 +63,6 @@ public final class Launcher {
             throw new TODO("Help Message");
         }
 
-        String javaName = System.getProperty("os.name").contains("Win") ? "java.exe" : "java";
-
         JAppConfigGroup config = JAppConfigGroup.readFile(Paths.get(args[0]));
         JAppRuntimeContext context = JAppRuntimeContext.search(config);
         if (context == null) {
@@ -83,7 +80,7 @@ public final class Launcher {
         config.resolve(context);
 
         List<String> command = new ArrayList<>();
-        command.add(Paths.get(System.getProperty("java.home"), "bin", javaName).toString());
+        command.add(context.getJava().getExec().toString());
 
         for (String property : config.getJvmProperties()) {
             command.add("-D" + property);
@@ -178,7 +175,7 @@ public final class Launcher {
 
         Collections.addAll(command,
                 "--module-path",
-                getBootLauncher().toString(),
+                getBootLauncher(),
                 "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
                 "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
