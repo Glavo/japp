@@ -15,8 +15,6 @@ import static org.glavo.japp.classfile.ClassFile.*;
 
 public final class ClassFileCompressor implements Compressor {
 
-    public static final ClassFileCompressor INSTANCE = new ClassFileCompressor();
-
     private static int maxCompressedSize(int input) {
         return input + input / 128 + 16;
     }

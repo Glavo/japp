@@ -46,23 +46,23 @@ final class DefaultCompressor implements Compressor {
                 break;
             case CLASSFILE:
                 try {
-                    result = ClassFileCompressor.INSTANCE.compress(packer, source);
+                    result = Compressors.CLASSFILE.compress(packer, source);
                 } catch (Throwable e) {
                     // Malformed class file
 
                     // TODO: Test ClassFileCompressor
                     e.printStackTrace();
-                    result = Compressor.DEFLATE.compress(packer, source);
+                    result = Compressors.DEFLATE.compress(packer, source);
                 }
                 break;
             case DEFLATE:
-                result = Compressor.DEFLATE.compress(packer, source);
+                result = Compressors.DEFLATE.compress(packer, source);
                 break;
             case LZ4:
-                result = Compressor.LZ4.compress(packer, source);
+                result = Compressors.LZ4.compress(packer, source);
                 break;
             case ZSTD:
-                result = Compressor.ZSTD.compress(packer, source);
+                result = Compressors.ZSTD.compress(packer, source);
                 break;
             default:
                 throw new TODO("Method: " + method);
