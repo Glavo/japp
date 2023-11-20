@@ -1,4 +1,4 @@
-package org.glavo.japp.boot.fs;
+package org.glavo.japp.boot.jappfs;
 
 import org.glavo.japp.TODO;
 

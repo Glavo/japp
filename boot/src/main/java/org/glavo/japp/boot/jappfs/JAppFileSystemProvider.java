@@ -1,4 +1,4 @@
-package org.glavo.japp.boot.fs;
+package org.glavo.japp.boot.jappfs;
 
 import org.glavo.japp.boot.JAppReader;
 
@@ -11,7 +11,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
