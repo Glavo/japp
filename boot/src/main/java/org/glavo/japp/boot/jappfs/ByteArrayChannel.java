@@ -10,7 +10,7 @@ final class ByteArrayChannel implements SeekableByteChannel {
 
     private byte[] array;
     private final int end;
-    private int offset;
+    private int position;
 
     public ByteArrayChannel(byte[] array) {
         this.array = array;
@@ -30,11 +30,13 @@ final class ByteArrayChannel implements SeekableByteChannel {
 
     @Override
     public long position() throws IOException {
-        return offset;
+        ensureOpen();
+        return position;
     }
 
     @Override
     public long size() throws IOException {
+        ensureOpen();
         return end;
     }
 
@@ -42,13 +44,13 @@ final class ByteArrayChannel implements SeekableByteChannel {
     public int read(ByteBuffer dst) throws IOException {
         ensureOpen();
 
-        if (offset == end) {
+        if (position >= end) {
             return -1;
         }
 
-        int n = Math.min(dst.remaining(), end - offset);
-        dst.put(array, offset, n);
-        offset += n;
+        int n = Math.min(dst.remaining(), end - position);
+        dst.put(array, position, n);
+        position += n;
         return n;
     }
 
@@ -64,7 +66,11 @@ final class ByteArrayChannel implements SeekableByteChannel {
 
     @Override
     public SeekableByteChannel position(long newPosition) throws IOException {
-        throw new UnsupportedOperationException();
+        if (newPosition < 0 || newPosition >= Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Illegal position " + newPosition);
+        }
+        this.position = Math.min((int) newPosition, end);
+        return this;
     }
 
     @Override
