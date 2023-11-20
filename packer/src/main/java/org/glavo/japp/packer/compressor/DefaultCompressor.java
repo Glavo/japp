@@ -68,9 +68,6 @@ final class DefaultCompressor implements Compressor {
                 throw new TODO("Method: " + method);
         }
 
-        if (result.getLength() < source.length) {
-            return result;
-        }
-        return new CompressResult(source);
+        return result.getLength() < source.length ? result : new CompressResult(source);
     }
 }
