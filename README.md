@@ -13,7 +13,7 @@ Features implemented:
 * Supports adding classpath/module/JVM options conditionally;
 * Download some dependencies from maven repository (or elsewhere) before running;
 * Share data between class files to reduce file size;
-* * Automatic selection of applicable Java.
+* Automatic selection of applicable Java.
 
 Features being implemented:
 
