@@ -53,12 +53,12 @@ public final class JAppFileStore extends FileStore {
 
     @Override
     public long getUsableSpace() throws IOException {
-        throw new UnsupportedOperationException("getUsableSpace");
+        return 0L;
     }
 
     @Override
     public long getUnallocatedSpace() throws IOException {
-        throw new UnsupportedOperationException("getUnallocatedSpace");
+        return 0L;
     }
 
     @Override
