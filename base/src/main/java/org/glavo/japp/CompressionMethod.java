@@ -4,5 +4,6 @@ public enum CompressionMethod {
     NONE,
     CLASSFILE,
     LZ4,
+    ZSTD,
     DEFLATE;
 }

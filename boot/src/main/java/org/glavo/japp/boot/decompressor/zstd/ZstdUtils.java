@@ -15,7 +15,7 @@ package org.glavo.japp.boot.decompressor.zstd;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
+import static org.glavo.japp.boot.decompressor.zstd.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 
 public final class ZstdUtils {
     private static final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();

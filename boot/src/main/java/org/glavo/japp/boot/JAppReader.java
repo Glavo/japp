@@ -5,6 +5,7 @@ import org.glavo.japp.TODO;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.lz4.LZ4Decompressor;
+import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.IOUtils;
 
 import java.io.ByteArrayInputStream;
@@ -97,24 +98,24 @@ public final class JAppReader implements Closeable {
             long offset,
             int size, int compressedSize,
             byte[] output) throws IOException {
+        if (method == CompressionMethod.NONE) {
+            IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(output));
+            return;
+        }
+
+
+        ByteBuffer compressed = ByteBuffer.allocate(compressedSize);
+        IOUtils.readFully(channel.position(offset + baseOffset), compressed);
+        compressed.flip();
+
         switch (method) {
-            case NONE: {
-                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(output));
-                break;
-            }
             case CLASSFILE: {
-                ByteBuffer compressed = ByteBuffer.allocate(compressedSize);
-                IOUtils.readFully(channel.position(offset + baseOffset), compressed);
-                compressed.flip();
                 ClassFileDecompressor.decompress(this, compressed, output);
                 break;
             }
             case DEFLATE: {
-                byte[] compressed = new byte[compressedSize];
-                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
-
                 Inflater inflater = new Inflater();
-                inflater.setInput(compressed);
+                inflater.setInput(compressed.array());
 
                 try {
                     int count = 0;
@@ -132,9 +133,11 @@ public final class JAppReader implements Closeable {
                 break;
             }
             case LZ4: {
-                byte[] compressed = new byte[compressedSize];
-                IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(compressed));
-                LZ4Decompressor.decompress(compressed, output);
+                LZ4Decompressor.decompress(compressed.array(), output);
+                break;
+            }
+            case ZSTD: {
+                ZstdUtils.decompress(compressed.array(), 0, compressedSize, output, 0, output.length);
                 break;
             }
             default: {

@@ -1,5 +1,6 @@
 package org.glavo.japp.packer.compressor;
 
+import com.github.luben.zstd.Zstd;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
 import org.glavo.japp.CompressionMethod;
@@ -22,6 +23,18 @@ public interface Compressor {
         byte[] result = new byte[compressor.maxCompressedLength(source.length)];
         int len = compressor.compress(source, result);
         return new CompressResult(CompressionMethod.LZ4, result, 0, len);
+    };
+
+    Compressor ZSTD = (context, source) -> {
+        int maxCompressedSize = source.length + (source.length >>> 8);
+
+        if (source.length < 128 * 1024) {
+            maxCompressedSize += (128 * 1024 - source.length) >>> 11;
+        }
+
+        byte[] res = new byte[maxCompressedSize];
+        long n = Zstd.compressByteArray(res, 0, res.length, source, 0, source.length, Zstd.defaultCompressionLevel());
+        return new CompressResult(CompressionMethod.ZSTD, res, 0, (int) n);
     };
 
     Compressor DEFLATE = (context, source) -> {

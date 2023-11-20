@@ -12,6 +12,7 @@ import java.util.Map;
 final class DefaultCompressor implements Compressor {
 
     private final Map<String, CompressionMethod> map = new HashMap<>();
+    private final CompressionMethod defaultMethod = CompressionMethod.ZSTD;
 
     public DefaultCompressor() {
         // map.put("class", CompressionMethod.CLASSFILE);
@@ -37,7 +38,7 @@ final class DefaultCompressor implements Compressor {
             return new CompressResult(source);
         }
 
-        CompressionMethod method = map.getOrDefault(ext, CompressionMethod.DEFLATE);
+        CompressionMethod method = map.getOrDefault(ext, defaultMethod);
         CompressResult result;
         switch (method) {
             case NONE:
@@ -59,6 +60,9 @@ final class DefaultCompressor implements Compressor {
                 break;
             case LZ4:
                 result = Compressor.LZ4.compress(packer, source);
+                break;
+            case ZSTD:
+                result = Compressor.ZSTD.compress(packer, source);
                 break;
             default:
                 throw new TODO("Method: " + method);
