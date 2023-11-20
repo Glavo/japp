@@ -103,7 +103,6 @@ public final class JAppReader implements Closeable {
             return;
         }
 
-
         ByteBuffer compressed = ByteBuffer.allocate(compressedSize);
         IOUtils.readFully(channel.position(offset + baseOffset), compressed);
         compressed.flip();
@@ -119,7 +118,7 @@ public final class JAppReader implements Closeable {
 
                 try {
                     int count = 0;
-                    while (count < output.length) {
+                    while (count < size) {
                         if (inflater.finished()) {
                             throw new IOException("Unexpected end of data");
                         }
@@ -137,7 +136,7 @@ public final class JAppReader implements Closeable {
                 break;
             }
             case ZSTD: {
-                ZstdUtils.decompress(compressed.array(), 0, compressedSize, output, 0, output.length);
+                ZstdUtils.decompress(compressed.array(), 0, compressedSize, output, 0, size);
                 break;
             }
             default: {
