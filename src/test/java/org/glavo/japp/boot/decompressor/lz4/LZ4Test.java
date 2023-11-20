@@ -25,10 +25,10 @@ public class LZ4Test {
 
     @Test
     void testDecompressor() throws Throwable {
-        for (int len = 0; len < 100; len++) {
+        for (int len = 0; len <= 128; len++) {
             for (int seed = 0; seed < 100; seed++) {
                 byte[] bytes = new byte[len];
-                new Random(0).nextBytes(bytes);
+                new Random(seed).nextBytes(bytes);
                 try {
                     testDecompress(bytes);
                 } catch (Throwable e) {
