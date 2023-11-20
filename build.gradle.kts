@@ -43,7 +43,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 
     testImplementation(Deps.LZ4)
-    testImplementation(Deps.AIRCOMPRESSOR)
+    testImplementation(Deps.ZSTD_JNI)
 
     testImplementation(project(":base"))
     testImplementation(project(":boot"))

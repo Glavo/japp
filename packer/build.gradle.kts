@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":launcher"))
 
     implementation(Deps.LZ4)
+    implementation(Deps.ZSTD_JNI)
 }
 
 tasks.jar {
