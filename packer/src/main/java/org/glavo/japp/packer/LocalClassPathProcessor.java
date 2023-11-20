@@ -22,7 +22,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class LocalClassPathProcessor extends ClassPathProcessor {
-    
+
     public static final LocalClassPathProcessor INSTANCE = new LocalClassPathProcessor();
 
     private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
@@ -117,6 +117,10 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 String name = entry.getName();
+
+                if (name.endsWith("/")) {
+                    continue;
+                }
 
                 Map<String, JAppResource> groupEntries = null;
 
