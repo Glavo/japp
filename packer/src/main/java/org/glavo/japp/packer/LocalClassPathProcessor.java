@@ -223,7 +223,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
         if (attributes.isDirectory()) {
             if (isModulePath) {
-                Path mi = p.resolve("module-info/module-info.java");
+                Path mi = p.resolve("module-info.class");
                 if (!Files.exists(mi)) {
                     scanFiles = true;
                 }
