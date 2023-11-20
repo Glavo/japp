@@ -30,7 +30,7 @@ public final class Compressors {
         }
 
         byte[] res = new byte[maxCompressedSize];
-        long n = Zstd.compressByteArray(res, 0, res.length, source, 0, source.length, Zstd.defaultCompressionLevel());
+        long n = Zstd.compressByteArray(res, 0, res.length, source, 0, source.length, 8);
         return new CompressResult(CompressionMethod.ZSTD, res, 0, (int) n);
     };
 
