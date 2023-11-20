@@ -113,7 +113,7 @@ public final class JAppReader implements Closeable {
                 break;
             }
             case DEFLATE: {
-                Inflater inflater = new Inflater();
+                Inflater inflater = new Inflater(true);
                 inflater.setInput(compressed.array());
 
                 try {
@@ -122,7 +122,7 @@ public final class JAppReader implements Closeable {
                         if (inflater.finished()) {
                             throw new IOException("Unexpected end of data");
                         }
-                        count += inflater.inflate(output);
+                        count += inflater.inflate(output, count, output.length - count);
                     }
                 } catch (DataFormatException e) {
                     throw new IOException(e);

@@ -38,7 +38,7 @@ public interface Compressor {
     };
 
     Compressor DEFLATE = (context, source) -> {
-        Deflater deflater = new Deflater();
+        Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true);
         deflater.setInput(source);
         deflater.finish();
 
