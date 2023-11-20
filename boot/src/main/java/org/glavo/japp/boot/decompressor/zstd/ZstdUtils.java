@@ -13,6 +13,8 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
+import java.lang.ref.Reference;
+
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static org.glavo.japp.boot.decompressor.zstd.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
@@ -30,7 +32,12 @@ public final class ZstdUtils {
         long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
         long outputLimit = outputAddress + maxOutputLength;
 
-        return decompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
+        try {
+            return decompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
+        } finally {
+            Reference.reachabilityFence(input);
+            Reference.reachabilityFence(output);
+        }
     }
 
     private static void verifyRange(byte[] data, int offset, int length) {
