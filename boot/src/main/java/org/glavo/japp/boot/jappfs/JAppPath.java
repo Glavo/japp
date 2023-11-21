@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public final class JAppPath implements Path {
@@ -64,9 +66,7 @@ public final class JAppPath implements Path {
 
     @Override
     public Path getParent() {
-
-
-        return null;
+        return null; // TODO
     }
 
     private String[] getPathElements() {
@@ -153,7 +153,6 @@ public final class JAppPath implements Path {
             return false;
         }
 
-
         int n = thisElements.length - otherElements.length;
         for (int i = 0; i < otherElements.length; i++) {
             if (!thisElements[n + i].equals(otherElements[i])) {
@@ -165,7 +164,44 @@ public final class JAppPath implements Path {
 
     @Override
     public Path normalize() {
-        throw new TODO();
+        int len = path.length();
+        if (len == 0 || (!path.contains("./") && path.charAt(len - 1) != '.')) {
+            return this;
+        }
+
+        List<String> list = new ArrayList<>();
+        String[] elements = getPathElements();
+
+        for (String element : elements) {
+            if (element.equals(".")) {
+                // ignored
+            } else if (element.equals("..")) {
+                int lastIndex = list.size() - 1;
+                if (lastIndex >= 0) {
+                    list.remove(lastIndex);
+                }
+            } else {
+                list.add(element);
+            }
+        }
+
+        if (list.isEmpty()) {
+            return this.isAbsolute() ? fs.getRootPath() : new JAppPath(fs, "", true);
+        }
+
+        StringBuilder res = new StringBuilder(path.length());
+        if (this.isAbsolute()) {
+            res.append('/');
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0 || this.isAbsolute()) {
+                res.append('/');
+            }
+            res.append(list.get(i));
+        }
+
+        return new JAppPath(fs, res.toString(), true);
     }
 
     @Override
