@@ -23,7 +23,7 @@ public final class JAppFileSystem extends FileSystem {
 
     JAppFileSystem(JAppFileSystemProvider provider, JAppReader reader) throws IOException {
         this.provider = provider;
-        this.reader = JAppReader.getSystemReader();
+        this.reader = reader;
     }
 
     @Override

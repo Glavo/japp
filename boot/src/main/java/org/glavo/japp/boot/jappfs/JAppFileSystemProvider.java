@@ -22,7 +22,11 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     private final ReentrantLock lock = new ReentrantLock();
 
     public JAppFileSystemProvider() throws IOException {
-        this.fileSystem = new JAppFileSystem(this, JAppReader.getSystemReader());
+        this(JAppReader.getSystemReader());
+    }
+
+    public JAppFileSystemProvider(JAppReader reader) throws IOException {
+        this.fileSystem = new JAppFileSystem(this, reader);
     }
 
     @Override
