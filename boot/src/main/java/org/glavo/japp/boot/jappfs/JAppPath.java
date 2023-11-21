@@ -61,12 +61,25 @@ public final class JAppPath implements Path {
             return null;
         }
 
-        return new JAppPath(fs, path.substring(off + 1));
+        return new JAppPath(fs, path.substring(off + 1), true);
     }
 
     @Override
     public Path getParent() {
-        return null; // TODO
+        if (path.isEmpty() || path.equals("/")) {
+            return null;
+        }
+
+        int off = path.lastIndexOf('/');
+        if (off < 0) {
+            return null;
+        }
+
+        if (off == 0) {
+            return fs.getRootPath();
+        }
+
+        return new JAppPath(fs, path.substring(0, off), true);
     }
 
     private String[] getPathElements() {
