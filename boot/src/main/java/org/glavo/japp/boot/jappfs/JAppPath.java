@@ -252,7 +252,7 @@ public final class JAppPath implements Path {
 
     @Override
     public Path toRealPath(LinkOption... options) throws IOException {
-        throw new TODO();
+        return toAbsolutePath().normalize(); // TODO
     }
 
     @Override
