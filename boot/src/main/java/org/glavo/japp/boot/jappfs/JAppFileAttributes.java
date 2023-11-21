@@ -6,6 +6,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
 public class JAppFileAttributes implements BasicFileAttributes {
+
+    private final JAppFileSystem.Node node;
+
+    public JAppFileAttributes(JAppFileSystem.Node node) {
+        this.node = node;
+    }
+
     @Override
     public FileTime lastModifiedTime() {
         throw new TODO();

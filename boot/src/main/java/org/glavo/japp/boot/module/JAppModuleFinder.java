@@ -38,10 +38,11 @@ public final class JAppModuleFinder implements ModuleFinder {
         return () -> {
             Set<String> packages = new HashSet<>();
             for (String name : group.getResources().keySet()) {
-                if (name.endsWith(".class") && !name.startsWith("META-INF/") && name.contains("/")) {
+                if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
                     int index = name.lastIndexOf("/");
-                    assert index >= 0;
-                    packages.add(name.substring(0, index).replace('/', '.'));
+                    if (index >= 0) {
+                        packages.add(name.substring(0, index).replace('/', '.'));
+                    }
                 }
             }
             return packages;
@@ -54,10 +55,11 @@ public final class JAppModuleFinder implements ModuleFinder {
         Set<String> packages = new HashSet<>();
 
         for (String name : group.getResources().keySet()) {
-            if (name.endsWith(".class") && !name.startsWith("META-INF/") && name.contains("/")) {
+            if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
                 int index = name.lastIndexOf("/");
-                assert index >= 0;
-                packages.add(name.substring(0, index).replace('/', '.'));
+                if (index >= 0) {
+                    packages.add(name.substring(0, index).replace('/', '.'));
+                }
             } else if (name.startsWith(SERVICES_PREFIX)) {
                 String sn = name.substring(SERVICES_PREFIX.length());
                 if (sn.contains("/")) {

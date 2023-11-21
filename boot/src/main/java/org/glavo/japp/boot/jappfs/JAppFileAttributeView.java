@@ -9,9 +9,11 @@ import java.nio.file.attribute.FileTime;
 
 public final class JAppFileAttributeView implements BasicFileAttributeView {
 
+    private final JAppPath path;
     private final boolean isJAppView;
 
-    public JAppFileAttributeView(boolean isJAppView) {
+    public JAppFileAttributeView(JAppPath path, boolean isJAppView) {
+        this.path = path;
         this.isJAppView = isJAppView;
     }
 
