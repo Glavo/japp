@@ -2,16 +2,21 @@ package org.glavo.japp.boot;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 
 public enum JAppResourceRoot {
-    MODULES("/modules"),
-    CLASSPATH("/classpath"),
-    RESOURCE("/resources");
+    MODULES, CLASSPATH, RESOURCE;
 
+    private final String rootName;
     private final String pathPrefix;
 
-    JAppResourceRoot(String pathPrefix) {
-        this.pathPrefix = pathPrefix;
+    JAppResourceRoot() {
+        this.rootName = name().toLowerCase(Locale.ROOT);
+        this.pathPrefix = '/' + rootName;
+    }
+
+    public String getRootName() {
+        return rootName;
     }
 
     public String getPathPrefix() {

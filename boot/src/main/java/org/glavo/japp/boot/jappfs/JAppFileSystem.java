@@ -1,6 +1,9 @@
 package org.glavo.japp.boot.jappfs;
 
 import org.glavo.japp.boot.JAppReader;
+import org.glavo.japp.boot.JAppResource;
+import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.boot.JAppResourceRoot;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -161,7 +164,7 @@ public final class JAppFileSystem extends FileSystem {
                     break;
                 case '[':
                     inClass++;
-                    firstIndexInClass = i+1;
+                    firstIndexInClass = i + 1;
                     sb.append('[');
                     break;
                 case ']':
@@ -206,5 +209,162 @@ public final class JAppFileSystem extends FileSystem {
             }
         }
         return sb.toString();
+    }
+
+    public static abstract class Node {
+        public abstract String getName();
+    }
+
+    public static abstract class DirectoryNode<S extends Node> extends Node {
+        protected volatile List<S> children;
+
+        public List<S> getChildren() {
+            return children;
+        }
+
+        @Override
+        public String toString() {
+            return this.getClass().getSimpleName() + (children == null ? "[<unresolved>]" : children);
+        }
+    }
+
+    public static final class RootNode extends DirectoryNode<ResourceRootNode> {
+        public RootNode(List<ResourceRootNode> children) {
+            this.children = children;
+        }
+
+        @Override
+        public String getName() {
+            return "";
+        }
+    }
+
+    public static final class ResourceRootNode extends DirectoryNode<ResourceGroupNode> {
+        private final JAppResourceRoot root;
+
+        public ResourceRootNode(JAppResourceRoot root, List<ResourceGroupNode> children) {
+            this.root = root;
+            this.children = children;
+        }
+
+        public JAppResourceRoot getRoot() {
+            return root;
+        }
+
+        @Override
+        public String getName() {
+            return root.getRootName();
+        }
+    }
+
+    public static final class ResourceGroupNode extends DirectoryNode<Node> {
+        private final JAppResourceGroup group;
+
+        public ResourceGroupNode(JAppResourceGroup group) {
+            this.group = group;
+        }
+
+        @Override
+        public String getName() {
+            return group.getName();
+        }
+
+        private static void put(List<Node> root, JAppResource resource) {
+            String[] paths = resource.getName().split("/");
+            if (paths.length < 1) {
+                throw new AssertionError("Resource: " + resource);
+            }
+
+            String fileName = paths[paths.length - 1];
+
+            List<Node> current = root;
+            for (int i = 0; i < paths.length - 1; i++) {
+                String name = paths[i];
+                SubDirectoryNode dir = null;
+
+                for (Node node : current) {
+                    if (node.getName().equals(name)) {
+                        if (!(node instanceof SubDirectoryNode)) {
+                            throw new AssertionError();
+                        }
+
+                        dir = (SubDirectoryNode) node;
+                        break;
+                    }
+                }
+
+                if (dir == null) {
+                    dir = new SubDirectoryNode(name);
+                    current.add(dir);
+                }
+
+                current = dir.children;
+            }
+
+            current.add(new ResourceNode(fileName, resource));
+        }
+
+        private List<Node> resolve() {
+            List<Node> list = new ArrayList<>();
+
+            for (JAppResource resource : group.getResources().values()) {
+                put(list, resource);
+            }
+
+            return list;
+        }
+
+        @Override
+        public List<Node> getChildren() {
+            if (this.children != null) {
+                return this.children;
+            }
+
+            synchronized (this) {
+                if (this.children != null) {
+                    return this.children;
+                }
+
+                return this.children = resolve();
+            }
+        }
+    }
+
+    public static final class SubDirectoryNode extends DirectoryNode<Node> {
+        private final String name;
+
+        public SubDirectoryNode(String name) {
+            this.name = name;
+            this.children = new ArrayList<>();
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+    }
+
+    public static final class ResourceNode extends Node {
+        private final String name;
+        private final JAppResource resource;
+
+        public ResourceNode(String name, JAppResource resource) {
+            this.resource = resource;
+            this.name = name;
+        }
+
+        public JAppResource getResource() {
+            return resource;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public String toString() {
+            return "ResourceNode[" + resource + "]";
+        }
     }
 }

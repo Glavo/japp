@@ -113,8 +113,6 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     public void checkAccess(Path path, AccessMode... modes) throws IOException {
         JAppPath jappPath = toJAppPath(path);
 
-        boolean w = false;
-        boolean x = false;
         for (AccessMode mode : modes) {
             switch (mode) {
                 case READ:
