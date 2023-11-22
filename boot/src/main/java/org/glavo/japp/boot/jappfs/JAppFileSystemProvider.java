@@ -57,39 +57,41 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     @Override
     public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
         JAppPath jappPath = toJAppPath(path);
+
         return null; // TODO
     }
 
     @Override
     public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
         JAppPath jappPath = toJAppPath(dir);
+
         return null; // TODO
     }
 
     @Override
     public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
         JAppPath jappPath = toJAppPath(dir);
-        // TODO
+        throw new ReadOnlyFileSystemException();
     }
 
     @Override
     public void delete(Path path) throws IOException {
         JAppPath jappPath = toJAppPath(path);
-        // TODO
+        throw new ReadOnlyFileSystemException();
     }
 
     @Override
     public void copy(Path source, Path target, CopyOption... options) throws IOException {
         JAppPath jappSource = toJAppPath(source);
         JAppPath jappTarget = toJAppPath(target);
-        // TODO
+        throw new ReadOnlyFileSystemException();
     }
 
     @Override
     public void move(Path source, Path target, CopyOption... options) throws IOException {
         JAppPath jappSource = toJAppPath(source);
         JAppPath jappTarget = toJAppPath(target);
-        // TODO
+        throw new ReadOnlyFileSystemException();
     }
 
     @Override

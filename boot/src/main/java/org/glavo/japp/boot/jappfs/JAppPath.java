@@ -13,24 +13,24 @@ import java.util.Objects;
 
 public final class JAppPath implements Path {
 
-    private final JAppFileSystem fs;
+    private final JAppFileSystem fileSystem;
     private final String path;
 
     private String[] pathElements;
 
-    JAppPath(JAppFileSystem fs, String path) {
-        this.fs = fs;
+    JAppPath(JAppFileSystem fileSystem, String path) {
+        this.fileSystem = fileSystem;
         this.path = normalize(path);
     }
 
-    JAppPath(JAppFileSystem fs, String path, boolean normalized) {
-        this.fs = fs;
+    JAppPath(JAppFileSystem fileSystem, String path, boolean normalized) {
+        this.fileSystem = fileSystem;
         this.path = normalized ? path : normalize(path);
     }
 
     @Override
-    public FileSystem getFileSystem() {
-        return fs;
+    public JAppFileSystem getFileSystem() {
+        return fileSystem;
     }
 
     @Override
@@ -41,7 +41,7 @@ public final class JAppPath implements Path {
     @Override
     public Path getRoot() {
         if (this.isAbsolute()) {
-            return fs.getRootPath();
+            return fileSystem.getRootPath();
         } else {
             return null;
         }
@@ -61,7 +61,7 @@ public final class JAppPath implements Path {
             return null;
         }
 
-        return new JAppPath(fs, path.substring(off + 1), true);
+        return new JAppPath(fileSystem, path.substring(off + 1), true);
     }
 
     @Override
@@ -76,10 +76,10 @@ public final class JAppPath implements Path {
         }
 
         if (off == 0) {
-            return fs.getRootPath();
+            return fileSystem.getRootPath();
         }
 
-        return new JAppPath(fs, path.substring(0, off), true);
+        return new JAppPath(fileSystem, path.substring(0, off), true);
     }
 
     private String[] getPathElements() {
@@ -98,7 +98,7 @@ public final class JAppPath implements Path {
     @Override
     public Path getName(int index) {
         try {
-            return new JAppPath(fs, getPathElements()[index]);
+            return new JAppPath(fileSystem, getPathElements()[index]);
         } catch (ArrayIndexOutOfBoundsException e) {
             throw new IllegalArgumentException();
         }
@@ -126,7 +126,7 @@ public final class JAppPath implements Path {
             }
             newPath = builder.toString();
         }
-        return new JAppPath(fs, newPath, true);
+        return new JAppPath(fileSystem, newPath, true);
     }
 
     @Override
@@ -199,7 +199,7 @@ public final class JAppPath implements Path {
         }
 
         if (list.isEmpty()) {
-            return this.isAbsolute() ? fs.getRootPath() : new JAppPath(fs, "", true);
+            return this.isAbsolute() ? fileSystem.getRootPath() : new JAppPath(fileSystem, "", true);
         }
 
         StringBuilder res = new StringBuilder(path.length());
@@ -214,7 +214,7 @@ public final class JAppPath implements Path {
             res.append(list.get(i));
         }
 
-        return new JAppPath(fs, res.toString(), true);
+        return new JAppPath(fileSystem, res.toString(), true);
     }
 
     @Override
@@ -226,7 +226,7 @@ public final class JAppPath implements Path {
         if (o.path.isEmpty()) {
             return this;
         }
-        return new JAppPath(fs, path + '/' + o.path, true);
+        return new JAppPath(fileSystem, path + '/' + o.path, true);
     }
 
     @Override
@@ -247,7 +247,7 @@ public final class JAppPath implements Path {
     public Path toAbsolutePath() {
         if (isAbsolute())
             return this;
-        return new JAppPath(fs, "/" + path);
+        return new JAppPath(fileSystem, "/" + path);
     }
 
     @Override
