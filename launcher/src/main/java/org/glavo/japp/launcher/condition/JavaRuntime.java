@@ -25,7 +25,6 @@ public final class JavaRuntime {
 
             JavaRuntime java = fromDir(realJavaHome);
             runtimes.put(realJavaHome, java);
-
         } catch (IOException ignored) {
         }
     }
@@ -46,15 +45,41 @@ public final class JavaRuntime {
         }
     }
 
+    private static void searchByJInfoFilesIn(Path dir) {
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.jinfo")) {
+            out:
+            for (Path path : stream) {
+                if (!Files.isRegularFile(path)) {
+                    continue;
+                }
+
+                for (String line : Files.readAllLines(path)) {
+                    if (line.startsWith("name=")) {
+                        tryAddJava(Paths.get("/usr/lib/jvm/" + line.substring("name=".length())));
+                        continue out;
+                    }
+
+                    if (line.isEmpty()) {
+                        break;
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
     static {
         if (OperatingSystem.parseOperatingSystem(System.getProperty("os.name")) == OperatingSystem.LINUX) {
-            searchIn(Paths.get("/usr/lib/jvm"));
+            searchByJInfoFilesIn(Paths.get("/usr/lib/jvm"));
             searchIn(JAppRuntimeContext.getHome().resolve("jvm"));
             tryAddJava(Paths.get(System.getProperty("java.home")));
         } else {
             throw new TODO("Currently only supports Linux");
         }
-
     }
 
     public static Collection<JavaRuntime> getAllJava() {
@@ -158,5 +183,16 @@ public final class JavaRuntime {
     public String toString() {
         return String.format("%s (version=%s, os=%s, arch=%s, libc=%s)",
                 exec, version, operatingSystem, architecture, libc);
+    }
+
+    public static void main(String[] args) {
+        if (runtimes.isEmpty()) {
+            System.out.println("Java runtime not found");
+        } else {
+            System.out.println("Java runtime found:");
+            for (JavaRuntime value : runtimes.values()) {
+                System.out.println("  - " + value);
+            }
+        }
     }
 }
