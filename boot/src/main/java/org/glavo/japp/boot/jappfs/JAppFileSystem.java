@@ -17,7 +17,7 @@ public final class JAppFileSystem extends FileSystem {
     private final JAppFileSystemProvider provider;
     private final JAppReader reader;
 
-    private final JAppPath root = new JAppPath(this, "/");
+    private final JAppPath root = new JAppPath(this, "/", true);
     private final List<Path> roots = Collections.singletonList(root);
     private static final Set<String> supportedFileAttributeViews = Collections.singleton("basic");
 
