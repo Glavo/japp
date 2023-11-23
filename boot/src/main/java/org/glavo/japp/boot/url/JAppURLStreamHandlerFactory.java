@@ -59,9 +59,6 @@ public class JAppURLStreamHandlerFactory implements URLStreamHandlerFactory {
                 String name = prefix + protocol + ".Handler";
                 try {
                     Class<?> cls = Class.forName(name);
-
-                    // TODO: Lookup in JAppClassLoader
-
                     handler = (URLStreamHandler) cls.newInstance();
                     break;
                 } catch (Exception ignored) {

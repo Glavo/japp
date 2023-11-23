@@ -54,7 +54,6 @@ public class JAppURLConnection extends URLConnection {
     }
 
     private MalformedURLException invalidURL() {
-
         return new MalformedURLException("Invalid URL: " + this.url);
     }
 
