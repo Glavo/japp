@@ -169,15 +169,20 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
     }
 
     public static void addDir(JAppPacker packer, Path dir, boolean modulePath) throws IOException {
+        String name;
         if (modulePath) {
-            throw new TODO();
+            try (InputStream input = Files.newInputStream(dir.resolve("module-info.class"))) {
+                name = readModuleName(input);
+            }
+        } else {
+            name = null;
         }
 
-        JAppResourceGroup group = new JAppResourceGroup(null);
+        JAppResourceGroup group = new JAppResourceGroup(name);
         JAppResourceReference reference = new JAppResourceReference.Local(null, packer.groups.size());
         packer.groups.add(group);
         if (modulePath) {
-            throw new TODO();
+            packer.current.modulePath.add(reference);
         } else {
             packer.current.classPath.add(reference);
         }
