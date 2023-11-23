@@ -62,6 +62,10 @@ public final class JAppReader implements Closeable {
         this.resources = new LinkedHashMap<>();
     }
 
+    public boolean isOpen() {
+        return channel.isOpen();
+    }
+
     @Override
     public void close() throws IOException {
         channel.close();

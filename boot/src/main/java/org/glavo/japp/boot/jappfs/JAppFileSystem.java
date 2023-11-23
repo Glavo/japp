@@ -33,12 +33,12 @@ public final class JAppFileSystem extends FileSystem {
 
     @Override
     public void close() throws IOException {
-        throw new UnsupportedOperationException();
+        reader.close();
     }
 
     @Override
     public boolean isOpen() {
-        return true;
+        return reader.isOpen();
     }
 
     @Override
