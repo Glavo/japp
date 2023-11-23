@@ -19,6 +19,7 @@ public final class MavenClassPathProcessor extends ClassPathProcessor {
     public void process(JAppPacker packer, String path, boolean isModulePath, Map<String, String> options) throws Throwable {
         boolean bundle = !"false".equals(options.remove("bundle"));
         String repo = options.remove("repository");
+        boolean verify = !"false".equals(options.remove("verify")); // TODO
 
         if (!options.isEmpty()) {
             throw new IllegalArgumentException("Unrecognized options: " + options.keySet());
@@ -41,8 +42,7 @@ public final class MavenClassPathProcessor extends ClassPathProcessor {
         } else {
             String name;
             if (isModulePath) {
-                // TODO
-                ModuleFinder finder = ModuleFinder.of(file);
+                ModuleFinder finder = ModuleFinder.of(file); // TODO: need opt
                 Set<ModuleReference> all = finder.findAll();
                 assert all.size() == 1;
                 name = all.iterator().next().descriptor().name();
