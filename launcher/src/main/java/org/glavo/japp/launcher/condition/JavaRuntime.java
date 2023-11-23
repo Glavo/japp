@@ -1,6 +1,9 @@
 package org.glavo.japp.launcher.condition;
 
 import org.glavo.japp.TODO;
+import org.glavo.japp.launcher.platform.Architecture;
+import org.glavo.japp.launcher.platform.LibC;
+import org.glavo.japp.launcher.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
@@ -10,217 +13,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public final class JavaRuntime {
-
-    public enum OperatingSystem {
-        WINDOWS("Windows"),
-        LINUX("Linux"),
-        MACOS("macOS");
-
-        private final String checkedName;
-        private final String displayName;
-
-        OperatingSystem(String displayName) {
-            this.checkedName = this.name().toLowerCase(Locale.ROOT);
-            this.displayName = displayName;
-        }
-
-        public String getCheckedName() {
-            return checkedName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public Path findJavaExecutable(Path javaHome) throws IOException {
-            if (this == WINDOWS) {
-                return javaHome.resolve("bin/java.exe");
-            } else {
-                return javaHome.resolve("bin/java");
-            }
-        }
-
-        @Override
-        public String toString() {
-            return displayName;
-        }
-    }
-
-    public enum Architecture {
-        X86(false, "x86"),
-        X86_64(true, "x86-64"),
-        IA64(true, "IA-64"),
-        SPARC(false, "SPARC"),
-        SPARCV9(true, "SPARC V9"),
-        ARM(false, "ARM"),
-        AARCH64(true, "AArch64"),
-        MIPS(false, "MIPS (Big-Endian)"),
-        MIPS64(true, "MIPS64 (Big-Endian)"),
-        MIPSEL(false, "MIPS (Little-Endian)"),
-        MIPS64EL(true, "MIPS64 (Little-Endian)"),
-        PPC(false, "PowerPC (Big-Endian)"),
-        PPC64(true, "PowerPC-64 (Big-Endian)"),
-        PPCLE(false, "PowerPC (Little-Endian)"),
-        PPC64LE(true, "PowerPC-64 (Little-Endian)"),
-        S390(false, "S390"),
-        S390X(true, "S390x"),
-        RISCV32(false, "RISC-V 32"),
-        RISCV64(true, "RISC-V 64"),
-        LOONGARCH32(false, "LoongArch32"),
-        LOONGARCH64(true, "LoongArch64");
-
-        private final String checkedName;
-        private final String displayName;
-        private final boolean is64Bit;
-
-        Architecture(boolean is64Bit, String displayName) {
-            this.checkedName = this.name().toLowerCase(Locale.ROOT).replace("_", "-");
-            this.displayName = displayName;
-            this.is64Bit = is64Bit;
-        }
-
-        public boolean is64Bit() {
-            return is64Bit;
-        }
-
-        public String getCheckedName() {
-            return checkedName;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        @Override
-        public String toString() {
-            return displayName;
-        }
-    }
-
-    public enum LibC {
-        DEFAULT, MUSL;
-
-        @Override
-        public String toString() {
-            return name().toLowerCase(Locale.ROOT);
-        }
-    }
-
-    public static OperatingSystem parseOperatingSystem(String name) {
-        name = name.trim().toLowerCase(Locale.ROOT);
-
-        if (name.contains("win"))
-            return OperatingSystem.WINDOWS;
-        else if (name.contains("mac") || name.contains("darwin"))
-            return OperatingSystem.MACOS;
-        else if (name.contains("linux"))
-            return OperatingSystem.LINUX;
-        else
-            throw new IllegalArgumentException(name);
-    }
-
-    public static Architecture parseArchitecture(String value) {
-        value = value.trim().toLowerCase(Locale.ROOT);
-
-        switch (value) {
-            case "x8664":
-            case "x86-64":
-            case "x86_64":
-            case "amd64":
-            case "ia32e":
-            case "em64t":
-            case "x64":
-                return Architecture.X86_64;
-            case "x8632":
-            case "x86-32":
-            case "x86_32":
-            case "x86":
-            case "i86pc":
-            case "i386":
-            case "i486":
-            case "i586":
-            case "i686":
-            case "ia32":
-            case "x32":
-                return Architecture.X86;
-            case "arm64":
-            case "aarch64":
-                return Architecture.AARCH64;
-            case "arm":
-            case "arm32":
-                return Architecture.ARM;
-            case "mips64":
-                return Architecture.MIPS64;
-            case "mips64el":
-                return Architecture.MIPS64EL;
-            case "mips":
-            case "mips32":
-                return Architecture.MIPS;
-            case "mipsel":
-            case "mips32el":
-                return Architecture.MIPSEL;
-            case "riscv32":
-                return Architecture.RISCV32;
-            case "riscv64":
-                return Architecture.RISCV64;
-            case "ia64":
-            case "ia64w":
-            case "itanium64":
-                return Architecture.IA64;
-            case "sparcv9":
-            case "sparc64":
-                return Architecture.SPARCV9;
-            case "sparc":
-            case "sparc32":
-                return Architecture.SPARC;
-            case "ppc64":
-            case "powerpc64":
-                return Architecture.PPC64;
-            case "ppc64le":
-            case "powerpc64le":
-                return Architecture.PPC64LE;
-            case "ppc":
-            case "ppc32":
-            case "powerpc":
-            case "powerpc32":
-                return Architecture.PPC;
-            case "ppcle":
-            case "ppc32le":
-            case "powerpcle":
-            case "powerpc32le":
-                return Architecture.PPCLE;
-            case "s390":
-                return Architecture.S390;
-            case "s390x":
-                return Architecture.S390X;
-            case "loongarch32":
-                return Architecture.LOONGARCH32;
-            case "loongarch64":
-                return Architecture.LOONGARCH64;
-            default:
-                if (value.startsWith("armv7")) {
-                    return Architecture.ARM;
-                }
-                if (value.startsWith("armv8") || value.startsWith("armv9")) {
-                    return Architecture.AARCH64;
-                }
-        }
-
-        throw new IllegalArgumentException();
-    }
-
-    public static LibC parseLibC(String value) {
-        switch (value) {
-            case "":
-            case "default":
-            case "gnu":
-                return LibC.DEFAULT;
-            case "musl":
-                return LibC.MUSL;
-            default:
-                throw new IllegalArgumentException(value);
-        }
-    }
 
     private static final Map<Path, JavaRuntime> runtimes = new HashMap<>();
 
@@ -255,7 +47,7 @@ public final class JavaRuntime {
     }
 
     static {
-        if (parseOperatingSystem(System.getProperty("os.name")) == OperatingSystem.LINUX) {
+        if (OperatingSystem.parseOperatingSystem(System.getProperty("os.name")) == OperatingSystem.LINUX) {
             searchIn(Paths.get("/usr/lib/jvm"));
             searchIn(JAppRuntimeContext.getHome().resolve("jvm"));
             tryAddJava(Paths.get(System.getProperty("java.home")));
@@ -309,14 +101,14 @@ public final class JavaRuntime {
         Runtime.Version version;
 
         String osName = release.getOrDefault("OS_NAME", System.getProperty("os.name"));
-        os = parseOperatingSystem(osName);
+        os = OperatingSystem.parseOperatingSystem(osName);
 
         String osArch = release.getOrDefault("OS_ARCH", System.getProperty("os.arch"));
-        arch = parseArchitecture(osArch);
+        arch = Architecture.parseArchitecture(osArch);
 
         String libcName = release.get("LIBC");
         if (libcName != null) {
-            libc = parseLibC(libcName);
+            libc = LibC.parseLibC(libcName);
         } else {
             libc = LibC.DEFAULT;
         }
