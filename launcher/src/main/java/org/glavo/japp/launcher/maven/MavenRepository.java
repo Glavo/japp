@@ -23,7 +23,7 @@ public abstract class MavenRepository {
                 : artifact + "-" + version + "-" + classifier + ".jar";
     }
 
-    private final String name;
+    final String name;
 
     MavenRepository(String name) {
         this.name = name;
@@ -81,7 +81,7 @@ public abstract class MavenRepository {
             Path cacheDir = JAppRuntimeContext.getHome()
                     .resolve("cache")
                     .resolve("maven")
-                    .resolve(getName())
+                    .resolve(name)
                     .resolve(group)
                     .resolve(artifact)
                     .resolve(version);
@@ -96,7 +96,7 @@ public abstract class MavenRepository {
 
             byte[] data;
             Path lockFile = cacheDir.resolve(fileName + ".lock");
-            try (FileChannel channel = FileChannel.open(lockFile, EnumSet.of(StandardOpenOption.READ, StandardOpenOption.CREATE))) {
+            try (FileChannel channel = FileChannel.open(lockFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
                 FileLock lock = channel.tryLock();
                 if (lock == null) {
                     for (int i = 0; i < 600; i++) {
