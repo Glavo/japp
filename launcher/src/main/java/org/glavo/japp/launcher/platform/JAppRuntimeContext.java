@@ -1,4 +1,4 @@
-package org.glavo.japp.launcher.condition;
+package org.glavo.japp.launcher.platform;
 
 import org.glavo.japp.launcher.JAppConfigGroup;
 
@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Locale;
 import java.util.jar.Manifest;
 
 public final class JAppRuntimeContext {

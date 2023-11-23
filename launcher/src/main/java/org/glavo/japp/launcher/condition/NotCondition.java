@@ -1,5 +1,7 @@
 package org.glavo.japp.launcher.condition;
 
+import org.glavo.japp.launcher.platform.JAppRuntimeContext;
+
 public class NotCondition implements Condition {
     private final Condition original;
 

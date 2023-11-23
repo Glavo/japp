@@ -1,5 +1,6 @@
 package org.glavo.japp.launcher.condition;
 
+import org.glavo.japp.launcher.platform.JAppRuntimeContext;
 import org.glavo.japp.util.ToStringBuilder;
 
 import java.util.Map;

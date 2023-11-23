@@ -1,5 +1,7 @@
 package org.glavo.japp.launcher.condition;
 
+import org.glavo.japp.launcher.platform.JAppRuntimeContext;
+
 import java.util.Iterator;
 import java.util.List;
 

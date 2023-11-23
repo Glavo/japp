@@ -1,9 +1,6 @@
-package org.glavo.japp.launcher.condition;
+package org.glavo.japp.launcher.platform;
 
 import org.glavo.japp.TODO;
-import org.glavo.japp.launcher.platform.Architecture;
-import org.glavo.japp.launcher.platform.LibC;
-import org.glavo.japp.launcher.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
