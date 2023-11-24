@@ -13,6 +13,8 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
+import org.glavo.japp.util.UnsafeUtil;
+
 import static org.glavo.japp.boot.decompressor.zstd.FiniteStateEntropy.MAX_SYMBOL;
 import static org.glavo.japp.boot.decompressor.zstd.FiniteStateEntropy.MIN_TABLE_LOG;
 import static org.glavo.japp.boot.decompressor.zstd.Util.highestBit;

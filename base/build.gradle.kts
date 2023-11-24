@@ -3,6 +3,7 @@ tasks.compileJava {
         listOf(
             "--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED",
             "--add-exports=java.base/jdk.internal.module=ALL-UNNAMED",
+            "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED",
         )
     )
 }

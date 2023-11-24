@@ -13,6 +13,8 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
+import org.glavo.japp.util.UnsafeUtil;
+
 import java.util.Arrays;
 
 import static org.glavo.japp.boot.decompressor.zstd.BitInputStream.isEndOfStream;

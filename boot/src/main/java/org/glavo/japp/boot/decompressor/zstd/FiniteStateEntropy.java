@@ -13,10 +13,12 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
+import org.glavo.japp.util.UnsafeUtil;
+
 import static org.glavo.japp.boot.decompressor.zstd.BitInputStream.peekBits;
 import static org.glavo.japp.boot.decompressor.zstd.Constants.*;
 import static org.glavo.japp.boot.decompressor.zstd.Util.verify;
-import static org.glavo.japp.boot.decompressor.zstd.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
+import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 
 final class FiniteStateEntropy {
     public static final int MAX_SYMBOL = 255;

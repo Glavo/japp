@@ -13,6 +13,8 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
+import org.glavo.japp.util.UnsafeUtil;
+
 import static org.glavo.japp.boot.decompressor.zstd.Constants.SIZE_OF_LONG;
 import static org.glavo.japp.boot.decompressor.zstd.Util.highestBit;
 import static org.glavo.japp.boot.decompressor.zstd.Util.verify;

@@ -11,13 +11,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.japp.boot.decompressor.zstd;
+package org.glavo.japp.util;
 
 import jdk.internal.misc.Unsafe;
 
 import java.nio.ByteOrder;
 
-final class UnsafeUtil {
+public final class UnsafeUtil {
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final boolean IS_BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
 
