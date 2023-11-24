@@ -14,6 +14,7 @@
 package org.glavo.japp.boot.decompressor.zstd;
 
 import org.glavo.japp.util.UnsafeUtil;
+import org.glavo.japp.util.XxHash64;
 
 import java.util.Arrays;
 
@@ -190,15 +191,13 @@ class ZstdFrameDecompressor {
             while (!lastBlock);
 
             if (frameHeader.hasChecksum) {
-                // TODO
-//                int decodedFrameSize = (int) (output - outputStart);
-//
-//                long hash = XxHash64.hash(0, outputBase, outputStart, decodedFrameSize);
-//
-//                int checksum = UnsafeUtil.getInt(inputBase, input);
-//                if (checksum != (int) hash) {
-//                    throw new MalformedInputException(input, format("Bad checksum. Expected: %s, actual: %s", Integer.toHexString(checksum), Integer.toHexString((int) hash)));
-//                }
+                long hash = XxHash64.hash(0, outputBase, outputStart, output);
+
+                int checksum = UnsafeUtil.getInt(inputBase, input);
+                if (checksum != (int) hash) {
+                    throw new MalformedInputException(input,
+                            String.format("Bad checksum. Expected: %s, actual: %s", Integer.toHexString(checksum), Integer.toHexString((int) hash)));
+                }
 
                 input += SIZE_OF_INT;
             }
