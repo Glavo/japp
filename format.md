@@ -20,3 +20,17 @@
 ```
 TODO
 ```
+
+## share
+
+Module path and class path:
+
+```
+PathList  : PathItem (',' PathItem)*
+PathItem  : Name ':' PathValue
+PathValue : 'E' ExternalPath 
+          | GroupIndexList
+
+GroupIndexList : GroupIndex ('+' GroupIndex)*
+GroupIndex: [0-9a-f]+ 
+```
