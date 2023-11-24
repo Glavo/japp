@@ -30,6 +30,10 @@ public final class UnsafeUtil {
         return UNSAFE.getByte(o, offset);
     }
 
+    public static int getUnsignedByte(Object o, long offset) {
+        return Byte.toUnsignedInt(getByte(o, offset));
+    }
+
     public static void putByte(Object o, long offset, byte x) {
         UNSAFE.putByte(o, offset, x);
     }
@@ -52,6 +56,10 @@ public final class UnsafeUtil {
             res = Integer.reverseBytes(res);
         }
         return res;
+    }
+
+    public static long getUnsignedInt(Object o, long offset) {
+        return Integer.toUnsignedLong(getInt(o, offset));
     }
 
     public static void putInt(Object o, long offset, int x) {

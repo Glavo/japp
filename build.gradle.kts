@@ -49,6 +49,9 @@ dependencies {
     testImplementation(project(":boot"))
     testImplementation(project(":launcher"))
     testImplementation(project(":packer"))
+
+    LWJGL.addDependency(this, "testImplementation", "lwjgl")
+    LWJGL.addDependency(this, "testImplementation", "lwjgl-xxhash")
 }
 
 tasks.compileTestJava {
