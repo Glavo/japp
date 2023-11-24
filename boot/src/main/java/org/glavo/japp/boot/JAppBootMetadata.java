@@ -12,16 +12,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
-/*
- * BootMetadata {
- *     u4 pool_length;
- *     u4 group_count;
- *     u4[group_count] group_lengths;
- *
- *     u1[pool_length] pool;
- *     ResourceGroup[group_count] groups;
- * }
- */
 public final class JAppBootMetadata {
     public static JAppBootMetadata fromJson(JSONObject obj, int release) throws IOException {
         JSONArray array = obj.getJSONArray("Groups");
