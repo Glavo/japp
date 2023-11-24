@@ -122,6 +122,7 @@ public abstract class MavenRepository {
                 Files.write(temp, data);
                 Files.move(temp, file, StandardCopyOption.REPLACE_EXISTING);
             }
+            Files.deleteIfExists(lockFile);
 
             return file;
         }
