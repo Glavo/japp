@@ -5,7 +5,7 @@ import org.glavo.japp.json.JSONObject;
 
 import java.nio.file.attribute.FileTime;
 
-public class JAppResource {
+public final class JAppResource {
 
     private final String name;
 

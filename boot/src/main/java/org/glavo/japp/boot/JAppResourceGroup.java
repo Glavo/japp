@@ -7,6 +7,12 @@ import org.glavo.japp.json.JSONObject;
 import java.util.*;
 import java.util.stream.Stream;
 
+/*
+ * ResourceGroup {
+ *     u1 compressMethod;
+ *     u1[] body;
+ * }
+ */
 public final class JAppResourceGroup {
 
     String name;
@@ -15,6 +21,14 @@ public final class JAppResourceGroup {
     SortedMap<Integer, Map<String, JAppResource>> multiReleaseResources;
 
     public JAppResourceGroup(String name) {
+        this.name = name;
+    }
+
+    public void initName(String name) {
+        if (this.name != null) {
+            throw new IllegalStateException();
+        }
+
         this.name = name;
     }
 
@@ -30,7 +44,6 @@ public final class JAppResourceGroup {
     public SortedMap<Integer, Map<String, JAppResource>> getMultiReleaseResources() {
         return multiReleaseResources;
     }
-
 
     @Visibility(Visibility.Context.PACKER)
     public Map<String, JAppResource> getMultiRelease(int release) {

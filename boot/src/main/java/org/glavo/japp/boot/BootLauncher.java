@@ -226,7 +226,7 @@ public final class BootLauncher {
                     JAppResourceGroup group = metadata.getGroups().get(Integer.parseInt(index, 16));
                     if (group.getName() == null) {
                         name = "unnamed@" + index;
-                        group.name = name;
+                        group.initName(name);
                     } else if (!name.equals(group.getName())) {
                         throw new AssertionError(group.getName() + " != " + name);
                     }

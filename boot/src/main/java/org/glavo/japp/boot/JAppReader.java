@@ -160,7 +160,7 @@ public final class JAppReader implements Closeable {
     public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
         int size = castArrayLength(resource.getSize());
 
-        byte[] array = new byte[(int) size];
+        byte[] array = new byte[size];
         if (size == 0) {
             return array;
         }
