@@ -18,8 +18,14 @@ public enum LibC {
         }
     }
 
+    private final String checkedName = this.name().toLowerCase(Locale.ROOT);
+
+    public String getCheckedName() {
+        return checkedName;
+    }
+
     @Override
     public String toString() {
-        return name().toLowerCase(Locale.ROOT);
+        return getCheckedName();
     }
 }
