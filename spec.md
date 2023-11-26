@@ -30,7 +30,7 @@ Resource {
     u4 compressed_size;
     
     u2 path_length;
-    u1[...] path;  
+    u1[path_length] path; // UTF-8  
     
     ResourceField[...] fields;
 }

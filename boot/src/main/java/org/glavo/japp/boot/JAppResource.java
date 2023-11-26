@@ -3,6 +3,7 @@ package org.glavo.japp.boot;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
 import org.glavo.japp.json.JSONObject;
+import org.glavo.japp.util.ByteBufferBuilder;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,6 +13,7 @@ import java.nio.file.attribute.FileTime;
 public final class JAppResource {
 
     private static final byte MAGIC_NUMBER = (byte) 0xaa;
+    private static final long NO_TIME = Long.MIN_VALUE;
 
     private final String name;
 
@@ -21,9 +23,9 @@ public final class JAppResource {
     private final CompressionMethod method;
     private final long compressedSize;
 
-    private long creationTime = -1L;
-    private long lastModifiedTime = -1L;
-    private long lastAccessTime = -1L;
+    private long creationTime = NO_TIME;
+    private long lastModifiedTime = NO_TIME;
+    private long lastAccessTime = NO_TIME;
 
     private boolean needCheck;
     private long checksum;
@@ -38,13 +40,13 @@ public final class JAppResource {
 
     public JAppResource(String name, long offset, long size,
                         CompressionMethod method, long compressedSize,
-                        FileTime lastAccessTime, FileTime lastModifiedTime, FileTime creationTime) {
+                        long creationTime, long lastModifiedTime, long lastAccessTime) {
         this.name = name;
         this.offset = offset;
         this.size = size;
-        this.lastAccessTime = lastAccessTime != null ? lastAccessTime.toMillis() : -1L;
-        this.lastModifiedTime = lastModifiedTime != null ? lastModifiedTime.toMillis() : -1L;
-        this.creationTime = creationTime != null ? creationTime.toMillis() : -1L;
+        this.lastAccessTime = lastAccessTime;
+        this.lastModifiedTime = lastModifiedTime;
+        this.creationTime = creationTime;
         this.method = method;
         this.compressedSize = compressedSize;
     }
@@ -61,17 +63,17 @@ public final class JAppResource {
         return size;
     }
 
-//    public FileTime getLastAccessTime() {
-//        return lastAccessTime;
-//    }
-//
-//    public FileTime getLastModifiedTime() {
-//        return lastModifiedTime;
-//    }
-//
-//    public FileTime getCreationTime() {
-//        return creationTime;
-//    }
+    public FileTime getCreationTime() {
+        return creationTime != NO_TIME ? FileTime.fromMillis(creationTime) : FileTime.fromMillis(0L);
+    }
+
+    public FileTime getLastModifiedTime() {
+        return lastModifiedTime != NO_TIME ? FileTime.fromMillis(lastModifiedTime) : getCreationTime();
+    }
+
+    public FileTime getLastAccessTime() {
+        return lastAccessTime != NO_TIME ? FileTime.fromMillis(lastAccessTime) : getLastModifiedTime();
+    }
 
     public CompressionMethod getMethod() {
         return method;
@@ -87,10 +89,10 @@ public final class JAppResource {
             throw new IOException(String.format("Wrong resource magic: %02x", magic));
         }
 
-        int compressMethodIndex = Byte.toUnsignedInt(buffer.get());
-        CompressionMethod compressionMethod = CompressionMethod.of(compressMethodIndex);
+        int compressMethodId = Byte.toUnsignedInt(buffer.get());
+        CompressionMethod compressionMethod = CompressionMethod.of(compressMethodId);
         if (compressionMethod == null) {
-            throw new IOException(String.format("Unknown compression method: %02x", compressMethodIndex));
+            throw new IOException(String.format("Unknown compression method: %02x", compressMethodId));
         }
 
         short flags = buffer.getShort();
@@ -106,11 +108,11 @@ public final class JAppResource {
 
         JAppResource resource = new JAppResource(path, offset, uncompressedSize, compressionMethod, compressedSize);
 
-        int fieldIndex;
-        while ((fieldIndex = Byte.toUnsignedInt(buffer.get())) != 0) {
-            JAppResourceField field = JAppResourceField.of(fieldIndex);
+        int fieldId;
+        while ((fieldId = Byte.toUnsignedInt(buffer.get())) != 0) {
+            JAppResourceField field = JAppResourceField.of(fieldId);
             if (field == null) {
-                throw new IOException(String.format("Unknown field: %02x", fieldIndex));
+                throw new IOException(String.format("Unknown field: %02x", fieldId));
             }
 
             switch (field) {
@@ -129,7 +131,7 @@ public final class JAppResource {
                 case FILE_LAST_MODIFIED_TIME:
                 case FILE_LAST_ACCESS_TIME: {
                     long time = buffer.getLong();
-                    if (time < 0) {
+                    if (time == NO_TIME) {
                         throw new IOException("Invalid time: " + time);
                     }
 
@@ -142,7 +144,7 @@ public final class JAppResource {
                         oldTime = resource.lastAccessTime;
                     }
 
-                    if (oldTime >= 0) {
+                    if (oldTime != NO_TIME) {
                         throw new IOException("Duplicate field: " + field);
                     }
 
@@ -163,22 +165,56 @@ public final class JAppResource {
         return resource;
     }
 
+    private static void writeFileTime(ByteBufferBuilder builder, JAppResourceField field, long time) {
+        if (time != NO_TIME) {
+            builder.putByte(field.id());
+            builder.putLong(time);
+        }
+    }
+
+    public static void writeTo(ByteBufferBuilder builder,
+                               String name, long offset, long size,
+                               CompressionMethod method, long compressedSize,
+                               long creationTime, long lastModifiedTime, long lastAccessTime,
+                               Long checksum) throws IOException {
+        builder.putByte(MAGIC_NUMBER);
+        builder.putByte(method.id());
+        builder.putShort((short) 0); // TODO
+        builder.putLong(offset);
+        builder.putUnsignedInt(size);
+        builder.putUnsignedInt(compressedSize);
+
+        byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
+        builder.putUnsignedShort(bytes.length);
+        builder.putBytes(bytes);
+
+        if (checksum != null) {
+            builder.putByte(JAppResourceField.CHECKSUM.id());
+            builder.putLong(checksum);
+        }
+
+        writeFileTime(builder, JAppResourceField.FILE_CREATE_TIME, creationTime);
+        writeFileTime(builder, JAppResourceField.FILE_LAST_MODIFIED_TIME, lastModifiedTime);
+        writeFileTime(builder, JAppResourceField.FILE_LAST_ACCESS_TIME, lastAccessTime);
+
+        builder.putByte(JAppResourceField.END.id());
+    }
+
     public static JAppResource fromJson(JSONObject obj) {
         String name = obj.getString("Name");
         long offset = obj.getLong("Offset");
         long size = obj.getLong("Size");
-        long lastAccessTime = obj.optLong("Last-Access-Time", -1L);
-        long lastModifiedTime = obj.optLong("Last-Modified-Time", -1L);
-        long creationTime = obj.optLong("Creation-Time", -1L);
+        long creationTime = obj.optLong("Creation-Time", NO_TIME);
+        long lastModifiedTime = obj.optLong("Last-Modified-Time", NO_TIME);
+        long lastAccessTime = obj.optLong("Last-Access-Time", NO_TIME);
         String method = obj.optString("Compression-Method", null);
         long compressedSize = method == null ? size : obj.getLong("Compressed-Size");
 
         return new JAppResource(
                 name,
                 offset, size,
-                CompressionMethod.valueOf(method), compressedSize, lastAccessTime > 0 ? FileTime.fromMillis(lastAccessTime) : null,
-                lastModifiedTime > 0 ? FileTime.fromMillis(lastModifiedTime) : null,
-                creationTime > 0 ? FileTime.fromMillis(creationTime) : null
+                CompressionMethod.valueOf(method), compressedSize,
+                creationTime, lastModifiedTime, lastAccessTime
         );
     }
 

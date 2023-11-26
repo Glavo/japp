@@ -146,7 +146,9 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 groupEntries.put(name, new JAppResource(
                         name, packer.totalBytes, entry.getSize(),
                         result.getMethod(), result.getLength(),
-                        entry.getLastAccessTime(), entry.getLastModifiedTime(), entry.getCreationTime()
+                        entry.getCreationTime().toMillis(),
+                        entry.getLastModifiedTime().toMillis(),
+                        entry.getLastAccessTime().toMillis()
                 ));
 
                 packer.writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
@@ -183,7 +185,9 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 group.getResources().put(path, new JAppResource(
                         path, packer.totalBytes, data.length,
                         result.getMethod(), result.getLength(),
-                        attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime()
+                        attrs.creationTime().toMillis(),
+                        attrs.lastModifiedTime().toMillis(),
+                        attrs.lastAccessTime().toMillis()
                 ));
                 packer.writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
                 return FileVisitResult.CONTINUE;

@@ -12,4 +12,8 @@ public enum CompressionMethod {
     public static CompressionMethod of(int i) {
         return i >= 0 && i < METHODS.length ? METHODS[i] : null;
     }
+
+    public byte id() {
+        return (byte) ordinal();
+    }
 }

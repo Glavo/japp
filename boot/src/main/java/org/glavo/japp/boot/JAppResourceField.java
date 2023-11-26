@@ -18,4 +18,8 @@ public enum JAppResourceField {
     public static JAppResourceField of(int i)  {
         return i >= 0 && i < FIELDS.length ? FIELDS[i] : null;
     }
+
+    public byte id() {
+        return (byte) ordinal();
+    }
 }
