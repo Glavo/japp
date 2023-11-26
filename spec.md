@@ -1,3 +1,5 @@
+# SPEC (Draft)
+
 ## launcher
 
 ## boot
@@ -15,7 +17,25 @@
  }
 ```
 
-[ResourceGroup](boot/src/main/java/org/glavo/japp/boot/JAppResourceGroup.java)
+[Resource](boot/src/main/java/org/glavo/japp/boot/JAppResource.java):
+
+```
+Resource {
+    u2 magic_number; // 0x0a0b
+    u2 flags;
+    u1 compress_method;
+    
+    u4 compressed_size;
+    u4 uncompressed_size;
+    
+    u2 path_length;
+    u1[...] path;  
+    
+    ResourceField[...] fields;
+}
+```
+
+[ResourceGroup](boot/src/main/java/org/glavo/japp/boot/JAppResourceGroup.java):
 
 ```
 TODO
