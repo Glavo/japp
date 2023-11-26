@@ -57,7 +57,7 @@ public final class JAppPacker {
     }
 
     private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
-        long fileSize = output.getTotalBytes() + 48;
+        long fileSize = output.getTotalBytes() + JAppConfigGroup.FILE_END_SIZE;
 
         // magic number
         output.writeBytes(MAGIC_NUMBER);
@@ -79,6 +79,8 @@ public final class JAppPacker {
         output.writeLong(bootMetadataOffset);
 
         // reserved
+        output.writeLong(0L);
+        output.writeLong(0L);
         output.writeLong(0L);
 
         if (output.getTotalBytes() != fileSize) {

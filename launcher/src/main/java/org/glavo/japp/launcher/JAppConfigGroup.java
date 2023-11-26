@@ -21,7 +21,7 @@ public final class JAppConfigGroup {
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
 
-    public static final int FILE_END_SIZE = 48;
+    public static final int FILE_END_SIZE = 64;
 
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
@@ -60,7 +60,7 @@ public final class JAppConfigGroup {
             long metadataOffset = endBuffer.getLong();
             long bootMetadataOffset = endBuffer.getLong();
 
-            assert endBuffer.remaining() == 8;
+            assert endBuffer.remaining() == 24;
 
             if (flags != 0) {
                 throw new IOException("Unsupported flags: " + Long.toBinaryString(flags));

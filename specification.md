@@ -16,7 +16,7 @@ JAppFile {
          u8 file_size;
          u8 launcher_metadata_offset;
          u8 boot_metadata_offset;
-         u1[8] reserved;
+         u1[24] reserved;
     } end;
 }
 ```
@@ -30,14 +30,14 @@ TODO
 [BootMetadata](boot/src/main/java/org/glavo/japp/boot/JAppBootMetadata.java):
 
 ```
- BootMetadata {
-     u4 pool_length;
-     u4 group_count;
-     u4[group_count] group_lengths;
- 
-     u1[pool_length] pool;
-     ResourceGroup[group_count] groups;
- }
+BootMetadata {
+    u4 pool_length;
+    u4 group_count;
+    u4[group_count] group_lengths;
+
+    u1[pool_length] pool;
+    ResourceGroup[group_count] groups;
+}
 ```
 
 [Resource](boot/src/main/java/org/glavo/japp/boot/JAppResource.java):
@@ -55,7 +55,7 @@ Resource {
     u2 path_length;
     u1[path_length] path; // UTF-8  
     
-    ResourceFields fields;
+    ResourceFields optional_fields;
 }
 ```
 
