@@ -12,7 +12,7 @@ import java.nio.file.attribute.FileTime;
 
 public final class JAppResource {
 
-    private static final byte MAGIC_NUMBER = (byte) 0xaa;
+    private static final byte MAGIC_NUMBER = (byte) 0x1b;
     public static final long NO_TIME = Long.MIN_VALUE;
 
     private final String name;
@@ -97,9 +97,9 @@ public final class JAppResource {
 
         short flags = buffer.getShort();
 
-        long offset = buffer.getLong();
         long uncompressedSize = Integer.toUnsignedLong(buffer.getInt());
         long compressedSize = Integer.toUnsignedLong(buffer.getInt());
+        long offset = buffer.getLong();
 
         int pathLength = Short.toUnsignedInt(buffer.getShort());
         byte[] pathBuffer = new byte[pathLength];
@@ -180,9 +180,9 @@ public final class JAppResource {
         builder.writeByte(MAGIC_NUMBER);
         builder.writeByte(method.id());
         builder.writeShort((short) 0); // TODO
-        builder.writeLong(offset);
         builder.writeUnsignedInt(size);
         builder.writeUnsignedInt(compressedSize);
+        builder.writeLong(offset);
 
         byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
         builder.writeUnsignedShort(bytes.length);

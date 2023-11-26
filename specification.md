@@ -44,13 +44,13 @@ BootMetadata {
 
 ```
 Resource {
-    u1 magic_number; // 0xaa
+    u1 magic_number; // 0x1b
     u1 compress_method;
     u2 flags;
     
-    u8 content_offset;
     u4 uncompressed_size;
     u4 compressed_size;
+    u8 content_offset;
     
     u2 path_length;
     u1[path_length] path; // UTF-8  
