@@ -28,6 +28,9 @@ public final class JAppPacker {
     private static final short MINOR_VERSION = 0;
 
     private final ByteBufferBuilder output = new ByteBufferBuilder(32 * 1024 * 1024);
+    {
+        output.writeBytes(MAGIC_NUMBER);
+    }
 
     private final JAppConfigGroup root = new JAppConfigGroup();
 
