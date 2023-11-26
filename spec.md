@@ -26,8 +26,8 @@ Resource {
     u2 flags;
     
     u8 content_offset;
-    u4 compressed_size;
     u4 uncompressed_size;
+    u4 compressed_size;
     
     u2 path_length;
     u1[...] path;  

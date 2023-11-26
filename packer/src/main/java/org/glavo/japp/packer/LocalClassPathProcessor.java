@@ -7,13 +7,10 @@ import org.glavo.japp.packer.compressor.CompressResult;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.ModuleFinder;
-import java.lang.module.ModuleReference;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Enumeration;
 import java.util.Map;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -148,8 +145,9 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
                 groupEntries.put(name, new JAppResource(
                         name, packer.totalBytes, entry.getSize(),
-                        entry.getLastAccessTime(), entry.getLastModifiedTime(), entry.getCreationTime(),
-                        result.getMethod(), result.getLength()));
+                        result.getMethod(), result.getLength(),
+                        entry.getLastAccessTime(), entry.getLastModifiedTime(), entry.getCreationTime()
+                ));
 
                 packer.writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
             }
@@ -184,8 +182,8 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 CompressResult result = packer.compressor.compress(packer, Files.readAllBytes(file), file, attrs);
                 group.getResources().put(path, new JAppResource(
                         path, packer.totalBytes, data.length,
-                        attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime(),
-                        result.getMethod(), result.getLength()
+                        result.getMethod(), result.getLength(),
+                        attrs.lastAccessTime(), attrs.lastModifiedTime(), attrs.creationTime()
                 ));
                 packer.writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
                 return FileVisitResult.CONTINUE;

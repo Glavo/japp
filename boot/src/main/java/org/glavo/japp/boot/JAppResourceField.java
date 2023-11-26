@@ -12,4 +12,10 @@ public enum JAppResourceField {
     FILE_LAST_MODIFIED_TIME,
     FILE_LAST_ACCESS_TIME
     ;
+
+    private static final JAppResourceField[] FIELDS = values();
+
+    public static JAppResourceField of(int i)  {
+        return i >= 0 && i < FIELDS.length ? FIELDS[i] : null;
+    }
 }
