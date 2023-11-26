@@ -37,7 +37,7 @@ public final class JAppModuleFinder implements ModuleFinder {
     private static Supplier<Set<String>> packageFinder(JAppResourceGroup group) {
         return () -> {
             Set<String> packages = new HashSet<>();
-            for (String name : group.getResources().keySet()) {
+            for (String name : ((Map<String, JAppResource>) group).keySet()) {
                 if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
                     int index = name.lastIndexOf("/");
                     if (index >= 0) {
@@ -54,7 +54,7 @@ public final class JAppModuleFinder implements ModuleFinder {
 
         Set<String> packages = new HashSet<>();
 
-        for (String name : group.getResources().keySet()) {
+        for (String name : ((Map<String, JAppResource>) group).keySet()) {
             if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
                 int index = name.lastIndexOf("/");
                 if (index >= 0) {
@@ -67,7 +67,7 @@ public final class JAppModuleFinder implements ModuleFinder {
                 }
 
                 List<String> providerClasses = new ArrayList<>();
-                for (String line : new String(reader.getResourceAsByteArray(group.getResources().get(name)), StandardCharsets.UTF_8).split("\\R")) {
+                for (String line : new String(reader.getResourceAsByteArray(((Map<String, JAppResource>) group).get(name)), StandardCharsets.UTF_8).split("\\R")) {
                     if (!line.isEmpty()) {
                         providerClasses.add(line);
                     }
@@ -83,7 +83,7 @@ public final class JAppModuleFinder implements ModuleFinder {
     }
 
     private ModuleReference load(JAppResourceGroup group) throws IOException {
-        JAppResource resource = group.getResources().get(MODULE_INFO);
+        JAppResource resource = ((Map<String, JAppResource>) group).get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
             descriptor = ModuleDescriptor.read(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)), packageFinder(group));

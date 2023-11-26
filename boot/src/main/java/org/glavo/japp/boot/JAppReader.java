@@ -94,7 +94,7 @@ public final class JAppReader implements Closeable {
             return null;
         }
 
-        return g.getResources().get(path);
+        return g.get(path);
     }
 
     private void getResourceAsByteArrayImpl(

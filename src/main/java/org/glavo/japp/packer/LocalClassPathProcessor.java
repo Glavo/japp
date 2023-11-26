@@ -2,7 +2,6 @@ package org.glavo.japp.packer;
 
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
-import org.glavo.japp.launcher.JAppResourceReference;
 import org.glavo.japp.packer.compressor.CompressResult;
 
 import java.io.IOException;
@@ -12,6 +11,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -35,7 +35,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
         return millis;
     }
 
-    public static void addJar(JAppPacker packer, Path jar, boolean modulePath) throws IOException {
+    public static void addJar(JAppPacker packer, Path jar, boolean isModulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(jar.toFile())) {
             Attributes attributes = null;
 
@@ -51,14 +51,14 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
             if (attributes != null) {
                 multiRelease = Boolean.parseBoolean(attributes.getValue("Multi-Release"));
-                if (modulePath) {
+                if (isModulePath) {
                     moduleName = attributes.getValue("Automatic-Module-Name");
                 }
             } else {
                 multiRelease = false;
             }
 
-            if (modulePath && moduleName == null) {
+            if (isModulePath && moduleName == null) {
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
                 while (entries.hasMoreElements()) {
                     ZipEntry entry = entries.nextElement();
@@ -93,20 +93,12 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 }
             }
 
-            if (modulePath && moduleName == null) {
+            if (isModulePath && moduleName == null) {
                 moduleName = ModuleInfoReader.deriveAutomaticModuleName(jar.getFileName().toString());
             }
 
-            // If the module name is not found, the file name is retained
-            JAppResourceGroup group = new JAppResourceGroup(modulePath ? moduleName : jar.getFileName().toString());
-            JAppResourceReference reference = new JAppResourceReference.Local(group.getName(), packer.groups.size());
-
-            packer.groups.add(group);
-            if (modulePath) {
-                packer.current.modulePath.add(reference);
-            } else {
-                packer.current.classPath.add(reference);
-            }
+            JAppResourceGroup baseGroup = new JAppResourceGroup();
+            TreeMap<Integer, JAppResourceGroup> multiGroups = multiRelease ? new TreeMap<>() : null;
 
             // Then write all entries
 
@@ -119,7 +111,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     continue;
                 }
 
-                Map<String, JAppResource> groupEntries = null;
+                JAppResourceGroup group = baseGroup;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -129,7 +121,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                         try {
                             int v = Integer.parseInt(ver);
                             if (v > 9) {
-                                groupEntries = group.getMultiRelease(v);
+                                group = multiGroups.computeIfAbsent(v, n -> new JAppResourceGroup());
                                 name = name.substring(idx + 1);
                             }
 
@@ -138,7 +130,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     }
                 }
 
-                byte[] buffer = new byte[(int) entry.getSize()];
+                byte[] buffer = new byte[Math.toIntExact(entry.getSize())];
                 try (InputStream in = zipFile.getInputStream(entry)) {
                     int count = 0;
                     int n;
@@ -151,11 +143,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
                 CompressResult result = packer.compressor.compress(packer, buffer, entry);
 
-                if (groupEntries == null) {
-                    groupEntries = group.getResources();
-                }
-
-                groupEntries.put(name, new JAppResource(
+                group.put(name, new JAppResource(
                         name, packer.getCurrentOffset(), entry.getSize(),
                         result.getMethod(), result.getLength(),
                         timeToMillis(entry.getCreationTime()),
@@ -165,12 +153,17 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
                 packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
             }
+
+            packer.addLocalReference(
+                    isModulePath, isModulePath ? moduleName : jar.getFileName().toString(),
+                    baseGroup, multiGroups
+            );
         }
     }
 
-    public static void addDir(JAppPacker packer, Path dir, boolean modulePath) throws IOException {
+    public static void addDir(JAppPacker packer, Path dir, boolean isModulePath) throws IOException {
         String name;
-        if (modulePath) {
+        if (isModulePath) {
             try (InputStream input = Files.newInputStream(dir.resolve("module-info.class"))) {
                 name = ModuleInfoReader.readModuleName(input);
             }
@@ -178,14 +171,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             name = null;
         }
 
-        JAppResourceGroup group = new JAppResourceGroup(name);
-        JAppResourceReference reference = new JAppResourceReference.Local(name, packer.groups.size());
-        packer.groups.add(group);
-        if (modulePath) {
-            packer.current.modulePath.add(reference);
-        } else {
-            packer.current.classPath.add(reference);
-        }
+        JAppResourceGroup group = new JAppResourceGroup();
 
         Path absoluteDir = dir.toAbsolutePath().normalize();
         Files.walkFileTree(absoluteDir, new SimpleFileVisitor<>() {
@@ -194,7 +180,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 String path = absoluteDir.relativize(file).toString().replace('\\', '/');
                 byte[] data = Files.readAllBytes(file);
                 CompressResult result = packer.compressor.compress(packer, Files.readAllBytes(file), file, attrs);
-                group.getResources().put(path, new JAppResource(
+                ((Map<String, JAppResource>) group).put(path, new JAppResource(
                         path, packer.getCurrentOffset(), data.length,
                         result.getMethod(), result.getLength(),
                         timeToMillis(attrs.creationTime()),
@@ -205,6 +191,8 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 return FileVisitResult.CONTINUE;
             }
         });
+
+        packer.addLocalReference(isModulePath, name, group, null);
     }
 
     @Override

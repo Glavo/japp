@@ -3,6 +3,7 @@ package org.glavo.japp.packer;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.launcher.JAppConfigGroup;
+import org.glavo.japp.launcher.JAppResourceReference;
 import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
@@ -19,6 +20,7 @@ import java.nio.file.Paths;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.jar.Manifest;
 
 public final class JAppPacker {
@@ -28,6 +30,7 @@ public final class JAppPacker {
     private static final short MINOR_VERSION = 0;
 
     private final ByteBufferBuilder output = new ByteBufferBuilder(32 * 1024 * 1024);
+
     {
         output.writeBytes(MAGIC_NUMBER);
     }
@@ -57,6 +60,33 @@ public final class JAppPacker {
 
     public ByteArrayPoolBuilder getPool() {
         return pool;
+    }
+
+    private int addGroup(JAppResourceGroup group) {
+        int index = groups.size();
+        groups.add(group);
+        return index;
+    }
+
+    public void addLocalReference(
+            boolean isModulePath, String name,
+            JAppResourceGroup baseGroup, TreeMap<Integer, JAppResourceGroup> multiGroups) {
+
+        int baseIndex = addGroup(baseGroup);
+        TreeMap<Integer, Integer> multiIndexes;
+        if (multiGroups != null && !multiGroups.isEmpty()) {
+            multiIndexes = new TreeMap<>();
+            multiGroups.forEach((i, g) -> multiIndexes.put(i, addGroup(g)));
+        } else {
+            multiIndexes = null;
+        }
+
+        JAppResourceReference.Local ref = new JAppResourceReference.Local(name, baseIndex, multiIndexes);
+        if (isModulePath) {
+            current.getModulePath().add(ref);
+        } else {
+            current.getClassPath().add(ref);
+        }
     }
 
     private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
@@ -95,12 +125,12 @@ public final class JAppPacker {
         if (!finished) {
             finished = true;
 
-            long bootMetadataOffset = output.getTotalBytes();
+            long bootMetadataOffset = getCurrentOffset();
             byte[] bootMetadata = JAppBootMetadata.toJson(groups, pool.toByteArray()).toString().getBytes(StandardCharsets.UTF_8);
             output.writeInt(bootMetadata.length);
             output.writeBytes(bootMetadata);
 
-            long metadataOffset = output.getTotalBytes();
+            long metadataOffset = getCurrentOffset();
             output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
             writeFileEnd(metadataOffset, bootMetadataOffset);
         }

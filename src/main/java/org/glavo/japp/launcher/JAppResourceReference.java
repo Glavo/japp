@@ -2,6 +2,9 @@ package org.glavo.japp.launcher;
 
 import org.glavo.japp.json.JSONObject;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 public abstract class JAppResourceReference {
 
     protected JAppResourceReference(String name) {
@@ -13,7 +16,20 @@ public abstract class JAppResourceReference {
         String name = obj.optString("Name", null);
         if (type.equals(Local.class.getSimpleName())) {
             int index = obj.getInt("Index");
-            return new Local(name, index);
+            JSONObject multiRelease = obj.optJSONObject("Multi-Release");
+            TreeMap<Integer, Integer> multiReleaseIndexes;
+
+            if (multiRelease != null) {
+                multiReleaseIndexes = new TreeMap<>();
+                for (String key : multiRelease.keySet()) {
+                    multiReleaseIndexes.put(Integer.parseInt(key), multiRelease.getInt(key));
+                }
+
+            } else {
+                multiReleaseIndexes = null;
+            }
+
+            return new Local(name, index, multiReleaseIndexes);
         } else if (type.equals(Maven.class.getSimpleName())) {
             String repository = obj.optString("Repository", null);
             String group = obj.getString("Group");
@@ -40,6 +56,17 @@ public abstract class JAppResourceReference {
             Local local = (Local) this;
             res.putOpt("Name", local.name);
             res.put("Index", local.index);
+
+            if (local.getMultiReleaseIndexes() != null) {
+                JSONObject multiRelease = new JSONObject();
+
+                for (Map.Entry<Integer, Integer> entry : local.getMultiReleaseIndexes().entrySet()) {
+                    multiRelease.put(String.valueOf(entry.getKey()), entry.getValue());
+                }
+
+                res.put("Multi-Release", multiRelease);
+            }
+
         } else if (this instanceof Maven) {
             Maven maven = (Maven) this;
             res.putOpt("Repository", maven.getRepository());
@@ -56,18 +83,24 @@ public abstract class JAppResourceReference {
 
     public static final class Local extends JAppResourceReference {
         private final int index;
+        private final TreeMap<Integer, Integer> multiReleaseIndexes;
 
-        public Local(String name, int index) {
+        public Local(String name, int index, TreeMap<Integer, Integer> multiReleaseIndexes) {
             super(name);
             if (index < 0) {
                 throw new IndexOutOfBoundsException(Integer.toString(index));
             }
 
             this.index = index;
+            this.multiReleaseIndexes = multiReleaseIndexes;
         }
 
         public int getIndex() {
             return index;
+        }
+
+        public TreeMap<Integer, Integer> getMultiReleaseIndexes() {
+            return multiReleaseIndexes;
         }
 
         @Override

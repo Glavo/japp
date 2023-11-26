@@ -12,11 +12,11 @@ import java.util.Base64;
 import java.util.List;
 
 public final class JAppBootMetadata {
-    public static JAppBootMetadata fromJson(JSONObject obj, int release) throws IOException {
+    public static JAppBootMetadata fromJson(JSONObject obj) throws IOException {
         JSONArray array = obj.getJSONArray("Groups");
         JAppResourceGroup[] groups = new JAppResourceGroup[array.length()];
         for (int i = 0; i < groups.length; i++) {
-            groups[i] = JAppResourceGroup.fromJson(array.getJSONObject(i), release);
+            groups[i] = JAppResourceGroup.fromJson(array.getJSONArray(i));
         }
 
         ByteArrayPool pool = ByteArrayPool.readPool(Channels.newChannel(new ByteArrayInputStream(

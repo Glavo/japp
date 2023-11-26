@@ -9,9 +9,7 @@ import org.glavo.japp.launcher.maven.MavenResolver;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.jar.Manifest;
 
 public final class Launcher {
@@ -23,7 +21,7 @@ public final class Launcher {
                 .getValue("JApp-Boot");
     }
 
-    private static void appendReferences(StringBuilder builder, List<JAppResourceReference> references) throws Throwable {
+    private static void appendReferences(StringBuilder builder, int release, List<JAppResourceReference> references) throws Throwable {
         boolean isFirst = true;
 
         for (JAppResourceReference reference : references) {
@@ -35,9 +33,25 @@ public final class Launcher {
                 builder.append(',');
             }
 
-            String refStr;
+            builder.append(name).append(":");
+
             if (reference instanceof JAppResourceReference.Local) {
-                refStr = Integer.toHexString(((JAppResourceReference.Local) reference).getIndex());
+                JAppResourceReference.Local local = (JAppResourceReference.Local) reference;
+                builder.append(Integer.toHexString(local.getIndex()));
+
+                TreeMap<Integer, Integer> multiReleaseIndexes = local.getMultiReleaseIndexes();
+                if (multiReleaseIndexes != null) {
+                    for (Map.Entry<Integer, Integer> entry : multiReleaseIndexes.entrySet()) {
+                        int r = entry.getKey();
+                        int i = entry.getValue();
+
+                        if (r <= release) {
+                            builder.append('+').append(Integer.toHexString(i));
+                        } else {
+                            break;
+                        }
+                    }
+                }
             } else if (reference instanceof JAppResourceReference.Maven) {
                 JAppResourceReference.Maven maven = (JAppResourceReference.Maven) reference;
 
@@ -49,12 +63,12 @@ public final class Launcher {
                         maven.getClassifier()
                 ).toAbsolutePath().normalize();
 
-                refStr = "E" + file;
+                builder.append('E').append(file);
             } else {
                 throw new TODO("Type: " + reference.getClass());
             }
 
-            builder.append(name).append(":").append(refStr);
+
         }
     }
 
@@ -109,13 +123,15 @@ public final class Launcher {
             command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
         }
 
+        @SuppressWarnings("deprecation")
+        int release = context.getJava().getVersion().major();
+
         boolean enablePreview = false;
 
         boolean isFirst = true;
         StringBuilder builder = new StringBuilder(80);
         if (!config.getEnableNativeAccess().isEmpty()) {
-            @SuppressWarnings("deprecation")
-            int release = context.getJava().getVersion().major();
+
 
             if (release == 16) {
                 command.add("-Dforeign.restricted=permit");
@@ -154,14 +170,14 @@ public final class Launcher {
         if (!config.getModulePath().isEmpty()) {
             builder.setLength(0);
             builder.append("-Dorg.glavo.japp.modules=");
-            appendReferences(builder, config.getModulePath());
+            appendReferences(builder, release, config.getModulePath());
             command.add(builder.toString());
         }
 
         if (!config.getClassPath().isEmpty()) {
             builder.setLength(0);
             builder.append("-Dorg.glavo.japp.classpath=");
-            appendReferences(builder, config.getClassPath());
+            appendReferences(builder, release, config.getClassPath());
             command.add(builder.toString());
         }
 

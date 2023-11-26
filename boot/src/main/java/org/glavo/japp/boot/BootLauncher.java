@@ -141,6 +141,21 @@ public final class BootLauncher {
         return value;
     }
 
+    private static JAppResourceGroup resolveResourceGroup(JAppBootMetadata metadata, String indexList) {
+        JAppResourceGroup group = null;
+
+        for (String indexString : indexList.split("\\+")) {
+            JAppResourceGroup g = metadata.getGroups().get(Integer.parseInt(indexString, 16));
+            if (group == null) {
+                group = g;
+            } else {
+                group.putAll(g);
+            }
+        }
+
+        return group;
+    }
+
     private static Method findMainMethod() throws Throwable {
         @SuppressWarnings("deprecation") int release = Runtime.version().major();
         BuiltinClassLoader loader = (BuiltinClassLoader) ClassLoader.getSystemClassLoader();
@@ -170,7 +185,7 @@ public final class BootLauncher {
         int size = buffer.rewind().getInt();
         buffer = ByteBuffer.allocate(size);
         IOUtils.readFully(channel, buffer);
-        JAppBootMetadata metadata = JAppBootMetadata.fromJson(new JSONObject(new String(buffer.array(), StandardCharsets.UTF_8)), release);
+        JAppBootMetadata metadata = JAppBootMetadata.fromJson(new JSONObject(new String(buffer.array(), StandardCharsets.UTF_8)));
 
         Map<String, JAppResourceGroup> modules = new HashMap<>();
         List<Path> externalModules = null;
@@ -186,21 +201,19 @@ public final class BootLauncher {
                 }
 
                 String name = item.substring(0, idx);
-                String index = item.substring(idx + 1);
+                String reference = item.substring(idx + 1);
 
-                char ch = index.charAt(0);
-                if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
-                    JAppResourceGroup group = metadata.getGroups().get(Integer.parseInt(index, 16));
-                    if (!group.getName().equals(name)) {
-                        throw new AssertionError(group.getName() + " != " + name);
-                    }
-                    modules.put(name, group);
-                } else if (ch == 'E') {
+                char ch = reference.charAt(0);
+                if (ch == 'E') {
                     if (externalModules == null) {
                         externalModules = new ArrayList<>();
                     }
 
-                    externalModules.add(Paths.get(index.substring(1)));
+                    externalModules.add(Paths.get(reference.substring(1)));
+                } else if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
+                    JAppResourceGroup group = resolveResourceGroup(metadata, reference);
+                    group.initName(name);
+                    modules.put(name, group);
                 } else {
                     throw new TODO();
                 }
@@ -212,6 +225,7 @@ public final class BootLauncher {
                     .findGetter(BuiltinClassLoader.class, "ucp", URLClassPath.class)
                     .invokeExact(loader);
 
+            int unnamedCount = 0;
             for (String item : classPaths.split(",")) {
                 int idx = item.indexOf(':');
 
@@ -220,22 +234,21 @@ public final class BootLauncher {
                 }
 
                 String name = item.substring(0, idx);
-                String index = item.substring(idx + 1);
+                String reference = item.substring(idx + 1);
 
-                char ch = index.charAt(0);
-                if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
-                    JAppResourceGroup group = metadata.getGroups().get(Integer.parseInt(index, 16));
-                    if (group.getName() == null) {
-                        name = "unnamed@" + index;
-                        group.initName(name);
-                    } else if (!name.equals(group.getName())) {
-                        throw new AssertionError(group.getName() + " != " + name);
+                char ch = reference.charAt(0);
+                if (ch == 'E') {
+                    ucp.addURL(Paths.get(reference.substring(1)).toUri().toURL());
+                } else if ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f')) {
+                    JAppResourceGroup group = resolveResourceGroup(metadata, reference);
+                    if (name.isEmpty()) {
+                        name = "unnamed@" + (unnamedCount++);
                     }
-                    ucp.addURL(JAppResourceRoot.CLASSPATH.toURI(group).toURL());
 
+                    group.initName(name);
+
+                    ucp.addURL(JAppResourceRoot.CLASSPATH.toURI(group).toURL());
                     classPath.put(name, group);
-                } else if (ch == 'E') {
-                    ucp.addURL(Paths.get(index.substring(1)).toUri().toURL());
                 } else {
                     throw new TODO();
                 }
