@@ -7,6 +7,7 @@ import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
+import org.glavo.japp.util.ByteBufferBuilder;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -22,12 +23,11 @@ import java.util.jar.Manifest;
 
 public final class JAppPacker {
 
+    private static final byte[] MAGIC_NUMBER = {'J', 'A', 'P', 'P'};
     private static final short MAJOR_VERSION = -1;
     private static final short MINOR_VERSION = 0;
 
-    private final ByteArrayOutputStream buffer = new ByteArrayOutputStream(16 * 1024 * 1024);
-    private final byte[] ba = new byte[8];
-    private final ByteBuffer bb = ByteBuffer.wrap(ba).order(ByteOrder.LITTLE_ENDIAN);
+    private final ByteBufferBuilder output = new ByteBufferBuilder(32 * 1024 * 1024);
 
     private final JAppConfigGroup root = new JAppConfigGroup();
 
@@ -39,79 +39,49 @@ public final class JAppPacker {
     final Compressor compressor = Compressors.DEFAULT;
     final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
 
-    long totalBytes = 0L;
-
     private boolean finished = false;
 
     private JAppPacker() {
+    }
+
+    public ByteBufferBuilder getOutput() {
+        return output;
+    }
+
+    public long getCurrentOffset() {
+        return output.getTotalBytes();
     }
 
     public ByteArrayPoolBuilder getPool() {
         return pool;
     }
 
-    void writeByte(byte b) throws IOException {
-        buffer.write(b & 0xff);
-        totalBytes += 1;
-    }
-
-    void writeShort(short s) throws IOException {
-        bb.putShort(0, s);
-        buffer.write(ba, 0, 2);
-        totalBytes += 2;
-    }
-
-    void writeInt(int i) throws IOException {
-        bb.putInt(0, i);
-        buffer.write(ba, 0, 4);
-        totalBytes += 4;
-    }
-
-    void writeLong(long l) throws IOException {
-        bb.putLong(0, l);
-        buffer.write(ba, 0, 8);
-        totalBytes += 8;
-    }
-
-    void writeBytes(byte[] arr) throws IOException {
-        writeBytes(arr, 0, arr.length);
-    }
-
-    void writeBytes(byte[] arr, int offset, int len) throws IOException {
-        buffer.write(arr, offset, len);
-        totalBytes += len;
-    }
-
     private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
-        long fileSize = totalBytes + 48;
+        long fileSize = output.getTotalBytes() + 48;
 
         // magic number
-        ba[0] = 'J';
-        ba[1] = 'A';
-        ba[2] = 'P';
-        ba[3] = 'P';
-        writeBytes(ba, 0, 4);
+        output.writeBytes(MAGIC_NUMBER);
 
         // version number
-        writeShort(MAJOR_VERSION);
-        writeShort(MINOR_VERSION);
+        output.writeShort(MAJOR_VERSION);
+        output.writeShort(MINOR_VERSION);
 
         // flags
-        writeLong(0L);
+        output.writeLong(0L);
 
         // file size
-        writeLong(fileSize);
+        output.writeLong(fileSize);
 
         // metadata offset
-        writeLong(metadataOffset);
+        output.writeLong(metadataOffset);
 
         // boot metadata offset
-        writeLong(bootMetadataOffset);
+        output.writeLong(bootMetadataOffset);
 
         // reserved
-        writeLong(0L);
+        output.writeLong(0L);
 
-        if (totalBytes != fileSize) {
+        if (output.getTotalBytes() != fileSize) {
             throw new AssertionError();
         }
     }
@@ -120,17 +90,17 @@ public final class JAppPacker {
         if (!finished) {
             finished = true;
 
-            long bootMetadataOffset = totalBytes;
+            long bootMetadataOffset = output.getTotalBytes();
             byte[] bootMetadata = JAppBootMetadata.toJson(groups, pool.toByteArray()).toString().getBytes(StandardCharsets.UTF_8);
-            writeInt(bootMetadata.length);
-            writeBytes(bootMetadata);
+            output.writeInt(bootMetadata.length);
+            output.writeBytes(bootMetadata);
 
-            long metadataOffset = totalBytes;
-            writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
+            long metadataOffset = output.getTotalBytes();
+            output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
             writeFileEnd(metadataOffset, bootMetadataOffset);
         }
 
-        this.buffer.writeTo(outputStream);
+        this.output.writeTo(outputStream);
     }
 
     private static String nextArg(String[] args, int index) {

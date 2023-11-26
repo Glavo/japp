@@ -1,14 +1,20 @@
 package org.glavo.japp.util;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-public final class ByteBufferBuilder {
+public final class ByteBufferBuilder extends OutputStream {
     private ByteBuffer buffer;
 
     public ByteBufferBuilder() {
         this(ByteOrder.LITTLE_ENDIAN, 8192);
+    }
+
+    public ByteBufferBuilder(int initialCapacity) {
+        this(ByteOrder.LITTLE_ENDIAN, initialCapacity);
     }
 
     public ByteBufferBuilder(ByteOrder order, int initialCapacity) {
@@ -21,53 +27,77 @@ public final class ByteBufferBuilder {
             int prevLen = arr.length;
             int nextLen = Math.max(prevLen * 2, prevLen + next);
 
-            buffer = ByteBuffer.wrap(Arrays.copyOf(arr, nextLen)).order(buffer.order()).position(buffer.position());
+            buffer = ByteBuffer.allocate(nextLen).order(buffer.order());
+            buffer.put(arr, 0, prevLen);
         }
     }
 
-    public void putByte(byte v) {
+    @Override
+    public void write(int b) {
+        writeByte((byte) b);
+    }
+
+    @Override
+    public void write(byte[] b) {
+        writeBytes(b);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) {
+        writeBytes(b, off, len);
+    }
+
+    public void writeByte(byte v) {
         prepare(Byte.BYTES);
         buffer.put(v);
     }
 
-    public void putShort(short v) {
+    public void writeShort(short v) {
         prepare(Short.BYTES);
         buffer.putShort(v);
     }
 
-    public void putUnsignedShort(int v) {
+    public void writeUnsignedShort(int v) {
         if (v > 0xffff) {
             throw new IllegalArgumentException();
         }
 
-        putShort((short) v);
+        writeShort((short) v);
     }
 
-    public void putInt(int v) {
+    public void writeInt(int v) {
         prepare(Integer.BYTES);
         buffer.putInt(v);
     }
 
-    public void putUnsignedInt(long v) {
+    public void writeUnsignedInt(long v) {
         if (v > 0xffff_ffffL) {
             throw new IllegalArgumentException();
         }
 
-        putInt((int) v);
+        writeInt((int) v);
     }
 
-    public void putLong(long v) {
+    public void writeLong(long v) {
         prepare(Long.BYTES);
         buffer.putLong(v);
     }
 
-    public void putBytes(byte[] array) {
-        putBytes(array, 0, array.length);
+    public void writeBytes(byte[] array) {
+        writeBytes(array, 0, array.length);
     }
 
-    public void putBytes(byte[] array, int offset, int len) {
+    public void writeBytes(byte[] array, int offset, int len) {
         prepare(len);
         buffer.put(array, offset, len);
+    }
+
+    public int getTotalBytes() {
+        return buffer.position();
+    }
+
+    public void writeTo(OutputStream out) throws IOException {
+        out.write(buffer.array(), 0, buffer.position());
     }
 
     public byte[] toByteArray() {

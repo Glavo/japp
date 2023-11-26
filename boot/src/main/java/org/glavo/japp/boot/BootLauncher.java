@@ -14,6 +14,7 @@ import java.lang.invoke.MethodType;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -293,6 +294,10 @@ public final class BootLauncher {
     }
 
     public static void main(String[] args) throws Throwable {
-        findMainMethod().invoke(null, (Object) args);
+        try {
+            findMainMethod().invoke(null, (Object) args);
+        } catch (InvocationTargetException e) {
+            throw e.getTargetException();
+        }
     }
 }

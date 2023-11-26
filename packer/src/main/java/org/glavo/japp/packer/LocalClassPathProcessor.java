@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.jar.Attributes;
@@ -22,6 +23,17 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
     private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
 
+    private static long timeToMillis(FileTime time) {
+        if (time == null) {
+            return JAppResource.NO_TIME;
+        }
+
+        long millis = time.toMillis();
+        if (millis == JAppResource.NO_TIME) {
+            throw new IllegalArgumentException("Invalid time: " + time);
+        }
+        return millis;
+    }
 
     public static void addJar(JAppPacker packer, Path jar, boolean modulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(jar.toFile())) {
@@ -144,14 +156,14 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 }
 
                 groupEntries.put(name, new JAppResource(
-                        name, packer.totalBytes, entry.getSize(),
+                        name, packer.getCurrentOffset(), entry.getSize(),
                         result.getMethod(), result.getLength(),
-                        entry.getCreationTime().toMillis(),
-                        entry.getLastModifiedTime().toMillis(),
-                        entry.getLastAccessTime().toMillis()
+                        timeToMillis(entry.getCreationTime()),
+                        timeToMillis(entry.getLastModifiedTime()),
+                        timeToMillis(entry.getLastAccessTime())
                 ));
 
-                packer.writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
+                packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
             }
         }
     }
@@ -167,7 +179,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
         }
 
         JAppResourceGroup group = new JAppResourceGroup(name);
-        JAppResourceReference reference = new JAppResourceReference.Local(null, packer.groups.size());
+        JAppResourceReference reference = new JAppResourceReference.Local(name, packer.groups.size());
         packer.groups.add(group);
         if (modulePath) {
             packer.current.modulePath.add(reference);
@@ -183,13 +195,13 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 byte[] data = Files.readAllBytes(file);
                 CompressResult result = packer.compressor.compress(packer, Files.readAllBytes(file), file, attrs);
                 group.getResources().put(path, new JAppResource(
-                        path, packer.totalBytes, data.length,
+                        path, packer.getCurrentOffset(), data.length,
                         result.getMethod(), result.getLength(),
-                        attrs.creationTime().toMillis(),
-                        attrs.lastModifiedTime().toMillis(),
-                        attrs.lastAccessTime().toMillis()
+                        timeToMillis(attrs.creationTime()),
+                        timeToMillis(attrs.lastModifiedTime()),
+                        timeToMillis(attrs.lastAccessTime())
                 ));
-                packer.writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
+                packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
                 return FileVisitResult.CONTINUE;
             }
         });

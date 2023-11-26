@@ -6,7 +6,6 @@ import org.glavo.japp.json.JSONObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.util.Arrays;
 import java.util.Base64;

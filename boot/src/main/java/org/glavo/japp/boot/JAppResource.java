@@ -13,7 +13,7 @@ import java.nio.file.attribute.FileTime;
 public final class JAppResource {
 
     private static final byte MAGIC_NUMBER = (byte) 0xaa;
-    private static final long NO_TIME = Long.MIN_VALUE;
+    public static final long NO_TIME = Long.MIN_VALUE;
 
     private final String name;
 
@@ -167,8 +167,8 @@ public final class JAppResource {
 
     private static void writeFileTime(ByteBufferBuilder builder, JAppResourceField field, long time) {
         if (time != NO_TIME) {
-            builder.putByte(field.id());
-            builder.putLong(time);
+            builder.writeByte(field.id());
+            builder.writeLong(time);
         }
     }
 
@@ -177,27 +177,27 @@ public final class JAppResource {
                                CompressionMethod method, long compressedSize,
                                long creationTime, long lastModifiedTime, long lastAccessTime,
                                Long checksum) throws IOException {
-        builder.putByte(MAGIC_NUMBER);
-        builder.putByte(method.id());
-        builder.putShort((short) 0); // TODO
-        builder.putLong(offset);
-        builder.putUnsignedInt(size);
-        builder.putUnsignedInt(compressedSize);
+        builder.writeByte(MAGIC_NUMBER);
+        builder.writeByte(method.id());
+        builder.writeShort((short) 0); // TODO
+        builder.writeLong(offset);
+        builder.writeUnsignedInt(size);
+        builder.writeUnsignedInt(compressedSize);
 
         byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
-        builder.putUnsignedShort(bytes.length);
-        builder.putBytes(bytes);
+        builder.writeUnsignedShort(bytes.length);
+        builder.writeBytes(bytes);
 
         if (checksum != null) {
-            builder.putByte(JAppResourceField.CHECKSUM.id());
-            builder.putLong(checksum);
+            builder.writeByte(JAppResourceField.CHECKSUM.id());
+            builder.writeLong(checksum);
         }
 
         writeFileTime(builder, JAppResourceField.FILE_CREATE_TIME, creationTime);
         writeFileTime(builder, JAppResourceField.FILE_LAST_MODIFIED_TIME, lastModifiedTime);
         writeFileTime(builder, JAppResourceField.FILE_LAST_ACCESS_TIME, lastAccessTime);
 
-        builder.putByte(JAppResourceField.END.id());
+        builder.writeByte(JAppResourceField.END.id());
     }
 
     public static JAppResource fromJson(JSONObject obj) {
