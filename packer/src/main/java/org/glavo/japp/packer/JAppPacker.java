@@ -72,7 +72,7 @@ public final class JAppPacker {
         // file size
         output.writeLong(fileSize);
 
-        // metadata offset
+        // launcher metadata offset
         output.writeLong(metadataOffset);
 
         // boot metadata offset

@@ -1,6 +1,29 @@
-# SPEC (Draft)
+# Specification (Draft)
+
+File format:
+
+```
+JAppFile {
+    u4 magic_number; // "JAPP"
+    u1[...] data_pool;
+    BootMetadata boot_metadata;
+    LauncherMetadata launcher_metadata;
+    FileEnd {
+         u4 magic_number; // "JAPP"
+         u2 major_version;
+         u2 minor_version;
+         u8 flags;
+         u8 file_size;
+         u8 launcher_metadata_offset;
+         u8 boot_metadata_offset;
+         u1[8] reserved;
+    } end;
+}
+```
 
 ## launcher
+
+TODO
 
 ## boot
 
@@ -32,7 +55,7 @@ Resource {
     u2 path_length;
     u1[path_length] path; // UTF-8  
     
-    ResourceField[...] fields;
+    ResourceFields fields;
 }
 ```
 
@@ -44,7 +67,7 @@ TODO
 
 ## share
 
-Module path and class path:
+Pass module path and class path:
 
 ```
 PathList  : PathItem (',' PathItem)*
