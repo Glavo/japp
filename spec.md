@@ -21,10 +21,11 @@
 
 ```
 Resource {
-    u2 magic_number; // 0x0a0b
-    u2 flags;
+    u1 magic_number; // 0xaa
     u1 compress_method;
+    u2 flags;
     
+    u8 content_offset;
     u4 compressed_size;
     u4 uncompressed_size;
     
