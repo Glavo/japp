@@ -1,6 +1,5 @@
 package org.glavo.japp.packer;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.launcher.JAppResourceReference;
@@ -8,7 +7,6 @@ import org.glavo.japp.packer.compressor.CompressResult;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.file.*;
@@ -27,10 +25,6 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
     private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
 
-    private static String readModuleName(InputStream moduleInfo) throws IOException {
-        // TODO: Support Java 8
-        return ModuleDescriptor.read(moduleInfo).name();
-    }
 
     public static void addJar(JAppPacker packer, Path jar, boolean modulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(jar.toFile())) {
@@ -85,19 +79,13 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     // parse module-info.class
 
                     try (InputStream mi = zipFile.getInputStream(entry)) {
-                        moduleName = readModuleName(mi);
+                        moduleName = ModuleInfoReader.readModuleName(mi);
                     }
                 }
             }
 
             if (modulePath && moduleName == null) {
-                Set<ModuleReference> moduleReferences = ModuleFinder.of(jar).findAll();
-                if (moduleReferences.size() != 1) {
-                    throw new AssertionError("ModuleReferences: " + moduleReferences);
-                }
-
-                ModuleReference reference = moduleReferences.iterator().next();
-                moduleName = reference.descriptor().name();
+                moduleName = ModuleInfoReader.deriveAutomaticModuleName(jar.getFileName().toString());
             }
 
             // If the module name is not found, the file name is retained
@@ -172,7 +160,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
         String name;
         if (modulePath) {
             try (InputStream input = Files.newInputStream(dir.resolve("module-info.class"))) {
-                name = readModuleName(input);
+                name = ModuleInfoReader.readModuleName(input);
             }
         } else {
             name = null;
