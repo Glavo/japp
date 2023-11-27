@@ -81,17 +81,19 @@ public final class JAppResourceGroup extends LinkedHashMap<String, JAppResource>
             return;
         }
 
+        int limit = Math.toIntExact(Math.addExact(buffer.position(), compressedSize));
+        ByteBuffer compressedBuffer = buffer.duplicate().limit(limit).order(ByteOrder.LITTLE_ENDIAN);
+        buffer.position(limit);
+
         ByteBuffer uncompressedBuffer;
         switch (compressionMethod) {
             case NONE: {
-                uncompressedBuffer = buffer.duplicate().limit(Math.toIntExact(Math.addExact(buffer.position(), compressedSize)))
-                        .order(ByteOrder.LITTLE_ENDIAN);
-                buffer.position(uncompressedBuffer.limit());
+                uncompressedBuffer = compressedBuffer;
                 break;
             }
             case ZSTD: {
-                uncompressedBuffer = ByteBuffer.allocate(Math.toIntExact(compressedSize)).order(ByteOrder.LITTLE_ENDIAN);
-                ZstdUtils.decompress(buffer, uncompressedBuffer);
+                uncompressedBuffer = ByteBuffer.allocate(Math.toIntExact(uncompressedSize)).order(ByteOrder.LITTLE_ENDIAN);
+                ZstdUtils.decompress(compressedBuffer, uncompressedBuffer);
                 if (uncompressedBuffer.hasRemaining()) {
                     throw new IOException();
                 }
