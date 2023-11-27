@@ -21,10 +21,6 @@ JAppFile {
 }
 ```
 
-## launcher
-
-TODO
-
 ## boot
 
 [BootMetadata](boot/src/main/java/org/glavo/japp/boot/JAppBootMetadata.java):
@@ -64,6 +60,11 @@ Resource {
 ```
 TODO
 ```
+
+## launcher
+
+TODO
+
 
 ## share
 
