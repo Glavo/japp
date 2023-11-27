@@ -58,7 +58,10 @@ Resource {
 [ResourceGroup](boot/src/main/java/org/glavo/japp/boot/JAppResourceGroup.java):
 
 ```
-TODO
+ResourceGroup {
+    u4 resource_count;
+    Resource[resource_count] resources;
+}
 ```
 
 ## launcher
