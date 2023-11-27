@@ -13,7 +13,7 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
-import org.glavo.japp.TODO;
+import org.glavo.japp.util.UnsafeUtil;
 
 import java.lang.ref.Reference;
 import java.nio.ByteBuffer;
@@ -26,19 +26,40 @@ public final class ZstdUtils {
     private static final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
 
     public static int decompress(ByteBuffer input, ByteBuffer output) throws MalformedInputException {
-        if (input.hasArray() && output.hasArray()) {
-            int inputArrayOffset = input.arrayOffset();
-            int outputArrayOffset = output.arrayOffset();
-            int res = decompress(
-                    input.array(), inputArrayOffset + input.position(), inputArrayOffset + input.limit(),
-                    output.array(), outputArrayOffset + output.position(), outputArrayOffset + output.limit()
-            );
-            input.position(input.limit());
-            output.position(output.position() + res);
-            return res;
+        Object inputBase;
+        long inputBaseAddress;
+        long inputAddress;
+        long inputLimit;
+
+        Object outputBase;
+        long outputBaseAddress;
+        long outputAddress;
+        long outputLimit;
+
+        if (input.hasArray()) {
+            inputBase = input.array();
+            inputBaseAddress = ARRAY_BYTE_BASE_OFFSET + input.arrayOffset();
         } else {
-            throw new TODO();
+            inputBase = null;
+            inputBaseAddress = UnsafeUtil.getDirectBufferAddress(input);
         }
+        inputAddress = inputBaseAddress + input.position();
+        inputLimit = inputBaseAddress + input.limit();
+
+        if (output.hasArray()) {
+            outputBase = output.array();
+            outputBaseAddress = ARRAY_BYTE_BASE_OFFSET + output.arrayOffset();
+        } else {
+            outputBase = null;
+            outputBaseAddress = UnsafeUtil.getDirectBufferAddress(output);
+        }
+        outputAddress = outputBaseAddress + output.position();
+        outputLimit = outputBaseAddress + output.limit();
+
+        input.position(input.limit());
+        int n = decompressor.decompress(inputBase, inputAddress, inputLimit, outputBase, outputAddress, outputLimit);
+        output.position(output.position() + n);
+        return n;
     }
 
     public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)

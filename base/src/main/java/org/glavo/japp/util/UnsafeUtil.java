@@ -15,6 +15,9 @@ package org.glavo.japp.util;
 
 import jdk.internal.misc.Unsafe;
 
+import java.lang.reflect.Field;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public final class UnsafeUtil {
@@ -23,7 +26,14 @@ public final class UnsafeUtil {
 
     public static final int ARRAY_BYTE_BASE_OFFSET = Unsafe.ARRAY_BYTE_BASE_OFFSET;
 
+    private static final long BUFFER_ADDRESS_OFFSET = UNSAFE.objectFieldOffset(Buffer.class, "address");
+
     private UnsafeUtil() {
+    }
+
+    public static long getDirectBufferAddress(ByteBuffer buffer) {
+        assert buffer.isDirect();
+        return UNSAFE.getLong(buffer, BUFFER_ADDRESS_OFFSET);
     }
 
     public static byte getByte(Object o, long offset) {

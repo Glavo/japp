@@ -1,15 +1,17 @@
 package org.glavo.japp.boot.decompressor.zstd;
 
 import com.github.luben.zstd.Zstd;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Random;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ZstdTest {
 
@@ -25,8 +27,33 @@ public class ZstdTest {
 
         byte[] decompressed = new byte[bytes.length];
         int decompressedLen = ZstdUtils.decompress(compressed, 0, compressed.length, decompressed, 0, decompressed.length);
-        Assertions.assertArrayEquals(bytes, decompressed);
-        Assertions.assertEquals(bytes.length, decompressedLen);
+        assertArrayEquals(bytes, decompressed);
+        assertEquals(bytes.length, decompressedLen);
+
+        Arrays.fill(decompressed, (byte) 0);
+        ByteBuffer compressedBuffer = ByteBuffer.wrap(compressed);
+        ByteBuffer decompressedBuffer = ByteBuffer.wrap(decompressed);
+
+        decompressedLen = ZstdUtils.decompress(compressedBuffer, decompressedBuffer);
+        assertFalse(compressedBuffer.hasRemaining());
+        assertFalse(decompressedBuffer.hasRemaining());
+        assertArrayEquals(bytes, decompressed);
+        assertEquals(bytes.length, decompressedLen);
+
+        compressedBuffer = ByteBuffer.allocateDirect(compressed.length);
+        compressedBuffer.put(compressed);
+        compressedBuffer.flip();
+        decompressedBuffer = ByteBuffer.allocateDirect(bytes.length);
+
+        decompressedLen = ZstdUtils.decompress(compressedBuffer, decompressedBuffer);
+        assertFalse(compressedBuffer.hasRemaining());
+        assertFalse(decompressedBuffer.hasRemaining());
+
+        decompressedBuffer.flip();
+        decompressedBuffer.get(decompressed);
+
+        assertArrayEquals(bytes, decompressed);
+        assertEquals(bytes.length, decompressedLen);
     }
 
     @Test
