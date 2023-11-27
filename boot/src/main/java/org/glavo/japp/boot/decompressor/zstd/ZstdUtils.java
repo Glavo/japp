@@ -13,7 +13,10 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
+import org.glavo.japp.TODO;
+
 import java.lang.ref.Reference;
+import java.nio.ByteBuffer;
 
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
@@ -21,6 +24,22 @@ import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 
 public final class ZstdUtils {
     private static final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+
+    public static int decompress(ByteBuffer input, ByteBuffer output) throws MalformedInputException {
+        if (input.hasArray() && output.hasArray()) {
+            int inputArrayOffset = input.arrayOffset();
+            int outputArrayOffset = output.arrayOffset();
+            int res = decompress(
+                    input.array(), inputArrayOffset + input.position(), inputArrayOffset + input.limit(),
+                    output.array(), outputArrayOffset + output.position(), outputArrayOffset + output.limit()
+            );
+            input.position(input.limit());
+            output.position(output.position() + res);
+            return res;
+        } else {
+            throw new TODO();
+        }
+    }
 
     public static int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
             throws MalformedInputException {

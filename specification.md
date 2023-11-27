@@ -29,9 +29,8 @@ JAppFile {
 BootMetadata {
     u4 pool_length;
     u4 group_count;
-    u4[group_count] group_lengths;
 
-    u1[pool_length] pool;
+    u1[pool_length] string_pool;
     ResourceGroup[group_count] groups;
 }
 ```
@@ -59,15 +58,21 @@ Resource {
 
 ```
 ResourceGroup {
-    u4 resource_count;
-    Resource[resource_count] resources;
+    u1 magic_number; // 0xeb
+    u1 compress_method;
+    u2 reserved;
+    
+    u4 uncompressed_size;
+    u4 compressed_size;
+    u4 resources_count;
+    
+    u1[compressed_size] compressed_resources;
 }
 ```
 
 ## launcher
 
 TODO
-
 
 ## share
 
