@@ -8,11 +8,9 @@ import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
-import org.glavo.japp.util.ByteBufferBuilder;
+import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +27,7 @@ public final class JAppPacker {
     private static final short MAJOR_VERSION = -1;
     private static final short MINOR_VERSION = 0;
 
-    private final ByteBufferBuilder output = new ByteBufferBuilder(32 * 1024 * 1024);
+    private final ByteBufferOutputStream output = new ByteBufferOutputStream(32 * 1024 * 1024);
 
     {
         output.writeBytes(MAGIC_NUMBER);
@@ -50,7 +48,7 @@ public final class JAppPacker {
     private JAppPacker() {
     }
 
-    public ByteBufferBuilder getOutput() {
+    public ByteBufferOutputStream getOutput() {
         return output;
     }
 

@@ -6,18 +6,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-public final class ByteBufferBuilder extends OutputStream {
+public final class ByteBufferOutputStream extends OutputStream {
     private ByteBuffer buffer;
 
-    public ByteBufferBuilder() {
+    public ByteBufferOutputStream() {
         this(ByteOrder.LITTLE_ENDIAN, 8192);
     }
 
-    public ByteBufferBuilder(int initialCapacity) {
+    public ByteBufferOutputStream(int initialCapacity) {
         this(ByteOrder.LITTLE_ENDIAN, initialCapacity);
     }
 
-    public ByteBufferBuilder(ByteOrder order, int initialCapacity) {
+    public ByteBufferOutputStream(ByteOrder order, int initialCapacity) {
         this.buffer = ByteBuffer.allocate(initialCapacity).order(order);
     }
 
@@ -32,14 +32,17 @@ public final class ByteBufferBuilder extends OutputStream {
         }
     }
 
-    @Override
-    public void write(int b) {
-        writeByte((byte) b);
+    public ByteBuffer getByteBuffer() {
+        return buffer;
+    }
+
+    public int getTotalBytes() {
+        return buffer.position();
     }
 
     @Override
-    public void write(byte[] b) {
-        writeBytes(b);
+    public void write(int b) {
+        writeByte((byte) b);
     }
 
     @Override
@@ -90,10 +93,6 @@ public final class ByteBufferBuilder extends OutputStream {
     public void writeBytes(byte[] array, int offset, int len) {
         prepare(len);
         buffer.put(array, offset, len);
-    }
-
-    public int getTotalBytes() {
-        return buffer.position();
     }
 
     public void writeTo(OutputStream out) throws IOException {

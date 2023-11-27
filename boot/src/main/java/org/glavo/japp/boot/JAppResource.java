@@ -3,7 +3,7 @@ package org.glavo.japp.boot;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
 import org.glavo.japp.json.JSONObject;
-import org.glavo.japp.util.ByteBufferBuilder;
+import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -165,39 +165,39 @@ public final class JAppResource {
         return resource;
     }
 
-    private static void writeFileTime(ByteBufferBuilder builder, JAppResourceField field, long time) {
+    private static void writeFileTime(ByteBufferOutputStream output, JAppResourceField field, long time) {
         if (time != NO_TIME) {
-            builder.writeByte(field.id());
-            builder.writeLong(time);
+            output.writeByte(field.id());
+            output.writeLong(time);
         }
     }
 
-    public static void writeTo(ByteBufferBuilder builder,
+    public static void writeTo(ByteBufferOutputStream output,
                                String name, long offset, long size,
                                CompressionMethod method, long compressedSize,
                                long creationTime, long lastModifiedTime, long lastAccessTime,
                                Long checksum) throws IOException {
-        builder.writeByte(MAGIC_NUMBER);
-        builder.writeByte(method.id());
-        builder.writeShort((short) 0); // TODO
-        builder.writeUnsignedInt(size);
-        builder.writeUnsignedInt(compressedSize);
-        builder.writeLong(offset);
+        output.writeByte(MAGIC_NUMBER);
+        output.writeByte(method.id());
+        output.writeShort((short) 0); // TODO
+        output.writeUnsignedInt(size);
+        output.writeUnsignedInt(compressedSize);
+        output.writeLong(offset);
 
         byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
-        builder.writeUnsignedShort(bytes.length);
-        builder.writeBytes(bytes);
+        output.writeUnsignedShort(bytes.length);
+        output.writeBytes(bytes);
 
         if (checksum != null) {
-            builder.writeByte(JAppResourceField.CHECKSUM.id());
-            builder.writeLong(checksum);
+            output.writeByte(JAppResourceField.CHECKSUM.id());
+            output.writeLong(checksum);
         }
 
-        writeFileTime(builder, JAppResourceField.FILE_CREATE_TIME, creationTime);
-        writeFileTime(builder, JAppResourceField.FILE_LAST_MODIFIED_TIME, lastModifiedTime);
-        writeFileTime(builder, JAppResourceField.FILE_LAST_ACCESS_TIME, lastAccessTime);
+        writeFileTime(output, JAppResourceField.FILE_CREATE_TIME, creationTime);
+        writeFileTime(output, JAppResourceField.FILE_LAST_MODIFIED_TIME, lastModifiedTime);
+        writeFileTime(output, JAppResourceField.FILE_LAST_ACCESS_TIME, lastAccessTime);
 
-        builder.writeByte(JAppResourceField.END.id());
+        output.writeByte(JAppResourceField.END.id());
     }
 
     public static JAppResource fromJson(JSONObject obj) {
