@@ -27,11 +27,24 @@ JAppFile {
 
 ```
 BootMetadata {
-    u4 pool_length;
     u4 group_count;
-
-    u1[pool_length] string_pool;
     ResourceGroup[group_count] groups;
+}
+```
+
+[ResourceGroup](boot/src/main/java/org/glavo/japp/boot/JAppResourceGroup.java):
+
+```
+ResourceGroup {
+    u1 magic_number; // 0xeb
+    u1 compress_method;
+    u2 reserved;
+    
+    u4 uncompressed_size;
+    u4 compressed_size;
+    u4 resources_count;
+    
+    u1[compressed_size] compressed_resources;
 }
 ```
 
@@ -51,22 +64,6 @@ Resource {
     u1[path_length] path; // UTF-8  
     
     ResourceFields optional_fields;
-}
-```
-
-[ResourceGroup](boot/src/main/java/org/glavo/japp/boot/JAppResourceGroup.java):
-
-```
-ResourceGroup {
-    u1 magic_number; // 0xeb
-    u1 compress_method;
-    u2 reserved;
-    
-    u4 uncompressed_size;
-    u4 compressed_size;
-    u4 resources_count;
-    
-    u1[compressed_size] compressed_resources;
 }
 ```
 
