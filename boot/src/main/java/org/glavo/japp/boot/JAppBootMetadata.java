@@ -107,7 +107,7 @@ public final class JAppBootMetadata {
                     uncompressed = uncompressedBuffer;
                 }
 
-                long actualChecksum = XxHash64.hashByteBufferWithoutUpdate(uncompressedBuffer);
+                long actualChecksum = XxHash64.hashByteBufferWithoutUpdate(uncompressed);
                 if (actualChecksum != checksum) {
                     throw new IOException(String.format(
                             "Failed while verifying resource group at index %d (expected=%x, actual=%x)",

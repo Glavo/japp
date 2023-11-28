@@ -120,7 +120,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                         String ver = name.substring(MULTI_RELEASE_PREFIX.length(), idx);
                         try {
                             int v = Integer.parseInt(ver);
-                            if (v > 9) {
+                            if (v >= 9) {
                                 group = multiGroups.computeIfAbsent(v, n -> new JAppResourceGroup());
                                 name = name.substring(idx + 1);
                             }
