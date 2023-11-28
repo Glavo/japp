@@ -1,5 +1,8 @@
 package org.glavo.japp.util;
 
+import java.lang.ref.Reference;
+import java.nio.ByteBuffer;
+
 import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 
 public final class XxHash64 {
@@ -8,6 +11,31 @@ public final class XxHash64 {
     private static final long P3 = 0x165667B19E3779F9L;
     private static final long P4 = 0x85EBCA77C2b2AE63L;
     private static final long P5 = 0x27D4EB2F165667C5L;
+
+    public static long hashByteBufferWithoutUpdate(ByteBuffer buffer) {
+        return hashByteBufferWithoutUpdate(0L, buffer);
+    }
+
+    public static long hashByteBufferWithoutUpdate(long seed, ByteBuffer buffer) {
+        Object inputBase;
+        long inputAddress;
+        long inputLimit;
+
+        if (buffer.hasArray()) {
+            inputBase = buffer.array();
+            inputAddress = ARRAY_BYTE_BASE_OFFSET + buffer.arrayOffset() + buffer.position();
+        } else {
+            inputBase = null;
+            inputAddress = UnsafeUtil.getDirectBufferAddress(buffer);
+        }
+        inputLimit = inputAddress + buffer.remaining();
+
+        try {
+            return hash(seed, inputBase, inputAddress, inputLimit);
+        } finally {
+            Reference.reachabilityFence(buffer);
+        }
+    }
 
     public static long hash(long seed, byte[] array, int offset, int length) {
         return hash(seed, (Object) array, ARRAY_BYTE_BASE_OFFSET + offset, ARRAY_BYTE_BASE_OFFSET + offset + length);

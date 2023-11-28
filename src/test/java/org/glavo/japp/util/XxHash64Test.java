@@ -25,11 +25,12 @@ public class XxHash64Test {
 
         ByteBuffer nativeBuffer = ByteBuffer.allocateDirect(length);
         nativeBuffer.put(data);
-        nativeBuffer.clear();
+        nativeBuffer.position(0);
 
         long expected = org.lwjgl.util.xxhash.XXHash.XXH64(nativeBuffer, 0L);
+        nativeBuffer.position(0);
 
-        long actual = XxHash64.hash(0L, data, 0, data.length);
-        assertEquals(expected, actual);
+        assertEquals(expected, XxHash64.hashByteBufferWithoutUpdate(ByteBuffer.wrap(data)));
+        assertEquals(expected, XxHash64.hashByteBufferWithoutUpdate(nativeBuffer));
     }
 }
