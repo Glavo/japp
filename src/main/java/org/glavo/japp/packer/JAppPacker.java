@@ -23,14 +23,13 @@ import java.util.jar.Manifest;
 
 public final class JAppPacker {
 
-    private static final byte[] MAGIC_NUMBER = {'J', 'A', 'P', 'P'};
+    private static final int MAGIC_NUMBER = 0x5050414a;
     private static final short MAJOR_VERSION = -1;
     private static final short MINOR_VERSION = 0;
 
     private final ByteBufferOutputStream output = new ByteBufferOutputStream(32 * 1024 * 1024);
-
     {
-        output.writeBytes(MAGIC_NUMBER);
+        output.writeInt(MAGIC_NUMBER);
     }
 
     private final JAppConfigGroup root = new JAppConfigGroup();
@@ -91,7 +90,7 @@ public final class JAppPacker {
         long fileSize = output.getTotalBytes() + JAppConfigGroup.FILE_END_SIZE;
 
         // magic number
-        output.writeBytes(MAGIC_NUMBER);
+        output.writeInt(MAGIC_NUMBER);
 
         // version number
         output.writeShort(MAJOR_VERSION);
@@ -124,9 +123,7 @@ public final class JAppPacker {
             finished = true;
 
             long bootMetadataOffset = getCurrentOffset();
-            byte[] bootMetadata = JAppBootMetadata.toJson(groups, pool.toByteArray()).toString().getBytes(StandardCharsets.UTF_8);
-            output.writeInt(bootMetadata.length);
-            output.writeBytes(bootMetadata);
+            new JAppBootMetadata(groups, null).writeTo(output); // TODO: pool
 
             long metadataOffset = getCurrentOffset();
             output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));

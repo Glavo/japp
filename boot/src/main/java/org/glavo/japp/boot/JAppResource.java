@@ -172,6 +172,14 @@ public final class JAppResource {
         }
     }
 
+    public void writeTo(ByteBufferOutputStream output) throws IOException {
+        writeTo(output, name, offset, size,
+                method, compressedSize,
+                creationTime, lastModifiedTime, lastAccessTime,
+                needCheck ? checksum : null
+        );
+    }
+
     public static void writeTo(ByteBufferOutputStream output,
                                String name, long offset, long size,
                                CompressionMethod method, long compressedSize,

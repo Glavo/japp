@@ -1,10 +1,12 @@
 package org.glavo.japp.boot;
 
+import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.json.JSONArray;
 import org.glavo.japp.json.JSONObject;
+import org.glavo.japp.util.ByteBufferOutputStream;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.util.XxHash64;
 
@@ -13,18 +15,24 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
 public final class JAppBootMetadata {
+    private static final int MAGIC_NUMBER = 0x544f4f42;
+
     public static JAppBootMetadata readFrom(SeekableByteChannel channel) throws IOException {
         ByteBuffer headerBuffer = ByteBuffer.allocate(JAppResourceGroup.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN);
-        headerBuffer.limit(4);
+        headerBuffer.limit(8);
         IOUtils.readFully(channel, headerBuffer);
         headerBuffer.flip();
+
+        int bootMagic = headerBuffer.getInt();
+        if (bootMagic != MAGIC_NUMBER) {
+            throw new IOException(String.format("Wrong boot magic: %02x", bootMagic));
+        }
 
         int groupCount = headerBuffer.getInt();
 
@@ -123,6 +131,37 @@ public final class JAppBootMetadata {
         return new JAppBootMetadata(Arrays.asList(groups), null); // TODO: Pool
     }
 
+    public void writeTo(ByteBufferOutputStream output) throws IOException {
+        output.writeInt(MAGIC_NUMBER);
+        output.writeInt(groups.size());
+        for (JAppResourceGroup group : groups) {
+            ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
+            for (JAppResource resource : group.values()) {
+                resource.writeTo(groupBodyBuilder);
+            }
+            byte[] groupBody = groupBodyBuilder.toByteArray();
+            byte[] compressed = Zstd.compress(groupBody);
+            CompressionMethod method;
+            if (compressed.length < groupBody.length) {
+                method = CompressionMethod.ZSTD;
+            } else {
+                method = CompressionMethod.NONE;
+                compressed = groupBody;
+            }
+
+            long checksum = XxHash64.hash(groupBody);
+
+            output.writeByte(JAppResourceGroup.MAGIC_NUMBER);
+            output.writeByte(method.id());
+            output.writeShort((short) 0); // reserved
+            output.writeInt(groupBody.length);
+            output.writeInt(compressed.length);
+            output.writeInt(group.size());
+            output.writeLong(checksum);
+            output.writeBytes(compressed);
+        }
+    }
+
     public static JAppBootMetadata fromJson(JSONObject obj) throws IOException {
         JSONArray array = obj.getJSONArray("Groups");
         JAppResourceGroup[] groups = new JAppResourceGroup[array.length()];
@@ -134,19 +173,6 @@ public final class JAppBootMetadata {
                 Base64.getDecoder().decode(obj.getString("Pool"))
         )));
         return new JAppBootMetadata(Arrays.asList(groups), pool);
-    }
-
-    public static JSONObject toJson(List<JAppResourceGroup> groups, byte[] pool) {
-        JSONObject res = new JSONObject();
-
-        JSONArray groupsArray = new JSONArray();
-        for (JAppResourceGroup group : groups) {
-            groupsArray.put(group.toJson());
-        }
-        res.put("Groups", groupsArray);
-        res.put("Pool", Base64.getEncoder().encodeToString(pool));
-
-        return res;
     }
 
     private final List<JAppResourceGroup> groups;

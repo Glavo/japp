@@ -37,6 +37,14 @@ public final class XxHash64 {
         }
     }
 
+    public static long hash(byte[] array) {
+        return hash(0, array);
+    }
+
+    public static long hash(long seed, byte[] array) {
+        return hash(seed, array, 0, array.length);
+    }
+
     public static long hash(long seed, byte[] array, int offset, int length) {
         return hash(seed, (Object) array, ARRAY_BYTE_BASE_OFFSET + offset, ARRAY_BYTE_BASE_OFFSET + offset + length);
     }

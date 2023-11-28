@@ -21,6 +21,10 @@ public final class ByteBufferOutputStream extends OutputStream {
         this.buffer = ByteBuffer.allocate(initialCapacity).order(order);
     }
 
+    public ByteBufferOutputStream(ByteBuffer buffer) {
+        this.buffer = buffer;
+    }
+
     private void prepare(int next) {
         if (buffer.remaining() < next) {
             byte[] arr = buffer.array();

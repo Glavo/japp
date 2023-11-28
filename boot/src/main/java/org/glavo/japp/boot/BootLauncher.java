@@ -180,12 +180,7 @@ public final class BootLauncher {
 
         FileChannel channel = FileChannel.open(Paths.get(file));
         channel.position(baseOffset + metadataOffset);
-        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES).order(ByteOrder.LITTLE_ENDIAN);
-        IOUtils.readFully(channel, buffer);
-        int size = buffer.rewind().getInt();
-        buffer = ByteBuffer.allocate(size);
-        IOUtils.readFully(channel, buffer);
-        JAppBootMetadata metadata = JAppBootMetadata.fromJson(new JSONObject(new String(buffer.array(), StandardCharsets.UTF_8)));
+        JAppBootMetadata metadata = JAppBootMetadata.readFrom(channel);
 
         Map<String, JAppResourceGroup> modules = new HashMap<>();
         List<Path> externalModules = null;
