@@ -43,6 +43,7 @@ ResourceGroup {
     u4 uncompressed_size;
     u4 compressed_size;
     u4 resources_count;
+    u8 checksum;
     
     u1[compressed_size] compressed_resources;
 }

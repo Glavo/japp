@@ -6,6 +6,7 @@ import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.json.JSONArray;
 import org.glavo.japp.json.JSONObject;
 import org.glavo.japp.util.IOUtils;
+import org.glavo.japp.util.XxHash64;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -58,6 +59,7 @@ public final class JAppBootMetadata {
                 int uncompressedSize = headerBuffer.getInt();
                 int compressedSize = headerBuffer.getInt();
                 int resourcesCount = headerBuffer.getInt();
+                long checksum = headerBuffer.getLong();
 
                 assert !headerBuffer.hasRemaining();
 
@@ -97,6 +99,13 @@ public final class JAppBootMetadata {
                     uncompressed = uncompressedBuffer;
                 }
 
+                long actualChecksum = XxHash64.hashByteBufferWithoutUpdate(uncompressedBuffer);
+                if (actualChecksum != checksum) {
+                    throw new IOException(String.format(
+                            "Failed while verifying resource group at index %d (expected=%x, actual=%x)",
+                            i, checksum, actualChecksum
+                    ));
+                }
 
                 for (int j = 0; j < resourcesCount; j++) {
                     JAppResource resource = JAppResource.readFrom(uncompressed);
