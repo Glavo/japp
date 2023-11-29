@@ -2,14 +2,12 @@ package org.glavo.japp.boot;
 
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
-import org.glavo.japp.json.JSONObject;
 import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.attribute.FileTime;
-import java.rmi.RemoteException;
 
 public final class JAppResource {
 
@@ -212,51 +210,8 @@ public final class JAppResource {
         output.writeByte(JAppResourceField.END.id());
     }
 
-    public static JAppResource fromJson(JSONObject obj) {
-        String name = obj.getString("Name");
-        long offset = obj.getLong("Offset");
-        long size = obj.getLong("Size");
-        long creationTime = obj.optLong("Creation-Time", NO_TIME);
-        long lastModifiedTime = obj.optLong("Last-Modified-Time", NO_TIME);
-        long lastAccessTime = obj.optLong("Last-Access-Time", NO_TIME);
-        String method = obj.optString("Compression-Method", null);
-        long compressedSize = method == null ? size : obj.getLong("Compressed-Size");
-
-        return new JAppResource(
-                name,
-                offset, size,
-                CompressionMethod.valueOf(method), compressedSize,
-                creationTime, lastModifiedTime, lastAccessTime
-        );
-    }
-
-    public JSONObject toJson() {
-        JSONObject obj = new JSONObject();
-
-        obj.putOpt("Name", name);
-        obj.putOnce("Offset", offset);
-        obj.putOnce("Size", size);
-
-        if (lastAccessTime > 0) {
-            obj.putOnce("Last-Access-Time", lastAccessTime);
-        }
-        if (lastModifiedTime > 0) {
-            obj.putOnce("Last-Modified-Time", lastModifiedTime);
-        }
-        if (creationTime > 0) {
-            obj.putOnce("Creation-Time", creationTime);
-        }
-
-        if (method != null) {
-            obj.putOnce("Compression-Method", method.toString());
-            obj.putOnce("Compressed-Size", compressedSize);
-        }
-
-        return obj;
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + toJson();
-    }
+//    @Override
+//    public String toString() {
+//        return getClass().getSimpleName() + toJson();
+//    }
 }

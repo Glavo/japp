@@ -4,20 +4,15 @@ import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
-import org.glavo.japp.json.JSONArray;
-import org.glavo.japp.json.JSONObject;
 import org.glavo.japp.util.ByteBufferOutputStream;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.util.XxHash64;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.Channels;
 import java.nio.channels.SeekableByteChannel;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 
 public final class JAppBootMetadata {
@@ -160,19 +155,6 @@ public final class JAppBootMetadata {
             output.writeLong(checksum);
             output.writeBytes(compressed);
         }
-    }
-
-    public static JAppBootMetadata fromJson(JSONObject obj) throws IOException {
-        JSONArray array = obj.getJSONArray("Groups");
-        JAppResourceGroup[] groups = new JAppResourceGroup[array.length()];
-        for (int i = 0; i < groups.length; i++) {
-            groups[i] = JAppResourceGroup.fromJson(array.getJSONArray(i));
-        }
-
-        ByteArrayPool pool = ByteArrayPool.readPool(Channels.newChannel(new ByteArrayInputStream(
-                Base64.getDecoder().decode(obj.getString("Pool"))
-        )));
-        return new JAppBootMetadata(Arrays.asList(groups), pool);
     }
 
     private final List<JAppResourceGroup> groups;
