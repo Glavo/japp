@@ -73,7 +73,7 @@ public final class JAppBootMetadata {
 
                 JAppResourceGroup group = new JAppResourceGroup();
 
-                if (compressedBuffer.capacity() < compressedSize) {
+                if (compressedBuffer.capacity() >= compressedSize) {
                     compressedBuffer.clear();
                 } else {
                     int nextLen = Math.max(compressedSize, compressedBuffer.capacity() * 2);
@@ -87,7 +87,7 @@ public final class JAppBootMetadata {
                 if (compressionMethod == CompressionMethod.NONE) {
                     uncompressed = compressedBuffer;
                 } else {
-                    if (uncompressedBuffer.capacity() < uncompressedSize) {
+                    if (uncompressedBuffer.capacity() >= uncompressedSize) {
                         uncompressedBuffer.clear();
                     } else {
                         int nextLen = Math.max(uncompressedSize, uncompressedBuffer.capacity() * 2);

@@ -111,6 +111,7 @@ public final class JAppResource {
         int fieldId;
         while ((fieldId = Byte.toUnsignedInt(buffer.get())) != 0) {
             JAppResourceField field = JAppResourceField.of(fieldId);
+            System.out.println(field);
             if (field == null) {
                 throw new IOException(String.format("Unknown field: %02x", fieldId));
             }
@@ -185,16 +186,16 @@ public final class JAppResource {
                                CompressionMethod method, long compressedSize,
                                long creationTime, long lastModifiedTime, long lastAccessTime,
                                Long checksum) throws IOException {
+        byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
+
         output.writeByte(MAGIC_NUMBER);
         output.writeByte(method.id());
         output.writeShort((short) 0); // TODO
         output.writeUnsignedInt(size);
         output.writeUnsignedInt(compressedSize);
         output.writeLong(offset);
-
-        byte[] bytes = name.getBytes(StandardCharsets.UTF_8);
-        output.writeUnsignedShort(bytes.length);
-        output.writeBytes(bytes);
+        output.writeUnsignedShort(nameBytes.length);
+        output.writeBytes(nameBytes);
 
         if (checksum != null) {
             output.writeByte(JAppResourceField.CHECKSUM.id());
