@@ -28,7 +28,7 @@ public final class ByteBufferOutputStream extends OutputStream {
     private void prepare(int next) {
         if (buffer.remaining() < next) {
             byte[] arr = buffer.array();
-            int prevLen = arr.length;
+            int prevLen = buffer.position();
             int nextLen = Math.max(prevLen * 2, prevLen + next);
 
             buffer = ByteBuffer.allocate(nextLen).order(buffer.order());
