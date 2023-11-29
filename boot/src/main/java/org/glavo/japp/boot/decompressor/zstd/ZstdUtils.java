@@ -25,6 +25,15 @@ import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 public final class ZstdUtils {
     private static final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
 
+    public static int maxCompressedLength(int sourceLength) {
+        int maxCompressedSize = sourceLength + (sourceLength >>> 8);
+
+        if (sourceLength < 128 * 1024) {
+            maxCompressedSize += (128 * 1024 - sourceLength) >>> 11;
+        }
+        return maxCompressedSize;
+    }
+
     public static int decompress(ByteBuffer input, ByteBuffer output) throws MalformedInputException {
         Object inputBase;
         long inputBaseAddress;

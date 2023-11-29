@@ -135,13 +135,25 @@ public final class JAppBootMetadata {
                 resource.writeTo(groupBodyBuilder);
             }
             byte[] groupBody = groupBodyBuilder.toByteArray();
-            byte[] compressed = Zstd.compress(groupBody);
-            CompressionMethod method;
-            if (compressed.length < groupBody.length) {
-                method = CompressionMethod.ZSTD;
-            } else {
+
+            CompressionMethod method = null;
+            byte[] compressed = null;
+            int compressedLength = -1;
+
+            if (groupBody.length >= 16) {
+                byte[] res = new byte[ZstdUtils.maxCompressedLength(groupBody.length)];
+                long n = Zstd.compressByteArray(res, 0, res.length, groupBody, 0, groupBody.length, 8);
+                if (n < groupBody.length - 4) {
+                    method = CompressionMethod.ZSTD;
+                    compressed = res;
+                    compressedLength = (int) n;
+                }
+            }
+
+            if (method == null) {
                 method = CompressionMethod.NONE;
                 compressed = groupBody;
+                compressedLength = groupBody.length;
             }
 
             long checksum = XxHash64.hash(groupBody);
@@ -150,10 +162,10 @@ public final class JAppBootMetadata {
             output.writeByte(method.id());
             output.writeShort((short) 0); // reserved
             output.writeInt(groupBody.length);
-            output.writeInt(compressed.length);
+            output.writeInt(compressedLength);
             output.writeInt(group.size());
             output.writeLong(checksum);
-            output.writeBytes(compressed);
+            output.writeBytes(compressed, 0, compressedLength);
         }
     }
 
