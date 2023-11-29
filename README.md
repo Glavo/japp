@@ -42,7 +42,7 @@ To try this project, you first need to compile it:
 Then, package your program as a japp file:
 
 ```shell
-./bin/japp-pack.sh --module-path <your-app-module-path> --class-path <your-app-class-path> -o myapp.japp <main-class>
+./bin/japp.sh pack --module-path <your-app-module-path> --class-path <your-app-class-path> -o myapp.japp <main-class>
 ```
 
 Currently supported options:

@@ -75,7 +75,7 @@ tasks.jar {
 }
 
 tasks.shadowJar {
-    outputs.file(rootProject.layout.buildDirectory.file("japp-packer.jar"))
+    outputs.file(rootProject.layout.buildDirectory.file("japp.jar"))
     doLast {
         copy {
             from(this@shadowJar.archiveFile)

@@ -8,7 +8,9 @@ import java.util.Arrays;
 public final class Main {
     public static void main(String[] args) throws Throwable {
         if (args.length == 0) {
-            throw new TODO("Help message");
+            System.out.println("Supported mode:");
+            System.out.println("  japp pack");
+            System.out.println("  japp run");
         }
 
         String command = args[0];
@@ -17,7 +19,7 @@ public final class Main {
             case "pack":
                 JAppPacker.main(args);
                 break;
-            case "launch":
+            case "run":
                 Launcher.main(args);
                 break;
             default:
