@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.attribute.FileTime;
+import java.rmi.RemoteException;
 
 public final class JAppResource {
 
@@ -96,6 +97,9 @@ public final class JAppResource {
         }
 
         short flags = buffer.getShort();
+        if (flags != 0) {
+            throw new IOException("Unsupported flags: " + Integer.toBinaryString(Short.toUnsignedInt(flags)));
+        }
 
         long uncompressedSize = Integer.toUnsignedLong(buffer.getInt());
         long compressedSize = Integer.toUnsignedLong(buffer.getInt());
@@ -111,7 +115,6 @@ public final class JAppResource {
         int fieldId;
         while ((fieldId = Byte.toUnsignedInt(buffer.get())) != 0) {
             JAppResourceField field = JAppResourceField.of(fieldId);
-            System.out.println(field);
             if (field == null) {
                 throw new IOException(String.format("Unknown field: %02x", fieldId));
             }
