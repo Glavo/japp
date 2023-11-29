@@ -3,7 +3,6 @@ package org.glavo.japp.packer.compressor;
 import org.glavo.japp.TODO;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.packer.JAppPacker;
-import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -57,9 +56,6 @@ final class DefaultCompressor implements Compressor {
                 break;
             case DEFLATE:
                 result = Compressors.DEFLATE.compress(packer, source);
-                break;
-            case LZ4:
-                result = Compressors.LZ4.compress(packer, source);
                 break;
             case ZSTD:
                 result = Compressors.ZSTD.compress(packer, source);

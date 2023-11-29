@@ -4,7 +4,6 @@ import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
-import org.glavo.japp.boot.decompressor.lz4.LZ4Decompressor;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.IOUtils;
 
@@ -133,10 +132,6 @@ public final class JAppReader implements Closeable {
                 } finally {
                     inflater.end();
                 }
-                break;
-            }
-            case LZ4: {
-                LZ4Decompressor.decompress(compressed.array(), output);
                 break;
             }
             case ZSTD: {

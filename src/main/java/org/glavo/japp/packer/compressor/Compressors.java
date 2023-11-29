@@ -1,8 +1,6 @@
 package org.glavo.japp.packer.compressor;
 
 import com.github.luben.zstd.Zstd;
-import net.jpountz.lz4.LZ4Compressor;
-import net.jpountz.lz4.LZ4Factory;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
@@ -14,13 +12,6 @@ public final class Compressors {
     public static final Compressor DEFAULT = new DefaultCompressor();
 
     public static final Compressor CLASSFILE = new ClassFileCompressor();
-
-    public static final Compressor LZ4 = (context, source) -> {
-        LZ4Compressor compressor = LZ4Factory.fastestJavaInstance().highCompressor();
-        byte[] result = new byte[compressor.maxCompressedLength(source.length)];
-        int len = compressor.compress(source, result);
-        return new CompressResult(CompressionMethod.LZ4, result, 0, len);
-    };
 
     public static final Compressor ZSTD = (context, source) -> {
         int maxCompressedSize = source.length + (source.length >>> 8);

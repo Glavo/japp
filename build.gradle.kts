@@ -43,7 +43,6 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 
-    testImplementation(Deps.LZ4)
     testImplementation(Deps.ZSTD_JNI)
 
     LWJGL.addDependency(this, "testImplementation", "lwjgl")
@@ -64,7 +63,6 @@ tasks.test {
 dependencies {
     implementation(project(":base"))
     implementation(project(":boot"))
-    implementation(Deps.LZ4)
     implementation(Deps.ZSTD_JNI)
 }
 
