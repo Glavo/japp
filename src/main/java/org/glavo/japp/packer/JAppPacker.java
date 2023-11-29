@@ -86,6 +86,10 @@ public final class JAppPacker {
         }
     }
 
+    private void writeLauncherMetadata() throws IOException {
+        output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
+    }
+
     private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
         long fileSize = output.getTotalBytes() + JAppConfigGroup.FILE_END_SIZE;
 
@@ -126,7 +130,8 @@ public final class JAppPacker {
             new JAppBootMetadata(groups, null).writeTo(output); // TODO: pool
 
             long metadataOffset = getCurrentOffset();
-            output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
+            writeLauncherMetadata();
+
             writeFileEnd(metadataOffset, bootMetadataOffset);
         }
 

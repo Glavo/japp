@@ -77,9 +77,9 @@ public final class JAppConfigGroup {
             long baseOffset = fileSize - fileContentSize;
             long metadataSize = fileContentSize - FILE_END_SIZE - metadataOffset;
 
-            String json;
+            JAppConfigGroup metadata;
             if (metadataSize < endBufferSize - FILE_END_SIZE) {
-                json = new String(endBuffer.array(), (int) (endBufferSize - metadataSize - FILE_END_SIZE), (int) metadataSize, UTF_8);
+                metadata = readConfigGroup(endBuffer.array(), (int) (endBufferSize - metadataSize - FILE_END_SIZE), (int) metadataSize);
             } else {
                 if (metadataSize > (1 << 30)) {
                     throw new IOException("Metadata is too large");
@@ -89,14 +89,17 @@ public final class JAppConfigGroup {
                 channel.position(baseOffset + metadataOffset);
                 IOUtils.readFully(channel, metadataBuffer);
 
-                json = new String(metadataBuffer.array(), UTF_8);
+                metadata = readConfigGroup(metadataBuffer.array(), 0, (int) metadataSize);
             }
 
-            JAppConfigGroup metadata = JAppConfigGroup.fromJson(new JSONObject(json));
             metadata.baseOffset = baseOffset;
             metadata.bootMetadataOffset = bootMetadataOffset;
             return metadata;
         }
+    }
+
+    private static JAppConfigGroup readConfigGroup(byte[] array, int offset, int length) throws IOException {
+        return JAppConfigGroup.fromJson(new JSONObject(new String(array, offset, length, UTF_8)));
     }
 
     private long baseOffset;
@@ -113,7 +116,7 @@ public final class JAppConfigGroup {
 
     public String condition;
 
-    public final List<JAppConfigGroup> subConfigs =  new ArrayList<>();
+    public final List<JAppConfigGroup> subConfigs = new ArrayList<>();
 
     public String mainClass;
     public String mainModule;
