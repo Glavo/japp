@@ -1,7 +1,10 @@
-package org.glavo.japp.packer;
+package org.glavo.japp.packer.processor;
 
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.packer.ClassPathProcessor;
+import org.glavo.japp.packer.JAppPacker;
+import org.glavo.japp.packer.ModuleInfoReader;
 import org.glavo.japp.packer.compressor.CompressResult;
 
 import java.io.IOException;
@@ -141,7 +144,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     assert count == buffer.length;
                 }
 
-                CompressResult result = packer.compressor.compress(packer, buffer, entry);
+                CompressResult result = packer.getCompressor().compress(packer, buffer, entry);
 
                 group.put(name, new JAppResource(
                         name, packer.getCurrentOffset(), entry.getSize(),
@@ -179,7 +182,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 String path = absoluteDir.relativize(file).toString().replace('\\', '/');
                 byte[] data = Files.readAllBytes(file);
-                CompressResult result = packer.compressor.compress(packer, Files.readAllBytes(file), file, attrs);
+                CompressResult result = packer.getCompressor().compress(packer, Files.readAllBytes(file), file, attrs);
                 ((Map<String, JAppResource>) group).put(path, new JAppResource(
                         path, packer.getCurrentOffset(), data.length,
                         result.getMethod(), result.getLength(),

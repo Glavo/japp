@@ -40,12 +40,12 @@ public final class JAppPacker {
     private final JAppConfigGroup root = new JAppConfigGroup();
 
     private final ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
-    JAppConfigGroup current = root;
+    public JAppConfigGroup current = root;
 
-    final List<JAppResourceGroup> groups = new ArrayList<>();
+    private final List<JAppResourceGroup> groups = new ArrayList<>();
 
-    final Compressor compressor = Compressors.DEFAULT;
-    final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
+    private final Compressor compressor = Compressors.DEFAULT;
+    private final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
 
     private boolean finished = false;
 
@@ -62,6 +62,10 @@ public final class JAppPacker {
 
     public ByteArrayPoolBuilder getPool() {
         return pool;
+    }
+
+    public Compressor getCompressor() {
+        return compressor;
     }
 
     private int addGroup(JAppResourceGroup group) {
