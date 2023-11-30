@@ -1,7 +1,6 @@
-package org.glavo.japp.packer;
+package org.glavo.japp.packer.processor;
 
-import org.glavo.japp.packer.processor.LocalClassPathProcessor;
-import org.glavo.japp.packer.processor.MavenClassPathProcessor;
+import org.glavo.japp.packer.JAppPacker;
 
 import java.io.File;
 import java.util.LinkedHashMap;

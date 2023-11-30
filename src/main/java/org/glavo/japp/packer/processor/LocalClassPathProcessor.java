@@ -1,7 +1,6 @@
 package org.glavo.japp.packer.processor;
 
 import org.glavo.japp.boot.JAppResource;
-import org.glavo.japp.packer.ClassPathProcessor;
 import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.packer.JAppResourceBuilder;
 import org.glavo.japp.packer.ModuleInfoReader;

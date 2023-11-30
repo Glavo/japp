@@ -11,6 +11,7 @@ import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
+import org.glavo.japp.packer.processor.ClassPathProcessor;
 import org.glavo.japp.util.ByteBufferOutputStream;
 import org.glavo.japp.util.XxHash64;
 
