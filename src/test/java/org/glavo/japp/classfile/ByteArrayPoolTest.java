@@ -4,11 +4,8 @@ import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -29,8 +26,7 @@ public class ByteArrayPoolTest {
             assertEquals(i, builder.add(testString(i)));
         }
 
-        ReadableByteChannel input = Channels.newChannel(new ByteArrayInputStream(builder.toByteArray()));
-        ByteArrayPool pool = ByteArrayPool.readPool(input);
+        ByteArrayPool pool = builder.toPool();
 
         for (int i = 0; i < 10; i++) {
             byte[] testString = testString(i);

@@ -1,7 +1,13 @@
 package org.glavo.japp.packer.compressor.classfile;
 
+import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
+import org.glavo.japp.util.ByteBufferOutputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.Channels;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -70,16 +76,19 @@ public final class ByteArrayPoolBuilder {
         return index;
     }
 
-    public byte[] toByteArray() {
-        byte[] res = new byte[8 + sizes.position() + bytes.position()];
-        ByteBuffer buffer = ByteBuffer.wrap(res).order(ByteOrder.LITTLE_ENDIAN);
-
+    public void writeTo(ByteBufferOutputStream output) {
         int size = map.size();
         int bytesSize = bytes.position();
-        buffer.putInt(size);
-        buffer.putInt(bytesSize);
-        buffer.put(sizes.array(), 0, sizes.position());
-        buffer.put(bytes.array(), 0, bytes.position());
-        return res;
+        output.writeInt(size);
+        output.writeInt(bytesSize);
+        output.writeBytes(sizes.array(), 0, sizes.position());
+        output.writeBytes(bytes.array(), 0, bytes.position());
+    }
+
+    public ByteArrayPool toPool() throws IOException {
+        ByteBufferOutputStream output = new ByteBufferOutputStream();
+        writeTo(output);
+        return ByteArrayPool.readPool(Channels.newChannel(
+                new ByteArrayInputStream(output.getByteBuffer().array(), 0, output.getTotalBytes())));
     }
 }
