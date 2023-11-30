@@ -210,8 +210,10 @@ public final class JAppResource {
         output.writeByte(JAppResourceField.END.id());
     }
 
-//    @Override
-//    public String toString() {
-//        return getClass().getSimpleName() + toJson();
-//    }
+    @Override
+    public String toString() {
+        return String.format(
+                "JAppResource{name=%s, offset=%d, size=%d, method=%s, compressedSize=%d, creationTime=%d, lastModifiedTime=%d, lastAccessTime=%d, needCheck=%s, checksum=%d}",
+                name, offset, size, method, compressedSize, creationTime, lastModifiedTime, lastAccessTime, needCheck, checksum);
+    }
 }
