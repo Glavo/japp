@@ -2,7 +2,6 @@ package org.glavo.japp.boot;
 
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.TODO;
-import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -11,7 +10,7 @@ import java.nio.file.attribute.FileTime;
 
 public final class JAppResource {
 
-    private static final byte MAGIC_NUMBER = (byte) 0x1b;
+    public static final byte MAGIC_NUMBER = (byte) 0x1b;
     public static final long NO_TIME = Long.MIN_VALUE;
 
     private final String name;
@@ -165,49 +164,6 @@ public final class JAppResource {
         }
 
         return resource;
-    }
-
-    private static void writeFileTime(ByteBufferOutputStream output, JAppResourceField field, long time) {
-        if (time != NO_TIME) {
-            output.writeByte(field.id());
-            output.writeLong(time);
-        }
-    }
-
-    public void writeTo(ByteBufferOutputStream output) throws IOException {
-        writeTo(output, name, offset, size,
-                method, compressedSize,
-                creationTime, lastModifiedTime, lastAccessTime,
-                needCheck ? checksum : null
-        );
-    }
-
-    public static void writeTo(ByteBufferOutputStream output,
-                               String name, long offset, long size,
-                               CompressionMethod method, long compressedSize,
-                               long creationTime, long lastModifiedTime, long lastAccessTime,
-                               Long checksum) throws IOException {
-        byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
-
-        output.writeByte(MAGIC_NUMBER);
-        output.writeByte(method.id());
-        output.writeShort((short) 0); // TODO
-        output.writeUnsignedInt(size);
-        output.writeUnsignedInt(compressedSize);
-        output.writeLong(offset);
-        output.writeUnsignedShort(nameBytes.length);
-        output.writeBytes(nameBytes);
-
-        if (checksum != null) {
-            output.writeByte(JAppResourceField.CHECKSUM.id());
-            output.writeLong(checksum);
-        }
-
-        writeFileTime(output, JAppResourceField.FILE_CREATE_TIME, creationTime);
-        writeFileTime(output, JAppResourceField.FILE_LAST_MODIFIED_TIME, lastModifiedTime);
-        writeFileTime(output, JAppResourceField.FILE_LAST_ACCESS_TIME, lastAccessTime);
-
-        output.writeByte(JAppResourceField.END.id());
     }
 
     @Override

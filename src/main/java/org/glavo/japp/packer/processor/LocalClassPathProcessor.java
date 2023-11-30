@@ -1,9 +1,9 @@
 package org.glavo.japp.packer.processor;
 
 import org.glavo.japp.boot.JAppResource;
-import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.packer.ClassPathProcessor;
 import org.glavo.japp.packer.JAppPacker;
+import org.glavo.japp.packer.JAppResourceBuilder;
 import org.glavo.japp.packer.ModuleInfoReader;
 import org.glavo.japp.packer.compressor.CompressResult;
 
@@ -13,6 +13,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.jar.Attributes;
@@ -100,8 +101,8 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 moduleName = ModuleInfoReader.deriveAutomaticModuleName(jar.getFileName().toString());
             }
 
-            JAppResourceGroup baseGroup = new JAppResourceGroup();
-            TreeMap<Integer, JAppResourceGroup> multiGroups = multiRelease ? new TreeMap<>() : null;
+            Map<String, JAppResourceBuilder> baseGroup = new LinkedHashMap<>();
+            TreeMap<Integer, Map<String, JAppResourceBuilder>> multiGroups = multiRelease ? new TreeMap<>() : null;
 
             // Then write all entries
 
@@ -114,7 +115,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     continue;
                 }
 
-                JAppResourceGroup group = baseGroup;
+                Map<String, JAppResourceBuilder> group = baseGroup;
 
                 if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
                     int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
@@ -124,7 +125,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                         try {
                             int v = Integer.parseInt(ver);
                             if (v >= 9) {
-                                group = multiGroups.computeIfAbsent(v, n -> new JAppResourceGroup());
+                                group = multiGroups.computeIfAbsent(v, n -> new LinkedHashMap<>());
                                 name = name.substring(idx + 1);
                             }
 
@@ -146,13 +147,16 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
                 CompressResult result = packer.getCompressor().compress(packer, buffer, entry);
 
-                group.put(name, new JAppResource(
+                JAppResourceBuilder resourceBuilder = new JAppResourceBuilder(
                         name, packer.getCurrentOffset(), entry.getSize(),
                         result.getMethod(), result.getLength(),
-                        timeToMillis(entry.getCreationTime()),
-                        timeToMillis(entry.getLastModifiedTime()),
-                        timeToMillis(entry.getLastAccessTime())
-                ));
+                        entry.getCreationTime(),
+                        entry.getLastModifiedTime(),
+                        entry.getLastAccessTime(),
+                        null
+                );
+
+                group.put(name, resourceBuilder);
 
                 packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
             }
@@ -174,7 +178,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             name = null;
         }
 
-        JAppResourceGroup group = new JAppResourceGroup();
+        Map<String, JAppResourceBuilder> group = new LinkedHashMap<>();
 
         Path absoluteDir = dir.toAbsolutePath().normalize();
         Files.walkFileTree(absoluteDir, new SimpleFileVisitor<>() {
@@ -183,12 +187,13 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 String path = absoluteDir.relativize(file).toString().replace('\\', '/');
                 byte[] data = Files.readAllBytes(file);
                 CompressResult result = packer.getCompressor().compress(packer, Files.readAllBytes(file), file, attrs);
-                ((Map<String, JAppResource>) group).put(path, new JAppResource(
+                group.put(path, new JAppResourceBuilder(
                         path, packer.getCurrentOffset(), data.length,
                         result.getMethod(), result.getLength(),
-                        timeToMillis(attrs.creationTime()),
-                        timeToMillis(attrs.lastModifiedTime()),
-                        timeToMillis(attrs.lastAccessTime())
+                        attrs.creationTime(),
+                        attrs.lastModifiedTime(),
+                        attrs.lastAccessTime(),
+                        null
                 ));
                 packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
                 return FileVisitResult.CONTINUE;

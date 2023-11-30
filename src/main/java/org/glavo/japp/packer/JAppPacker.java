@@ -3,7 +3,6 @@ package org.glavo.japp.packer;
 import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.JAppBootMetadata;
-import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.launcher.JAppConfigGroup;
@@ -20,10 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.jar.Manifest;
 
 public final class JAppPacker {
@@ -42,7 +38,7 @@ public final class JAppPacker {
     private final ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
     public JAppConfigGroup current = root;
 
-    private final List<JAppResourceGroup> groups = new ArrayList<>();
+    private final List<Map<String, JAppResourceBuilder>> groups = new ArrayList<>();
 
     private final Compressor compressor = Compressors.DEFAULT;
     private final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
@@ -68,7 +64,7 @@ public final class JAppPacker {
         return compressor;
     }
 
-    private int addGroup(JAppResourceGroup group) {
+    private int addGroup(Map<String, JAppResourceBuilder> group) {
         int index = groups.size();
         groups.add(group);
         return index;
@@ -76,7 +72,7 @@ public final class JAppPacker {
 
     public void addLocalReference(
             boolean isModulePath, String name,
-            JAppResourceGroup baseGroup, TreeMap<Integer, JAppResourceGroup> multiGroups) {
+            Map<String, JAppResourceBuilder> baseGroup, TreeMap<Integer, Map<String, JAppResourceBuilder>> multiGroups) {
 
         int baseIndex = addGroup(baseGroup);
         TreeMap<Integer, Integer> multiIndexes;
@@ -98,9 +94,9 @@ public final class JAppPacker {
     private void writeBootMetadata() throws IOException {
         output.writeInt(JAppBootMetadata.MAGIC_NUMBER);
         output.writeInt(groups.size());
-        for (JAppResourceGroup group : groups) {
+        for (Map<String, JAppResourceBuilder> group : groups) {
             ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
-            for (JAppResource resource : group.values()) {
+            for (JAppResourceBuilder resource : group.values()) {
                 resource.writeTo(groupBodyBuilder);
             }
             byte[] groupBody = groupBodyBuilder.toByteArray();
