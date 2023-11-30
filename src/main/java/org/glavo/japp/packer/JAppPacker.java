@@ -1,7 +1,11 @@
 package org.glavo.japp.packer;
 
+import com.github.luben.zstd.Zstd;
+import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.JAppBootMetadata;
+import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
+import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.JAppResourceReference;
 import org.glavo.japp.launcher.condition.ConditionParser;
@@ -9,6 +13,7 @@ import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 import org.glavo.japp.util.ByteBufferOutputStream;
+import org.glavo.japp.util.XxHash64;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -86,6 +91,49 @@ public final class JAppPacker {
         }
     }
 
+    private void writeBootMetadata() throws IOException {
+        output.writeInt(JAppBootMetadata.MAGIC_NUMBER);
+        output.writeInt(groups.size());
+        for (JAppResourceGroup group : groups) {
+            ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
+            for (JAppResource resource : group.values()) {
+                resource.writeTo(groupBodyBuilder);
+            }
+            byte[] groupBody = groupBodyBuilder.toByteArray();
+
+            CompressionMethod method = null;
+            byte[] compressed = null;
+            int compressedLength = -1;
+
+            if (groupBody.length >= 16) {
+                byte[] res = new byte[ZstdUtils.maxCompressedLength(groupBody.length)];
+                long n = Zstd.compressByteArray(res, 0, res.length, groupBody, 0, groupBody.length, 8);
+                if (n < groupBody.length - 4) {
+                    method = CompressionMethod.ZSTD;
+                    compressed = res;
+                    compressedLength = (int) n;
+                }
+            }
+
+            if (method == null) {
+                method = CompressionMethod.NONE;
+                compressed = groupBody;
+                compressedLength = groupBody.length;
+            }
+
+            long checksum = XxHash64.hash(groupBody);
+
+            output.writeByte(JAppResourceGroup.MAGIC_NUMBER);
+            output.writeByte(method.id());
+            output.writeShort((short) 0); // reserved
+            output.writeInt(groupBody.length);
+            output.writeInt(compressedLength);
+            output.writeInt(group.size());
+            output.writeLong(checksum);
+            output.writeBytes(compressed, 0, compressedLength);
+        }
+    }
+
     private void writeLauncherMetadata() throws IOException {
         output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
     }
@@ -127,7 +175,7 @@ public final class JAppPacker {
             finished = true;
 
             long bootMetadataOffset = getCurrentOffset();
-            new JAppBootMetadata(groups, null).writeTo(output); // TODO: pool
+            writeBootMetadata();
 
             long metadataOffset = getCurrentOffset();
             writeLauncherMetadata();

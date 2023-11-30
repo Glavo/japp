@@ -4,8 +4,8 @@ import java.util.LinkedHashMap;
 
 public final class JAppResourceGroup extends LinkedHashMap<String, JAppResource> {
 
-    static final byte MAGIC_NUMBER = (byte) 0xeb;
-    static final int HEADER_LENGTH = 24; // 1 + 1 + 2 + 4 + 4 + 4 + 8
+    public static final byte MAGIC_NUMBER = (byte) 0xeb;
+    public static final int HEADER_LENGTH = 24; // 1 + 1 + 2 + 4 + 4 + 4 + 8
 
     private String name;
 

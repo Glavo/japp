@@ -29,6 +29,7 @@ JAppFile {
 BootMetadata {
     u4 magic_number; // "BOOT"
     u4 group_count;
+    ByteArrayPool stringsPool;
     ResourceGroup[group_count] groups;
 }
 ```

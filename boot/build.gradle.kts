@@ -6,7 +6,6 @@ plugins {
 
 dependencies {
     implementation(project(":base"))
-    compileOnly(Deps.ZSTD_JNI)
 }
 
 tasks.compileJava {
