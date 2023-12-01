@@ -335,6 +335,7 @@ final class ClassFileReader {
                 for (int i = 0; i < numValues; i++) {
                     scanElementValue();
                 }
+                break;
             }
             default:
                 throw new IOException(String.format("Unknown element value: 0x%02x", tag));
