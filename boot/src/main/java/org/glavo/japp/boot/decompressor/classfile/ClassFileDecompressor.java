@@ -136,8 +136,9 @@ public final class ClassFileDecompressor {
                         throw new IOException(String.format("Unknown tag: 0x%02x", Byte.toUnsignedInt(tag)));
                     }
 
-                    outputBuffer.put(compressed.array(), compressed.arrayOffset() + compressed.position(), size);
-                    compressed.position(compressed.position() + size);
+                    int compressedLimit = compressed.limit();
+                    outputBuffer.put(compressed.limit(compressed.position() + size));
+                    compressed.limit(compressedLimit);
                 }
             }
         }
