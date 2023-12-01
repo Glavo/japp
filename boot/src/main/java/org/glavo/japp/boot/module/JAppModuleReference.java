@@ -12,7 +12,6 @@ import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -37,7 +36,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Optional<URI> find(String name) throws IOException {
-        JAppResource resource = ((Map<String, JAppResource>) group).get(name);
+        JAppResource resource = group.get(name);
         if (resource != null) {
             return Optional.of(JAppResourceRoot.MODULES.toURI(group, resource));
         } else {
@@ -47,7 +46,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Optional<InputStream> open(String name) throws IOException {
-        JAppResource resource = ((Map<String, JAppResource>) group).get(name);
+        JAppResource resource = group.get(name);
         if (resource != null) {
             return Optional.of(reader.openResource(resource));
         } else {
@@ -57,7 +56,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Optional<ByteBuffer> read(String name) throws IOException {
-        JAppResource resource = ((Map<String, JAppResource>) group).get(name);
+        JAppResource resource = group.get(name);
         if (resource != null) {
             return Optional.of(reader.readResource(resource));
         } else {
@@ -67,7 +66,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
 
     @Override
     public Stream<String> list() throws IOException {
-        return ((Map<String, JAppResource>) group).values().stream().map(JAppResource::getName);
+        return group.values().stream().map(JAppResource::getName);
     }
 
     @Override

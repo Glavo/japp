@@ -37,7 +37,7 @@ public final class JAppModuleFinder implements ModuleFinder {
     private static Supplier<Set<String>> packageFinder(JAppResourceGroup group) {
         return () -> {
             Set<String> packages = new HashSet<>();
-            for (String name : ((Map<String, JAppResource>) group).keySet()) {
+            for (String name : group.keySet()) {
                 if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
                     int index = name.lastIndexOf("/");
                     if (index >= 0) {
@@ -54,7 +54,7 @@ public final class JAppModuleFinder implements ModuleFinder {
 
         Set<String> packages = new HashSet<>();
 
-        for (String name : ((Map<String, JAppResource>) group).keySet()) {
+        for (String name : group.keySet()) {
             if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
                 int index = name.lastIndexOf("/");
                 if (index >= 0) {
@@ -98,7 +98,7 @@ public final class JAppModuleFinder implements ModuleFinder {
     }
 
     private ModuleReference load(JAppResourceGroup group) throws IOException {
-        JAppResource resource = ((Map<String, JAppResource>) group).get(MODULE_INFO);
+        JAppResource resource = group.get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
             descriptor = ModuleDescriptor.read(reader.readResource(resource), packageFinder(group));

@@ -307,7 +307,7 @@ public final class JAppFileSystem extends FileSystem {
         private List<Node> resolve() {
             List<Node> list = new ArrayList<>();
 
-            for (JAppResource resource : ((Map<String, JAppResource>) group).values()) {
+            for (JAppResource resource : group.values()) {
                 put(list, resource);
             }
 
