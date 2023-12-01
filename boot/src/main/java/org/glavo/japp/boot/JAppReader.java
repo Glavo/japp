@@ -1,7 +1,6 @@
 package org.glavo.japp.boot;
 
 import org.glavo.japp.CompressionMethod;
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
@@ -103,17 +102,9 @@ public final class JAppReader implements Closeable {
 
     private void decompressResource(
             CompressionMethod method,
-            long offset,
-            int size, int compressedSize,
+            ByteBuffer compressed,
             byte[] output) throws IOException {
-        if (method == CompressionMethod.NONE) {
-            IOUtils.readFully(channel.position(offset + baseOffset), ByteBuffer.wrap(output));
-            return;
-        }
-
-        ByteBuffer compressed = ByteBuffer.allocate(compressedSize);
-        IOUtils.readFully(channel.position(offset + baseOffset), compressed);
-        compressed.flip();
+        int size = output.length;
 
         switch (method) {
             case CLASSFILE: {
@@ -144,7 +135,7 @@ public final class JAppReader implements Closeable {
                 break;
             }
             default: {
-                throw new TODO("Method: " + method);
+                throw new IOException("Unsupported compression method: " + method);
             }
         }
     }
@@ -159,27 +150,39 @@ public final class JAppReader implements Closeable {
 
     public ByteBuffer readResource(JAppResource resource) throws IOException {
         int size = castArrayLength(resource.getSize());
-
-        byte[] array = new byte[size];
         if (size == 0) {
-            return ByteBuffer.wrap(array);
+            return ByteBuffer.allocate(0);
         }
 
         CompressionMethod method = resource.getMethod();
-        long offset = resource.getOffset();
+        int offset = Math.toIntExact(resource.getOffset());
         int compressedSize = castArrayLength(resource.getCompressedSize());
 
-        lock.lock();
-        try {
-            decompressResource(method, offset, size, compressedSize, array);
-        } catch (Throwable e) {
-            e.printStackTrace(); // TODO: DEBUG
-        } finally {
-            lock.unlock();
+        ByteBuffer compressed;
+        if (mappedBuffer != null) {
+            compressed = mappedBuffer.duplicate().position(offset).limit(offset + compressedSize).slice();
+        } else {
+            compressed = ByteBuffer.allocate(compressedSize);
+
+            lock.lock();
+            try {
+                IOUtils.readFully(channel.position(offset + baseOffset), compressed);
+                compressed.flip();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        ByteBuffer uncompressed;
+        if (method == CompressionMethod.NONE) {
+            uncompressed = compressed;
+        } else {
+            uncompressed = ByteBuffer.allocate(size);
+            decompressResource(method, compressed, uncompressed.array());
         }
 
         if (resource.needCheck) {
-            long checksum = XxHash64.hash(array);
+            long checksum = XxHash64.hashByteBufferWithoutUpdate(uncompressed);
             if (resource.checksum != checksum) {
                 throw new IOException(String.format(
                         "Failed while verifying resource (expected=%x, actual=%x)",
@@ -190,7 +193,7 @@ public final class JAppReader implements Closeable {
             resource.needCheck = false;
         }
 
-        return ByteBuffer.wrap(array);
+        return uncompressed;
     }
 
     public InputStream openResource(JAppResource resource) throws IOException {

@@ -93,7 +93,7 @@ public final class JAppBootMetadata {
                         }
                         uncompressedBuffer.flip();
                     } else {
-                        throw new IOException("Unsupported compress method: " + compressionMethod);
+                        throw new IOException("Unsupported compression method: " + compressionMethod);
                     }
                     uncompressed = uncompressedBuffer;
                 }

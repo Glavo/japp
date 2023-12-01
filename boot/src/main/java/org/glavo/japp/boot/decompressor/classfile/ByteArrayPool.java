@@ -65,7 +65,7 @@ public final class ByteArrayPool {
             if (compressionMethod == CompressionMethod.ZSTD) {
                 ZstdUtils.decompress(compressedBytes, 0, compressedBytesSize, uncompressedBytes, 0, uncompressedBytesSize);
             } else {
-                throw new IOException("Unsupported compress method: " + compressionMethod);
+                throw new IOException("Unsupported compression method: " + compressionMethod);
             }
         }
 

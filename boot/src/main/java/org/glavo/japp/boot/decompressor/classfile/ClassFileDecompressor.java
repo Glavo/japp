@@ -157,7 +157,7 @@ public final class ClassFileDecompressor {
                 throw new IOException();
             }
         } else {
-            throw new IOException("Unsupported compress method: " + compressionMethod);
+            throw new IOException("Unsupported compression method: " + compressionMethod);
         }
     }
 }
