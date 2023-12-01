@@ -67,11 +67,6 @@ public final class JAppResourcesWriter implements AutoCloseable {
             multiIndexes = null;
         }
 
-        JAppResourceReference.Local ref = new JAppResourceReference.Local(name, baseIndex, multiIndexes);
-        if (isModulePath) {
-            packer.current.getModulePath().add(ref);
-        } else {
-            packer.current.getClassPath().add(ref);
-        }
+        packer.addReference(new JAppResourceReference.Local(name, baseIndex, multiIndexes), isModulePath);
     }
 }

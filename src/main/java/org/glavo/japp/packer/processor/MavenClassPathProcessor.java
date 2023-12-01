@@ -51,12 +51,10 @@ public final class MavenClassPathProcessor extends ClassPathProcessor {
                 name = file.getFileName().toString();
             }
 
-            JAppResourceReference.Maven ref = new JAppResourceReference.Maven(name, repo, group, artifact, version, classifier);
-            if (isModulePath) {
-                packer.current.modulePath.add(ref);
-            } else {
-                packer.current.classPath.add(ref);
-            }
+            packer.addReference(
+                    new JAppResourceReference.Maven(name, repo, group, artifact, version, classifier),
+                    isModulePath
+            );
         }
     }
 }

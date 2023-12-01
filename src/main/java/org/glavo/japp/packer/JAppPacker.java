@@ -6,6 +6,7 @@ import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.launcher.JAppConfigGroup;
+import org.glavo.japp.launcher.JAppResourceReference;
 import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
@@ -36,7 +37,7 @@ public final class JAppPacker {
     private final JAppConfigGroup root = new JAppConfigGroup();
 
     private final ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
-    public JAppConfigGroup current = root;
+    private JAppConfigGroup current = root;
 
     final List<Map<String, JAppResourceInfo>> groups = new ArrayList<>();
 
@@ -62,6 +63,16 @@ public final class JAppPacker {
 
     public JAppResourcesWriter createResourcesWriter(String name, boolean isModulePath) {
         return new JAppResourcesWriter(this, name, isModulePath);
+    }
+
+    public void addReference(JAppResourceReference reference, boolean isModulePath) {
+        Objects.requireNonNull(reference);
+
+        if (isModulePath) {
+            current.modulePath.add(reference);
+        } else {
+            current.classPath.add(reference);
+        }
     }
 
     private void writeBootMetadata() throws IOException {
