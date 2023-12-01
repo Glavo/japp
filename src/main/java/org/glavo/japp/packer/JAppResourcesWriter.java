@@ -2,6 +2,7 @@ package org.glavo.japp.packer;
 
 import org.glavo.japp.launcher.JAppResourceReference;
 import org.glavo.japp.packer.compressor.CompressResult;
+import org.glavo.japp.util.XxHash64;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -43,6 +44,7 @@ public final class JAppResourcesWriter implements AutoCloseable {
         resources.put(resource.name, resource);
         resource.offset = packer.getCurrentOffset();
         resource.size = body.length;
+        resource.checksum = XxHash64.hash(body);
 
         CompressResult result = packer.compressor.compress(packer, body, resource.name);
         resource.method = result.getMethod();

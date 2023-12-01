@@ -6,6 +6,7 @@ import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.IOUtils;
+import org.glavo.japp.util.XxHash64;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -171,6 +172,18 @@ public final class JAppReader implements Closeable {
             e.printStackTrace(); // TODO: DEBUG
         } finally {
             lock.unlock();
+        }
+
+        if (resource.needCheck) {
+            long checksum = XxHash64.hash(array);
+            if (resource.checksum != checksum) {
+                throw new IOException(String.format(
+                        "Failed while verifying resource (expected=%x, actual=%x)",
+                        resource.checksum, checksum
+                ));
+            }
+
+            resource.needCheck = false;
         }
 
         return array;

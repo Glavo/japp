@@ -25,26 +25,13 @@ public final class JAppResource {
     private long lastModifiedTime = NO_TIME;
     private long lastAccessTime = NO_TIME;
 
-    private boolean needCheck;
-    private long checksum;
+    boolean needCheck;
+    long checksum;
 
     public JAppResource(String name, long offset, long size, CompressionMethod method, long compressedSize) {
         this.name = name;
         this.offset = offset;
         this.size = size;
-        this.method = method;
-        this.compressedSize = compressedSize;
-    }
-
-    public JAppResource(String name, long offset, long size,
-                        CompressionMethod method, long compressedSize,
-                        long creationTime, long lastModifiedTime, long lastAccessTime) {
-        this.name = name;
-        this.offset = offset;
-        this.size = size;
-        this.lastAccessTime = lastAccessTime;
-        this.lastModifiedTime = lastModifiedTime;
-        this.creationTime = creationTime;
         this.method = method;
         this.compressedSize = compressedSize;
     }
