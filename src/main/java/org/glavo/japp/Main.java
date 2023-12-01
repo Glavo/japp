@@ -9,14 +9,14 @@ public final class Main {
     public static void main(String[] args) throws Throwable {
         if (args.length == 0) {
             System.out.println("Supported mode:");
-            System.out.println("  japp pack");
+            System.out.println("  japp create");
             System.out.println("  japp run");
         }
 
         String command = args[0];
         args = Arrays.copyOfRange(args, 1, args.length);
         switch (command) {
-            case "pack":
+            case "create":
                 JAppPacker.main(args);
                 break;
             case "run":
