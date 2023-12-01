@@ -111,6 +111,7 @@ public final class JAppPacker {
     private void writeBootMetadata() throws IOException {
         output.writeInt(JAppBootMetadata.MAGIC_NUMBER);
         output.writeInt(groups.size());
+        pool.writeTo(output);
         for (Map<String, JAppResourceInfo> group : groups) {
             ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
             for (JAppResourceInfo resource : group.values()) {

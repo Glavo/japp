@@ -34,6 +34,20 @@ BootMetadata {
 }
 ```
 
+[ByteArrayPool]():
+```
+ByteArrayPool {
+    u1 magic_number; // 0xf0
+    u1 compress_method;
+    u2 resvered;
+    u4 count;
+    u4 uncompressed_bytes_size;
+    u4 compressed_bytes_size;
+    u2[count] sizes; 
+    u1[compressed_length] compressed_bytes;
+}
+```
+
 [ResourceGroup](boot/src/main/java/org/glavo/japp/boot/JAppResourceGroup.java):
 
 ```

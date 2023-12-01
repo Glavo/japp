@@ -1,6 +1,9 @@
 package org.glavo.japp.packer.compressor.classfile;
 
+import com.github.luben.zstd.Zstd;
+import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
+import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.ByteArrayInputStream;
@@ -77,18 +80,34 @@ public final class ByteArrayPoolBuilder {
     }
 
     public void writeTo(ByteBufferOutputStream output) {
-        int size = map.size();
-        int bytesSize = bytes.position();
-        output.writeInt(size);
-        output.writeInt(bytesSize);
+        int count = map.size();
+        int uncompressedBytesSize = bytes.position();
+
+        CompressionMethod compressionMethod;
+        byte[] compressed = new byte[ZstdUtils.maxCompressedLength(uncompressedBytesSize)];
+        long compressedBytesSize = Zstd.compressByteArray(compressed, 0, compressed.length, bytes.array(), 0, uncompressedBytesSize, 8);
+        if (compressedBytesSize < uncompressedBytesSize) {
+            compressionMethod = CompressionMethod.ZSTD;
+        } else {
+            compressionMethod = CompressionMethod.NONE;
+            compressed = bytes.array();
+            compressedBytesSize = uncompressedBytesSize;
+        }
+
+        output.writeByte(ByteArrayPool.MAGIC_NUMBER);
+        output.writeByte(compressionMethod.id());
+        output.writeShort((short) 0);
+        output.writeInt(count);
+        output.writeInt(uncompressedBytesSize);
+        output.writeInt((int) compressedBytesSize);
         output.writeBytes(sizes.array(), 0, sizes.position());
-        output.writeBytes(bytes.array(), 0, bytes.position());
+        output.writeBytes(compressed, 0, (int) compressedBytesSize);
     }
 
     public ByteArrayPool toPool() throws IOException {
         ByteBufferOutputStream output = new ByteBufferOutputStream();
         writeTo(output);
-        return ByteArrayPool.readPool(Channels.newChannel(
+        return ByteArrayPool.readFrom(Channels.newChannel(
                 new ByteArrayInputStream(output.getByteBuffer().array(), 0, output.getTotalBytes())));
     }
 }

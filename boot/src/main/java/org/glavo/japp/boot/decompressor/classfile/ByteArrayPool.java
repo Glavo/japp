@@ -1,5 +1,7 @@
 package org.glavo.japp.boot.decompressor.classfile;
 
+import org.glavo.japp.CompressionMethod;
+import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.IOUtils;
 
 import java.io.IOException;
@@ -8,6 +10,8 @@ import java.nio.ByteOrder;
 import java.nio.channels.ReadableByteChannel;
 
 public final class ByteArrayPool {
+    public static final byte MAGIC_NUMBER = (byte) 0xf0;
+
     private final ByteBuffer bytes;
     private final long[] offsetAndSize;
 
@@ -16,31 +20,55 @@ public final class ByteArrayPool {
         this.offsetAndSize = offsetAndSize;
     }
 
-    public static ByteArrayPool readPool(ReadableByteChannel channel) throws IOException {
-        ByteBuffer headerBuffer = ByteBuffer.allocate(8).order(ByteOrder.LITTLE_ENDIAN);
+    public static ByteArrayPool readFrom(ReadableByteChannel channel) throws IOException {
+        ByteBuffer headerBuffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
         IOUtils.readFully(channel, headerBuffer);
         headerBuffer.flip();
 
-        int size = headerBuffer.getInt();
-        int bytesSize = headerBuffer.getInt();
+        byte magic = headerBuffer.get();
+        if (magic != MAGIC_NUMBER) {
+            throw new IOException(String.format("Wrong boot magic: %02x", Byte.toUnsignedInt(magic)));
+        }
 
-        long[] offsetAndSize = new long[size];
+        CompressionMethod compressionMethod = CompressionMethod.readFrom(headerBuffer);
+
+        short reserved = headerBuffer.getShort();
+        if (reserved != 0) {
+            throw new IOException("Reserved is not zero");
+        }
+
+        int count = headerBuffer.getInt();
+        int uncompressedBytesSize = headerBuffer.getInt();
+        int compressedBytesSize = headerBuffer.getInt();
+
+        long[] offsetAndSize = new long[count];
 
         int offset = 0;
-        ByteBuffer sizes = ByteBuffer.allocate(size * 2).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer sizes = ByteBuffer.allocate(count * 2).order(ByteOrder.LITTLE_ENDIAN);
         IOUtils.readFully(channel, sizes);
         sizes.flip();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < count; i++) {
             int s = Short.toUnsignedInt(sizes.getShort());
             offsetAndSize[i] = (((long) s) << 32) | (long) offset;
             offset += s;
         }
 
-        ByteBuffer bytes = ByteBuffer.allocate(bytesSize);
-        IOUtils.readFully(channel, bytes);
-        bytes.flip();
+        byte[] compressedBytes = new byte[compressedBytesSize];
+        IOUtils.readFully(channel, ByteBuffer.wrap(compressedBytes));
 
-        return new ByteArrayPool(bytes, offsetAndSize);
+        byte[] uncompressedBytes;
+        if (compressionMethod == CompressionMethod.NONE) {
+            uncompressedBytes = compressedBytes;
+        } else {
+            uncompressedBytes = new byte[uncompressedBytesSize];
+            if (compressionMethod == CompressionMethod.ZSTD) {
+                ZstdUtils.decompress(compressedBytes, 0, compressedBytesSize, uncompressedBytes, 0, uncompressedBytesSize);
+            } else {
+                throw new IOException("Unsupported compress method: " + compressionMethod);
+            }
+        }
+
+        return new ByteArrayPool(ByteBuffer.wrap(uncompressedBytes), offsetAndSize);
     }
 
     public ByteBuffer get(int index) {

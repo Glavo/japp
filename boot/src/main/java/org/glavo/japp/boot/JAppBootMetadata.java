@@ -29,6 +29,8 @@ public final class JAppBootMetadata {
 
         int groupCount = headerBuffer.getInt();
 
+        ByteArrayPool pool = ByteArrayPool.readFrom(channel);
+
         JAppResourceGroup[] groups = new JAppResourceGroup[groupCount];
         {
             headerBuffer.limit(JAppResourceGroup.HEADER_LENGTH);
@@ -46,11 +48,7 @@ public final class JAppBootMetadata {
                     throw new IOException(String.format("Wrong resource magic: %02x", magic));
                 }
 
-                int compressMethodId = Byte.toUnsignedInt(headerBuffer.get());
-                CompressionMethod compressionMethod = CompressionMethod.of(compressMethodId);
-                if (compressionMethod == null) {
-                    throw new IOException(String.format("Unknown compression method: %02x", compressMethodId));
-                }
+                CompressionMethod compressionMethod = CompressionMethod.readFrom(headerBuffer);
 
                 short reserved = headerBuffer.getShort();
                 if (reserved != 0) {
@@ -121,7 +119,7 @@ public final class JAppBootMetadata {
             }
         }
 
-        return new JAppBootMetadata(Arrays.asList(groups), null); // TODO: Pool
+        return new JAppBootMetadata(Arrays.asList(groups), pool);
     }
 
     private final List<JAppResourceGroup> groups;

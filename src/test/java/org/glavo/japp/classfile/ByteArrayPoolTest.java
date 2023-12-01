@@ -17,18 +17,17 @@ public class ByteArrayPoolTest {
         return ("str" + index).getBytes(UTF_8);
     }
 
-    @Test
-    void test() throws IOException {
+    void test(int n) throws IOException {
         ByteArrayPoolBuilder builder = new ByteArrayPoolBuilder();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < n; i++) {
             assertEquals(i, builder.add(testString(i)));
             assertEquals(i, builder.add(testString(i)));
         }
 
         ByteArrayPool pool = builder.toPool();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < n; i++) {
             byte[] testString = testString(i);
 
             ByteBuffer buffer = ByteBuffer.allocate(20);
@@ -39,5 +38,12 @@ public class ByteArrayPoolTest {
             buffer.flip().get(out);
             assertArrayEquals(testString, out);
         }
+    }
+
+    @Test
+    void test() throws IOException {
+        test(0);
+        test(10);
+        test(100);
     }
 }

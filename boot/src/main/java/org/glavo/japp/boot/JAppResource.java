@@ -74,11 +74,7 @@ public final class JAppResource {
             throw new IOException(String.format("Wrong resource magic: %02x", magic));
         }
 
-        int compressMethodId = Byte.toUnsignedInt(buffer.get());
-        CompressionMethod compressionMethod = CompressionMethod.of(compressMethodId);
-        if (compressionMethod == null) {
-            throw new IOException(String.format("Unknown compression method: %02x", compressMethodId));
-        }
+        CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);
 
         short flags = buffer.getShort();
         if (flags != 0) {
