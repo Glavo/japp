@@ -14,7 +14,7 @@ final class DefaultCompressor implements Compressor {
     private final CompressionMethod defaultMethod = CompressionMethod.ZSTD;
 
     public DefaultCompressor() {
-        // map.put("class", CompressionMethod.CLASSFILE);
+        map.put("class", CompressionMethod.CLASSFILE);
 
         for (String ext : new String[]{
                 "png", "apng", "jpg", "jpeg", "webp", "heic", "heif", "avif",
