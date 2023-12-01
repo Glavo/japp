@@ -49,7 +49,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
     public Optional<InputStream> open(String name) throws IOException {
         JAppResource resource = ((Map<String, JAppResource>) group).get(name);
         if (resource != null) {
-            return Optional.of(reader.getResourceAsInputStream(resource));
+            return Optional.of(reader.openResource(resource));
         } else {
             return Optional.empty();
         }
@@ -59,7 +59,7 @@ public final class JAppModuleReference extends ModuleReference implements Module
     public Optional<ByteBuffer> read(String name) throws IOException {
         JAppResource resource = ((Map<String, JAppResource>) group).get(name);
         if (resource != null) {
-            return Optional.of(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)));
+            return Optional.of(reader.readResource(resource));
         } else {
             return Optional.empty();
         }

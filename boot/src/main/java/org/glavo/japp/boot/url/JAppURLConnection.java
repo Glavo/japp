@@ -74,7 +74,7 @@ public class JAppURLConnection extends URLConnection {
     @Override
     public InputStream getInputStream() throws IOException {
         connect();
-        return JAppReader.getSystemReader().getResourceAsInputStream(resource);
+        return JAppReader.getSystemReader().openResource(resource);
     }
 
     @Override

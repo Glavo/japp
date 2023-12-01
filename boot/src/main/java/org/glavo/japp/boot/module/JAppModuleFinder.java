@@ -67,7 +67,22 @@ public final class JAppModuleFinder implements ModuleFinder {
                 }
 
                 List<String> providerClasses = new ArrayList<>();
-                for (String line : new String(reader.getResourceAsByteArray(((Map<String, JAppResource>) group).get(name)), StandardCharsets.UTF_8).split("\\R")) {
+
+                JAppResource resource = group.get(name);
+                ByteBuffer resourceBody = reader.readResource(resource);
+                byte[] resourceArray;
+                int resourceOffset;
+                int resourceLen = Math.toIntExact(resource.getSize());
+                if (resourceBody.hasArray()) {
+                    resourceArray = resourceBody.array();
+                    resourceOffset = resourceBody.arrayOffset() + resourceBody.position();
+                } else {
+                    resourceArray = new byte[resourceLen];
+                    resourceOffset = 0;
+                    resourceBody.get(resourceArray);
+                }
+
+                for (String line : new String(resourceArray, resourceOffset, resourceLen, StandardCharsets.UTF_8).split("\\R")) {
                     if (!line.isEmpty()) {
                         providerClasses.add(line);
                     }
@@ -86,7 +101,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         JAppResource resource = ((Map<String, JAppResource>) group).get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
-            descriptor = ModuleDescriptor.read(ByteBuffer.wrap(reader.getResourceAsByteArray(resource)), packageFinder(group));
+            descriptor = ModuleDescriptor.read(reader.readResource(resource), packageFinder(group));
         } else {
             descriptor = deriveModuleDescriptor(group);
         }

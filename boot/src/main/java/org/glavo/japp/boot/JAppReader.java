@@ -5,10 +5,10 @@ import org.glavo.japp.TODO;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
+import org.glavo.japp.util.ByteBufferInputStream;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.util.XxHash64;
 
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -153,12 +153,12 @@ public final class JAppReader implements Closeable {
         return (int) value;
     }
 
-    public byte[] getResourceAsByteArray(JAppResource resource) throws IOException {
+    public ByteBuffer readResource(JAppResource resource) throws IOException {
         int size = castArrayLength(resource.getSize());
 
         byte[] array = new byte[size];
         if (size == 0) {
-            return array;
+            return ByteBuffer.wrap(array);
         }
 
         CompressionMethod method = resource.getMethod();
@@ -186,10 +186,10 @@ public final class JAppReader implements Closeable {
             resource.needCheck = false;
         }
 
-        return array;
+        return ByteBuffer.wrap(array);
     }
 
-    public InputStream getResourceAsInputStream(JAppResource resource) throws IOException {
-        return new ByteArrayInputStream(getResourceAsByteArray(resource));
+    public InputStream openResource(JAppResource resource) throws IOException {
+        return new ByteBufferInputStream(readResource(resource));
     }
 }
