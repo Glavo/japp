@@ -3,6 +3,8 @@ package org.glavo.japp.packer;
 import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.JAppBootMetadata;
+import org.glavo.japp.boot.JAppResource;
+import org.glavo.japp.boot.JAppResourceField;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.launcher.JAppConfigGroup;
@@ -20,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.jar.Manifest;
 
@@ -75,13 +78,43 @@ public final class JAppPacker {
         }
     }
 
+    private static void writeResourceFileTimeField(ByteBufferOutputStream output, JAppResourceField field, FileTime time) {
+        if (time != null) {
+            output.writeByte(field.id());
+            output.writeLong(time.toMillis());
+        }
+    }
+    private static void writeResource(JAppResourceInfo resource, ByteBufferOutputStream groupBodyBuilder) {
+        byte[] nameBytes = resource.name.getBytes(StandardCharsets.UTF_8);
+
+        groupBodyBuilder.writeByte(JAppResource.MAGIC_NUMBER);
+        groupBodyBuilder.writeByte(resource.method.id());
+        groupBodyBuilder.writeShort((short) 0); // TODO
+        groupBodyBuilder.writeUnsignedInt(resource.size);
+        groupBodyBuilder.writeUnsignedInt(resource.compressedSize);
+        groupBodyBuilder.writeLong(resource.offset);
+        groupBodyBuilder.writeUnsignedShort(nameBytes.length);
+        groupBodyBuilder.writeBytes(nameBytes);
+
+        if (resource.checksum != null) {
+            groupBodyBuilder.writeByte(JAppResourceField.CHECKSUM.id());
+            groupBodyBuilder.writeLong(resource.checksum);
+        }
+
+        writeResourceFileTimeField(groupBodyBuilder, JAppResourceField.FILE_CREATE_TIME, resource.creationTime);
+        writeResourceFileTimeField(groupBodyBuilder, JAppResourceField.FILE_LAST_MODIFIED_TIME, resource.lastModifiedTime);
+        writeResourceFileTimeField(groupBodyBuilder, JAppResourceField.FILE_LAST_ACCESS_TIME, resource.lastAccessTime);
+
+        groupBodyBuilder.writeByte(JAppResourceField.END.id());
+    }
+
     private void writeBootMetadata() throws IOException {
         output.writeInt(JAppBootMetadata.MAGIC_NUMBER);
         output.writeInt(groups.size());
         for (Map<String, JAppResourceInfo> group : groups) {
             ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
             for (JAppResourceInfo resource : group.values()) {
-                resource.writeTo(groupBodyBuilder);
+                writeResource(resource, groupBodyBuilder);
             }
             byte[] groupBody = groupBodyBuilder.toByteArray();
 
