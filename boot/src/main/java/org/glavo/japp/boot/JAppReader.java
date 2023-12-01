@@ -45,6 +45,8 @@ public final class JAppReader implements Closeable {
     private final FileChannel channel;
     private final long baseOffset;
 
+    private final ByteBuffer mappedBuffer;
+
     private final Map<String, JAppResourceGroup> modules;
     private final Map<String, JAppResourceGroup> classpath;
     private final Map<String, JAppResourceGroup> resources;
@@ -52,10 +54,12 @@ public final class JAppReader implements Closeable {
     private final ByteArrayPool pool;
 
     public JAppReader(FileChannel channel, long baseOffset,
+                      ByteBuffer mappedBuffer,
                       ByteArrayPool pool,
                       Map<String, JAppResourceGroup> modules, Map<String, JAppResourceGroup> classpath) throws IOException {
         this.channel = channel;
         this.baseOffset = baseOffset;
+        this.mappedBuffer = mappedBuffer;
         this.pool = pool;
         this.modules = modules;
         this.classpath = classpath;
@@ -97,7 +101,7 @@ public final class JAppReader implements Closeable {
         return g.get(path);
     }
 
-    private void getResourceAsByteArrayImpl(
+    private void decompressResource(
             CompressionMethod method,
             long offset,
             int size, int compressedSize,
@@ -167,7 +171,7 @@ public final class JAppReader implements Closeable {
 
         lock.lock();
         try {
-            getResourceAsByteArrayImpl(method, offset, size, compressedSize, array);
+            decompressResource(method, offset, size, compressedSize, array);
         } catch (Throwable e) {
             e.printStackTrace(); // TODO: DEBUG
         } finally {
