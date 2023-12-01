@@ -1,5 +1,6 @@
 package org.glavo.japp.packer.compressor.classfile;
 
+import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.util.CompressedNumber;
@@ -51,7 +52,7 @@ public final class ClassFileCompressor implements Compressor {
                     putConstantDescriptor(packer, mutf8, outputBuffer);
                 } else if (tag == CONSTANT_EXTERNAL_STRING_Signature) {
                     putConstantSignature(packer, mutf8, outputBuffer);
-                }  else {
+                } else {
                     putConstantUTF8(packer, mutf8, outputBuffer);
                 }
             } else {
@@ -60,7 +61,20 @@ public final class ClassFileCompressor implements Compressor {
             }
         }
 
-        outputBuffer.put(buffer.array(), buffer.arrayOffset() + reader.tailPosition, reader.tailLen);
+
+        outputBuffer.put(CompressionMethod.ZSTD.id());
+        int outputPosition = outputBuffer.position();
+        long compressedTailLen = Zstd.compressByteArray(
+                output, outputPosition, output.length - outputPosition,
+                source, reader.tailPosition, reader.tailLen,
+                8);
+        if (compressedTailLen < reader.tailLen) {
+            outputBuffer.position(outputPosition + (int) compressedTailLen);
+        } else {
+            outputBuffer.position(outputPosition - 1);
+            outputBuffer.put(CompressionMethod.NONE.id());
+            outputBuffer.put(source, reader.tailPosition, reader.tailLen);
+        }
         return new CompressResult(CompressionMethod.CLASSFILE, output, 0, outputBuffer.position());
     }
 

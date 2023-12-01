@@ -55,7 +55,7 @@ final class DefaultCompressor implements Compressor {
 
                     // TODO: Test ClassFileCompressor
                     e.printStackTrace();
-                    result = Compressors.DEFLATE.compress(packer, source);
+                    result = Compressors.ZSTD.compress(packer, source);
                 }
                 break;
             case DEFLATE:

@@ -1,9 +1,10 @@
 package org.glavo.japp.boot.decompressor.classfile;
 
+import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.JAppReader;
+import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.classfile.ClassFile;
 import org.glavo.japp.util.CompressedNumber;
-import org.glavo.japp.util.MUTF8;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -141,11 +142,21 @@ public final class ClassFileDecompressor {
             }
         }
 
-        if (compressed.remaining() != outputBuffer.remaining()) {
-            throw new IOException(String.format("The remaining bytes do not match: %d != %d",
-                    compressed.remaining(), outputBuffer.remaining()));
-        }
+        CompressionMethod compressionMethod = CompressionMethod.readFrom(compressed);
+        if (compressionMethod == CompressionMethod.NONE) {
+            if (compressed.remaining() != outputBuffer.remaining()) {
+                throw new IOException(String.format("The remaining bytes do not match: %d != %d",
+                        compressed.remaining(), outputBuffer.remaining()));
+            }
 
-        outputBuffer.put(compressed);
+            outputBuffer.put(compressed);
+        } else if (compressionMethod == CompressionMethod.ZSTD) {
+            ZstdUtils.decompress(compressed, outputBuffer);
+            if (compressed.hasRemaining() || outputBuffer.hasRemaining()) {
+                throw new IOException();
+            }
+        } else {
+            throw new IOException("Unsupported compress method: " + compressionMethod);
+        }
     }
 }
