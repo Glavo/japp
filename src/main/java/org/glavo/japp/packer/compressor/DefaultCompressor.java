@@ -32,10 +32,14 @@ final class DefaultCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(JAppPacker packer, byte[] source, String ext) throws IOException {
+    public CompressResult compress(JAppPacker packer, byte[] source, String filePath) throws IOException {
         if (source.length <= 16) {
             return new CompressResult(source);
         }
+
+        int sep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+        int dot = filePath.lastIndexOf('.');
+        String ext = dot > sep ? filePath.substring(dot + 1) : null;
 
         CompressionMethod method = map.getOrDefault(ext, defaultMethod);
         CompressResult result;

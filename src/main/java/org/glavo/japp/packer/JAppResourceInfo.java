@@ -9,39 +9,23 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.attribute.FileTime;
 
-public final class JAppResourceBuilder {
-    private final String name;
+public final class JAppResourceInfo {
+    final String name;
 
-    private final long offset;
-    private final long size;
+    FileTime creationTime;
+    FileTime lastModifiedTime;
+    FileTime lastAccessTime;
 
-    private final CompressionMethod method;
-    private final long compressedSize;
+    boolean hasWritten = false;
+    long offset;
+    long size;
+    CompressionMethod method;
+    long compressedSize;
 
-    private FileTime creationTime;
-    private FileTime lastModifiedTime;
-    private FileTime lastAccessTime;
+    Long checksum;
 
-    private Long checksum;
-
-    public JAppResourceBuilder(String name, long offset, long size, CompressionMethod method, long compressedSize) {
+    public JAppResourceInfo(String name) {
         this.name = name;
-        this.offset = offset;
-        this.size = size;
-        this.method = method;
-        this.compressedSize = compressedSize;
-    }
-
-    public JAppResourceBuilder(String name, long offset, long size, CompressionMethod method, long compressedSize, FileTime creationTime, FileTime lastModifiedTime, FileTime lastAccessTime, Long checksum) {
-        this.name = name;
-        this.offset = offset;
-        this.size = size;
-        this.method = method;
-        this.compressedSize = compressedSize;
-        this.creationTime = creationTime;
-        this.lastModifiedTime = lastModifiedTime;
-        this.lastAccessTime = lastAccessTime;
-        this.checksum = checksum;
     }
 
     public void setCreationTime(FileTime creationTime) {
@@ -56,10 +40,6 @@ public final class JAppResourceBuilder {
         this.lastAccessTime = lastAccessTime;
     }
 
-    public void setChecksum(Long checksum) {
-        this.checksum = checksum;
-    }
-
     private static void writeFileTime(ByteBufferOutputStream output, JAppResourceField field, FileTime time) {
         if (time != null) {
             output.writeByte(field.id());
@@ -67,7 +47,7 @@ public final class JAppResourceBuilder {
         }
     }
 
-    public void writeTo(ByteBufferOutputStream output) throws IOException {
+    void writeTo(ByteBufferOutputStream output) throws IOException {
         byte[] nameBytes = name.getBytes(StandardCharsets.UTF_8);
 
         output.writeByte(JAppResource.MAGIC_NUMBER);
@@ -89,11 +69,5 @@ public final class JAppResourceBuilder {
         writeFileTime(output, JAppResourceField.FILE_LAST_ACCESS_TIME, lastAccessTime);
 
         output.writeByte(JAppResourceField.END.id());
-    }
-
-    @Override
-    public String toString() {
-        return String.format("JAppResourceBuilder{name=%s, offset=%d, size=%d, method=%s, compressedSize=%d, creationTime=%s, lastModifiedTime=%s, lastAccessTime=%s, checksum=%d}",
-                name, offset, size, method, compressedSize, creationTime, lastModifiedTime, lastAccessTime, checksum);
     }
 }

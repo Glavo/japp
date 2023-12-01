@@ -1,20 +1,16 @@
 package org.glavo.japp.packer.processor;
 
-import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.packer.JAppPacker;
-import org.glavo.japp.packer.JAppResourceBuilder;
+import org.glavo.japp.packer.JAppResourceInfo;
+import org.glavo.japp.packer.JAppResourcesWriter;
 import org.glavo.japp.packer.ModuleInfoReader;
-import org.glavo.japp.packer.compressor.CompressResult;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -25,18 +21,6 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
     public static final LocalClassPathProcessor INSTANCE = new LocalClassPathProcessor();
 
     private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
-
-    private static long timeToMillis(FileTime time) {
-        if (time == null) {
-            return JAppResource.NO_TIME;
-        }
-
-        long millis = time.toMillis();
-        if (millis == JAppResource.NO_TIME) {
-            throw new IllegalArgumentException("Invalid time: " + time);
-        }
-        return millis;
-    }
 
     public static void addJar(JAppPacker packer, Path jar, boolean isModulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(jar.toFile())) {
@@ -100,70 +84,56 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 moduleName = ModuleInfoReader.deriveAutomaticModuleName(jar.getFileName().toString());
             }
 
-            Map<String, JAppResourceBuilder> baseGroup = new LinkedHashMap<>();
-            TreeMap<Integer, Map<String, JAppResourceBuilder>> multiGroups = multiRelease ? new TreeMap<>() : null;
+            try (JAppResourcesWriter writer = packer.createResourcesWriter(
+                    isModulePath ? moduleName : jar.getFileName().toString(),
+                    isModulePath
+            )) {
+                Enumeration<? extends ZipEntry> entries = zipFile.entries();
+                while (entries.hasMoreElements()) {
+                    ZipEntry entry = entries.nextElement();
+                    String name = entry.getName();
 
-            // Then write all entries
+                    if (name.endsWith("/")) {
+                        continue;
+                    }
 
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                String name = entry.getName();
+                    int release = -1;
 
-                if (name.endsWith("/")) {
-                    continue;
-                }
+                    if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
+                        int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
 
-                Map<String, JAppResourceBuilder> group = baseGroup;
+                        if (idx > MULTI_RELEASE_PREFIX.length() && idx < name.length() - 1) {
+                            String ver = name.substring(MULTI_RELEASE_PREFIX.length(), idx);
+                            try {
+                                int v = Integer.parseInt(ver);
+                                if (v >= 9) {
+                                    release = v;
+                                    name = name.substring(idx + 1);
+                                }
 
-                if (multiRelease && name.startsWith(MULTI_RELEASE_PREFIX)) {
-                    int idx = name.indexOf('/', MULTI_RELEASE_PREFIX.length());
-
-                    if (idx > MULTI_RELEASE_PREFIX.length() && idx < name.length() - 1) {
-                        String ver = name.substring(MULTI_RELEASE_PREFIX.length(), idx);
-                        try {
-                            int v = Integer.parseInt(ver);
-                            if (v >= 9) {
-                                group = multiGroups.computeIfAbsent(v, n -> new LinkedHashMap<>());
-                                name = name.substring(idx + 1);
+                            } catch (NumberFormatException ignored) {
                             }
-
-                        } catch (NumberFormatException ignored) {
                         }
                     }
-                }
 
-                byte[] buffer = new byte[Math.toIntExact(entry.getSize())];
-                try (InputStream in = zipFile.getInputStream(entry)) {
-                    int count = 0;
-                    int n;
-                    while ((n = in.read(buffer, count, buffer.length - count)) > 0) {
-                        count += n;
+                    byte[] buffer = new byte[Math.toIntExact(entry.getSize())];
+                    try (InputStream in = zipFile.getInputStream(entry)) {
+                        int count = 0;
+                        int n;
+                        while ((n = in.read(buffer, count, buffer.length - count)) > 0) {
+                            count += n;
+                        }
+
+                        assert count == buffer.length;
                     }
 
-                    assert count == buffer.length;
+                    JAppResourceInfo resource = new JAppResourceInfo(name);
+                    resource.setCreationTime(entry.getCreationTime());
+                    resource.setLastModifiedTime(entry.getLastModifiedTime());
+                    writer.writeResource(release, resource, buffer);
                 }
-
-                CompressResult result = packer.getCompressor().compress(packer, buffer, entry);
-
-                JAppResourceBuilder resourceBuilder = new JAppResourceBuilder(
-                        name, packer.getCurrentOffset(), entry.getSize(),
-                        result.getMethod(), result.getLength(),
-                        entry.getCreationTime(),
-                        entry.getLastModifiedTime(),
-                        entry.getLastAccessTime(),
-                        null
-                );
-
-                group.put(name, resourceBuilder);
-
-                packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
             }
 
-            packer.addLocalReference(
-                    isModulePath, isModulePath ? moduleName : jar.getFileName().toString(),
-                    baseGroup, multiGroups
-            );
         }
     }
 
@@ -177,29 +147,22 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             name = null;
         }
 
-        Map<String, JAppResourceBuilder> group = new LinkedHashMap<>();
-
-        Path absoluteDir = dir.toAbsolutePath().normalize();
-        Files.walkFileTree(absoluteDir, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                String path = absoluteDir.relativize(file).toString().replace('\\', '/');
-                byte[] data = Files.readAllBytes(file);
-                CompressResult result = packer.getCompressor().compress(packer, Files.readAllBytes(file), file, attrs);
-                group.put(path, new JAppResourceBuilder(
-                        path, packer.getCurrentOffset(), data.length,
-                        result.getMethod(), result.getLength(),
-                        attrs.creationTime(),
-                        attrs.lastModifiedTime(),
-                        attrs.lastAccessTime(),
-                        null
-                ));
-                packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
-                return FileVisitResult.CONTINUE;
-            }
-        });
-
-        packer.addLocalReference(isModulePath, name, group, null);
+        try (JAppResourcesWriter writer = packer.createResourcesWriter(name, isModulePath)) {
+            Path absoluteDir = dir.toAbsolutePath().normalize();
+            Files.walkFileTree(absoluteDir, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String path = absoluteDir.relativize(file).toString().replace('\\', '/');
+                    byte[] data = Files.readAllBytes(file);
+                    JAppResourceInfo resource = new JAppResourceInfo(path);
+                    resource.setCreationTime(attrs.creationTime());
+                    resource.setLastModifiedTime(attrs.lastModifiedTime());
+                    resource.setLastAccessTime(attrs.lastAccessTime());
+                    writer.writeResource(resource, data);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
     }
 
     @Override

@@ -6,7 +6,6 @@ import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.launcher.JAppConfigGroup;
-import org.glavo.japp.launcher.JAppResourceReference;
 import org.glavo.japp.launcher.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
@@ -39,9 +38,9 @@ public final class JAppPacker {
     private final ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
     public JAppConfigGroup current = root;
 
-    private final List<Map<String, JAppResourceBuilder>> groups = new ArrayList<>();
+    final List<Map<String, JAppResourceInfo>> groups = new ArrayList<>();
 
-    private final Compressor compressor = Compressors.DEFAULT;
+    final Compressor compressor = Compressors.DEFAULT;
     private final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
 
     private boolean finished = false;
@@ -61,43 +60,16 @@ public final class JAppPacker {
         return pool;
     }
 
-    public Compressor getCompressor() {
-        return compressor;
-    }
-
-    private int addGroup(Map<String, JAppResourceBuilder> group) {
-        int index = groups.size();
-        groups.add(group);
-        return index;
-    }
-
-    public void addLocalReference(
-            boolean isModulePath, String name,
-            Map<String, JAppResourceBuilder> baseGroup, TreeMap<Integer, Map<String, JAppResourceBuilder>> multiGroups) {
-
-        int baseIndex = addGroup(baseGroup);
-        TreeMap<Integer, Integer> multiIndexes;
-        if (multiGroups != null && !multiGroups.isEmpty()) {
-            multiIndexes = new TreeMap<>();
-            multiGroups.forEach((i, g) -> multiIndexes.put(i, addGroup(g)));
-        } else {
-            multiIndexes = null;
-        }
-
-        JAppResourceReference.Local ref = new JAppResourceReference.Local(name, baseIndex, multiIndexes);
-        if (isModulePath) {
-            current.getModulePath().add(ref);
-        } else {
-            current.getClassPath().add(ref);
-        }
+    public JAppResourcesWriter createResourcesWriter(String name, boolean isModulePath) {
+        return new JAppResourcesWriter(this, name, isModulePath);
     }
 
     private void writeBootMetadata() throws IOException {
         output.writeInt(JAppBootMetadata.MAGIC_NUMBER);
         output.writeInt(groups.size());
-        for (Map<String, JAppResourceBuilder> group : groups) {
+        for (Map<String, JAppResourceInfo> group : groups) {
             ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
-            for (JAppResourceBuilder resource : group.values()) {
+            for (JAppResourceInfo resource : group.values()) {
                 resource.writeTo(groupBodyBuilder);
             }
             byte[] groupBody = groupBodyBuilder.toByteArray();
