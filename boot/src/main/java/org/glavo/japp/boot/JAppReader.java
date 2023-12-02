@@ -5,6 +5,7 @@ import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.ByteBufferInputStream;
+import org.glavo.japp.util.ByteBufferUtils;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.util.XxHash64;
 
@@ -139,7 +140,7 @@ public final class JAppReader implements Closeable {
 
         ByteBuffer compressed;
         if (mappedBuffer != null) {
-            compressed = mappedBuffer.duplicate().position(offset).limit(offset + compressedSize).slice();
+            compressed = ByteBufferUtils.slice(mappedBuffer, offset, compressedSize);
         } else {
             compressed = ByteBuffer.allocate(compressedSize);
 
