@@ -76,16 +76,17 @@ public final class JAppResource {
 
         CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);
 
-        short flags = buffer.getShort();
-        if (flags != 0) {
-            throw new IOException("Unsupported flags: " + Integer.toBinaryString(Short.toUnsignedInt(flags)));
+        int pathLength = Short.toUnsignedInt(buffer.getShort());
+
+        int reserved = buffer.getInt();
+        if (reserved != 0) {
+            throw new IOException("Reserved is not zero");
         }
 
-        long uncompressedSize = Integer.toUnsignedLong(buffer.getInt());
-        long compressedSize = Integer.toUnsignedLong(buffer.getInt());
+        long uncompressedSize = buffer.getLong();
+        long compressedSize = buffer.getLong();
         long offset = buffer.getLong();
 
-        int pathLength = Short.toUnsignedInt(buffer.getShort());
         byte[] pathBuffer = new byte[pathLength];
         buffer.get(pathBuffer);
         String path = new String(pathBuffer, StandardCharsets.UTF_8);

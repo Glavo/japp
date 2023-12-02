@@ -89,11 +89,11 @@ public final class JAppPacker {
 
         groupBodyBuilder.writeByte(JAppResource.MAGIC_NUMBER);
         groupBodyBuilder.writeByte(resource.method.id());
-        groupBodyBuilder.writeShort((short) 0); // TODO
-        groupBodyBuilder.writeUnsignedInt(resource.size);
-        groupBodyBuilder.writeUnsignedInt(resource.compressedSize);
-        groupBodyBuilder.writeLong(resource.offset);
         groupBodyBuilder.writeUnsignedShort(nameBytes.length);
+        groupBodyBuilder.writeInt(0);
+        groupBodyBuilder.writeLong(resource.size);
+        groupBodyBuilder.writeLong(resource.compressedSize);
+        groupBodyBuilder.writeLong(resource.offset);
         groupBodyBuilder.writeBytes(nameBytes);
 
         if (resource.checksum != null) {

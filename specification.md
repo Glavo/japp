@@ -71,13 +71,11 @@ ResourceGroup {
 Resource {
     u1 magic_number; // 0x1b
     u1 compress_method;
-    u2 flags;
-    
-    u4 uncompressed_size;
-    u4 compressed_size;
-    u8 content_offset;
-    
     u2 path_length;
+    u4 reserved;
+    u8 uncompressed_size;
+    u8 compressed_size;
+    u8 content_offset;
     u1[path_length] path; // UTF-8  
     
     ResourceFields optional_fields;
