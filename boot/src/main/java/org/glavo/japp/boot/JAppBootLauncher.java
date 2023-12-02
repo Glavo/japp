@@ -247,7 +247,7 @@ public final class JAppBootLauncher {
 
         ByteBuffer mappedBuffer = null;
         if (!System.getProperty("org.glavo.japp.mmap", "true").equals("false")) {
-            mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset - baseOffset);
+            mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
         }
 
         JAppReader reader = new JAppReader(channel, baseOffset, mappedBuffer, metadata.getPool(), modules, classPath);
