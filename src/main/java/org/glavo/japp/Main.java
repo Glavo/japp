@@ -11,6 +11,7 @@ public final class Main {
             System.out.println("Supported mode:");
             System.out.println("  japp create");
             System.out.println("  japp run");
+            return;
         }
 
         String command = args[0];
