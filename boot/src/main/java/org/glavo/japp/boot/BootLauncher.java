@@ -152,7 +152,6 @@ public final class BootLauncher {
     }
 
     private static Method findMainMethod() throws Throwable {
-        @SuppressWarnings("deprecation") int release = Runtime.version().major();
         BuiltinClassLoader loader = (BuiltinClassLoader) ClassLoader.getSystemClassLoader();
         MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(BuiltinClassLoader.class, MethodHandles.lookup());
 
