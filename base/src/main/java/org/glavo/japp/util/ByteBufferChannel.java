@@ -1,4 +1,4 @@
-package org.glavo.japp.boot.jappfs;
+package org.glavo.japp.util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -6,57 +6,56 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.NonWritableChannelException;
 import java.nio.channels.SeekableByteChannel;
 
-final class ByteArrayChannel implements SeekableByteChannel {
+public final class ByteBufferChannel implements SeekableByteChannel {
+    private ByteBuffer buffer;
 
-    private byte[] array;
-    private final int end;
-    private int position;
-
-    public ByteArrayChannel(byte[] array) {
-        this.array = array;
-        this.end = array.length;
+    public ByteBufferChannel(ByteBuffer buffer) {
+        this.buffer = buffer;
     }
 
     private void ensureOpen() throws IOException {
-        if (array == null) {
+        if (buffer == null) {
             throw new ClosedChannelException();
         }
     }
 
     @Override
     public boolean isOpen() {
-        return array != null;
+        return buffer != null;
     }
 
     @Override
     public long position() throws IOException {
         ensureOpen();
-        return position;
+        return buffer.position();
     }
 
     @Override
     public long size() throws IOException {
         ensureOpen();
-        return end;
+        return buffer.capacity();
     }
 
     @Override
     public int read(ByteBuffer dst) throws IOException {
         ensureOpen();
 
-        if (position >= end) {
+        int remaining = buffer.remaining();
+
+        if (remaining == 0) {
             return -1;
         }
 
-        int n = Math.min(dst.remaining(), end - position);
-        dst.put(array, position, n);
-        position += n;
+        int n = Math.min(dst.remaining(), remaining);
+        int end = buffer.position() + n;
+        dst.put(buffer.duplicate().limit(end));
+        buffer.position(end);
         return n;
     }
 
     @Override
     public void close() throws IOException {
-        array = null;
+        buffer = null;
     }
 
     @Override
@@ -69,7 +68,7 @@ final class ByteArrayChannel implements SeekableByteChannel {
         if (newPosition < 0 || newPosition >= Integer.MAX_VALUE) {
             throw new IllegalArgumentException("Illegal position " + newPosition);
         }
-        this.position = Math.min((int) newPosition, end);
+        this.buffer.position(Math.min((int) newPosition, buffer.limit()));
         return this;
     }
 
