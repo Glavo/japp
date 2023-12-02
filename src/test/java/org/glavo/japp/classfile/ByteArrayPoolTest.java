@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -38,6 +38,10 @@ public class ByteArrayPoolTest {
             byte[] out = new byte[testString.length];
             buffer.flip().get(out);
             assertArrayEquals(testString, out);
+
+            Arrays.fill(out, (byte) 0);
+            pool.get(i).get(out);
+            assertArrayEquals(testString, out);
         }
     }
 
@@ -46,17 +50,5 @@ public class ByteArrayPoolTest {
         test(0);
         test(10);
         test(100);
-    }
-
-    @Test
-    void testGetClassFileName() throws IOException {
-        ByteArrayPoolBuilder builder = new ByteArrayPoolBuilder();
-        int emptyIndex = builder.add("".getBytes(US_ASCII));
-        int packageNameIndex = builder.add("org/glavo".getBytes(US_ASCII));
-        int classNameIndex = builder.add("Main".getBytes(US_ASCII));
-
-        ByteArrayPool pool = builder.toPool();
-        assertEquals("Main.class", pool.getClassFileName(emptyIndex, classNameIndex));
-        assertEquals("org/glavo/Main.class", pool.getClassFileName(packageNameIndex, classNameIndex));
     }
 }
