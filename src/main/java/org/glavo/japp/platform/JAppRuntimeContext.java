@@ -1,4 +1,4 @@
-package org.glavo.japp.launcher.platform;
+package org.glavo.japp.platform;
 
 import org.glavo.japp.launcher.JAppConfigGroup;
 
@@ -25,7 +25,6 @@ public final class JAppRuntimeContext {
         PROJECT_DIRECTORY = Paths.get(manifest.getMainAttributes().getValue("Project-Directory"));
         HOME = PROJECT_DIRECTORY.resolve(".japp");
     }
-
 
     public static Path getHome() {
         return HOME;

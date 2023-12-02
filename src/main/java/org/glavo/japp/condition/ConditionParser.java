@@ -1,4 +1,4 @@
-package org.glavo.japp.launcher.condition;
+package org.glavo.japp.condition;
 
 import java.util.*;
 import java.util.function.Function;

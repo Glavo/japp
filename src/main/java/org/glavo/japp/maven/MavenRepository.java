@@ -1,6 +1,6 @@
-package org.glavo.japp.launcher.maven;
+package org.glavo.japp.maven;
 
-import org.glavo.japp.launcher.platform.JAppRuntimeContext;
+import org.glavo.japp.platform.JAppRuntimeContext;
 
 import java.io.IOException;
 import java.io.InputStream;

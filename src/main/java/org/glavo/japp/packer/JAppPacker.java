@@ -9,7 +9,7 @@ import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.JAppResourceReference;
-import org.glavo.japp.launcher.condition.ConditionParser;
+import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;

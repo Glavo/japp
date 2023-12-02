@@ -1,4 +1,4 @@
-package org.glavo.japp.launcher.platform;
+package org.glavo.japp.platform;
 
 import java.io.IOException;
 import java.nio.file.Path;

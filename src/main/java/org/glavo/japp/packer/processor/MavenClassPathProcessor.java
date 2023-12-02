@@ -1,7 +1,7 @@
 package org.glavo.japp.packer.processor;
 
 import org.glavo.japp.launcher.JAppResourceReference;
-import org.glavo.japp.launcher.maven.MavenResolver;
+import org.glavo.japp.maven.MavenResolver;
 import org.glavo.japp.packer.JAppPacker;
 
 import java.lang.module.ModuleFinder;

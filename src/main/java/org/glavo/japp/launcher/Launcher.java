@@ -1,10 +1,10 @@
 package org.glavo.japp.launcher;
 
 import org.glavo.japp.TODO;
-import org.glavo.japp.launcher.condition.ConditionParser;
-import org.glavo.japp.launcher.platform.JAppRuntimeContext;
-import org.glavo.japp.launcher.platform.JavaRuntime;
-import org.glavo.japp.launcher.maven.MavenResolver;
+import org.glavo.japp.condition.ConditionParser;
+import org.glavo.japp.platform.JAppRuntimeContext;
+import org.glavo.japp.platform.JavaRuntime;
+import org.glavo.japp.maven.MavenResolver;
 
 import java.io.IOException;
 import java.nio.file.Path;

@@ -1,4 +1,4 @@
-package org.glavo.japp.launcher.maven;
+package org.glavo.japp.maven;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
