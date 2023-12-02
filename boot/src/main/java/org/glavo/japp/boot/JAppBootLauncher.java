@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public final class BootLauncher {
+public final class JAppBootLauncher {
     private static void addExportsOrOpens(ModuleLayer layer, boolean opens) {
         String prefix = opens
                 ? "org.glavo.japp.addopens."
@@ -295,7 +295,7 @@ public final class BootLauncher {
         }
 
         if (mainModule.isNamed()) {
-            Modules.addOpens(mainModule, mainClass.getPackageName(), BootLauncher.class.getModule());
+            Modules.addOpens(mainModule, mainClass.getPackageName(), JAppBootLauncher.class.getModule());
         }
 
         return mainClass.getMethod("main", String[].class);

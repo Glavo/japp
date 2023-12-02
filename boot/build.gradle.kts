@@ -18,9 +18,12 @@ tasks.compileJava {
     )
 }
 
+val mainClassName = "org.glavo.japp.boot.JAppBootLauncher"
+
 val compileModuleInfo = tasks.create<CompileModuleInfo>("compileModuleInfo") {
-    sourceFile.set(layout.projectDirectory.file("src/main/module-info/module-info.java"));
-    targetFile.set(layout.buildDirectory.file("classes/module-info/main/module-info.class"));
+    sourceFile.set(layout.projectDirectory.file("src/main/module-info/module-info.java"))
+    targetFile.set(layout.buildDirectory.file("classes/module-info/main/module-info.class"))
+    moduleMainClass = mainClassName
 }
 
 tasks.classes.get().dependsOn(compileModuleInfo)
@@ -37,4 +40,5 @@ tasks.create<Jar>("bootJar") {
 
 tasks.withType<Jar> {
     from(compileModuleInfo.targetFile)
+    manifest.attributes("Main-Class" to mainClassName)
 }

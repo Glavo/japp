@@ -200,7 +200,7 @@ public final class Launcher {
                 "--add-opens=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-opens=java.base/java.lang=" + BOOT_LAUNCHER_MODULE,
                 "--module",
-                BOOT_LAUNCHER_MODULE + "/org.glavo.japp.boot.BootLauncher"
+                BOOT_LAUNCHER_MODULE
         );
 
         for (int i = 1; i < args.length; i++) {
