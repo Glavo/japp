@@ -14,6 +14,7 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -244,7 +245,12 @@ public final class BootLauncher {
             }
         }
 
-        JAppReader reader = new JAppReader(channel, baseOffset, null, metadata.getPool(), modules, classPath);
+        ByteBuffer mappedBuffer = null;
+        if (!System.getProperty("org.glavo.japp.mmap", "true").equals("false")) {
+            mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset - baseOffset);
+        }
+
+        JAppReader reader = new JAppReader(channel, baseOffset, mappedBuffer, metadata.getPool(), modules, classPath);
         JAppReader.initSystemReader(reader);
 
         ModuleLayer layer;
