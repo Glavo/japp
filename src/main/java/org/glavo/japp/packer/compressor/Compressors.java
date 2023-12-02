@@ -5,9 +5,6 @@ import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
-import java.util.Arrays;
-import java.util.zip.Deflater;
-
 public final class Compressors {
 
     public static final Compressor DEFAULT = new DefaultCompressor();
@@ -18,27 +15,6 @@ public final class Compressors {
         byte[] res = new byte[ZstdUtils.maxCompressedLength(source.length)];
         long n = Zstd.compressByteArray(res, 0, res.length, source, 0, source.length, 8);
         return new CompressResult(CompressionMethod.ZSTD, res, 0, (int) n);
-    };
-
-    public static final Compressor DEFLATE = (context, source) -> {
-        Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION, true);
-        deflater.setInput(source);
-        deflater.finish();
-
-        byte[] res = new byte[source.length];
-        int count = 0;
-
-        while (!deflater.finished()) {
-            if (count == res.length) {
-                res = Arrays.copyOf(res, res.length * 2);
-            }
-
-            count += deflater.deflate(res, count, res.length - count);
-        }
-
-        deflater.end();
-
-        return new CompressResult(CompressionMethod.DEFLATE, res, 0, count);
     };
 
     private Compressors() {

@@ -16,8 +16,6 @@ import java.nio.channels.FileChannel;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.zip.DataFormatException;
-import java.util.zip.Inflater;
 
 public final class JAppReader implements Closeable {
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
@@ -109,25 +107,6 @@ public final class JAppReader implements Closeable {
         switch (method) {
             case CLASSFILE: {
                 ClassFileDecompressor.decompress(this, compressed, output);
-                break;
-            }
-            case DEFLATE: {
-                Inflater inflater = new Inflater(true);
-                inflater.setInput(compressed.array());
-
-                try {
-                    int count = 0;
-                    while (count < size) {
-                        if (inflater.finished()) {
-                            throw new IOException("Unexpected end of data");
-                        }
-                        count += inflater.inflate(output, count, output.length - count);
-                    }
-                } catch (DataFormatException e) {
-                    throw new IOException(e);
-                } finally {
-                    inflater.end();
-                }
                 break;
             }
             case ZSTD: {

@@ -6,8 +6,7 @@ import java.nio.ByteBuffer;
 public enum CompressionMethod {
     NONE,
     CLASSFILE,
-    ZSTD,
-    DEFLATE;
+    ZSTD;
 
     private static final CompressionMethod[] METHODS = values();
 

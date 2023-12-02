@@ -63,9 +63,6 @@ final class DefaultCompressor implements Compressor {
                     result = Compressors.ZSTD.compress(packer, source);
                 }
                 break;
-            case DEFLATE:
-                result = Compressors.DEFLATE.compress(packer, source);
-                break;
             case ZSTD:
                 result = Compressors.ZSTD.compress(packer, source);
                 break;
