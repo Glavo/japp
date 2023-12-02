@@ -1,17 +1,17 @@
-package org.glavo.japp.launcher;
+package org.glavo.japp;
 
 import org.glavo.japp.json.JSONObject;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-public abstract class JAppResourceReference {
+public abstract class JAppResourceGroupReference {
 
-    protected JAppResourceReference(String name) {
+    protected JAppResourceGroupReference(String name) {
         this.name = name;
     }
 
-    public static JAppResourceReference fromJson(JSONObject obj) {
+    public static JAppResourceGroupReference fromJson(JSONObject obj) {
         String type = obj.getString("Type");
         String name = obj.optString("Name", null);
         if (type.equals(Local.class.getSimpleName())) {
@@ -81,7 +81,7 @@ public abstract class JAppResourceReference {
         return res;
     }
 
-    public static final class Local extends JAppResourceReference {
+    public static final class Local extends JAppResourceGroupReference {
         private final int index;
         private final TreeMap<Integer, Integer> multiReleaseIndexes;
 
@@ -105,11 +105,15 @@ public abstract class JAppResourceReference {
 
         @Override
         public String toString() {
-            return "JAppResourceReference.Local[index=" + index + ']';
+            if (multiReleaseIndexes == null) {
+                return "Local[index=" + index + ']';
+            } else {
+                return String.format("Local[index=%d, multiReleaseIndexes=%s]", index, multiReleaseIndexes);
+            }
         }
     }
 
-    public static final class Maven extends JAppResourceReference {
+    public static final class Maven extends JAppResourceGroupReference {
         private final String repository;
         private final String group;
         private final String artifact;
@@ -147,12 +151,7 @@ public abstract class JAppResourceReference {
 
         @Override
         public String toString() {
-            return "Maven{" +
-                   "group='" + group + '\'' +
-                   ", artifact='" + artifact + '\'' +
-                   ", version='" + version + '\'' +
-                   ", classifier='" + classifier + '\'' +
-                   '}';
+            return String.format("Maven[group=%s, artifact=%s, version=%s, classifier=%s]", group, artifact, version, classifier);
         }
     }
 }

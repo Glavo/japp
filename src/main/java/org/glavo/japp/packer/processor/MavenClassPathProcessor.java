@@ -1,6 +1,6 @@
 package org.glavo.japp.packer.processor;
 
-import org.glavo.japp.launcher.JAppResourceReference;
+import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.maven.MavenResolver;
 import org.glavo.japp.packer.JAppPacker;
 
@@ -52,7 +52,7 @@ public final class MavenClassPathProcessor extends ClassPathProcessor {
             }
 
             packer.addReference(
-                    new JAppResourceReference.Maven(name, repo, group, artifact, version, classifier),
+                    new JAppResourceGroupReference.Maven(name, repo, group, artifact, version, classifier),
                     isModulePath
             );
         }

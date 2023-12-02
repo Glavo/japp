@@ -1,4 +1,4 @@
-package org.glavo.japp.launcher;
+package org.glavo.japp;
 
 import org.glavo.japp.annotation.Visibility;
 import org.glavo.japp.condition.ConditionParser;
@@ -105,8 +105,8 @@ public final class JAppConfigGroup {
     private long baseOffset;
     private long bootMetadataOffset;
 
-    public final List<JAppResourceReference> modulePath = new ArrayList<>();
-    public final List<JAppResourceReference> classPath = new ArrayList<>();
+    public final List<JAppResourceGroupReference> modulePath = new ArrayList<>();
+    public final List<JAppResourceGroupReference> classPath = new ArrayList<>();
 
     public final List<String> jvmProperties = new ArrayList<>();
     public final List<String> addReads = new ArrayList<>();
@@ -157,11 +157,11 @@ public final class JAppConfigGroup {
         return mainModule;
     }
 
-    public List<JAppResourceReference> getModulePath() {
+    public List<JAppResourceGroupReference> getModulePath() {
         return modulePath;
     }
 
-    public List<JAppResourceReference> getClassPath() {
+    public List<JAppResourceGroupReference> getClassPath() {
         return classPath;
     }
 
@@ -177,11 +177,11 @@ public final class JAppConfigGroup {
     }
 
     private void readReferences(boolean isModulePath, JSONArray array) throws IOException {
-        List<JAppResourceReference> list = isModulePath ? this.modulePath : this.classPath;
+        List<JAppResourceGroupReference> list = isModulePath ? this.modulePath : this.classPath;
 
         if (array != null) {
             for (Object jsonItem : array) {
-                list.add(JAppResourceReference.fromJson((JSONObject) jsonItem));
+                list.add(JAppResourceGroupReference.fromJson((JSONObject) jsonItem));
             }
         }
     }
@@ -218,11 +218,11 @@ public final class JAppConfigGroup {
         JSONArray modulePath = new JSONArray();
         JSONArray classPath = new JSONArray();
 
-        for (JAppResourceReference reference : this.modulePath) {
+        for (JAppResourceGroupReference reference : this.modulePath) {
             modulePath.put(reference.toJson());
         }
 
-        for (JAppResourceReference reference : this.classPath) {
+        for (JAppResourceGroupReference reference : this.classPath) {
             classPath.put(reference.toJson());
         }
 
@@ -267,9 +267,9 @@ public final class JAppConfigGroup {
         return condition == null || ConditionParser.parse(condition).test(context);
     }
 
-    private void addOrReplace(List<JAppResourceReference> target, List<JAppResourceReference> source) {
+    private void addOrReplace(List<JAppResourceGroupReference> target, List<JAppResourceGroupReference> source) {
         loop:
-        for (JAppResourceReference reference : source) {
+        for (JAppResourceGroupReference reference : source) {
             if (reference.name != null) {
                 for (int i = 0; i < target.size(); i++) {
                     if (reference.name.equals(target.get(i).name)) {

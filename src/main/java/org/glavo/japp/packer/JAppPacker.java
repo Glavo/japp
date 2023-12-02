@@ -7,8 +7,8 @@ import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceField;
 import org.glavo.japp.boot.JAppResourceGroup;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
-import org.glavo.japp.launcher.JAppConfigGroup;
-import org.glavo.japp.launcher.JAppResourceReference;
+import org.glavo.japp.JAppConfigGroup;
+import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
@@ -68,7 +68,7 @@ public final class JAppPacker {
         return new JAppResourcesWriter(this, name, isModulePath);
     }
 
-    public void addReference(JAppResourceReference reference, boolean isModulePath) {
+    public void addReference(JAppResourceGroupReference reference, boolean isModulePath) {
         Objects.requireNonNull(reference);
 
         if (isModulePath) {

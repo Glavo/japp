@@ -1,5 +1,7 @@
 package org.glavo.japp.launcher;
 
+import org.glavo.japp.JAppConfigGroup;
+import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.TODO;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.platform.JAppRuntimeContext;
@@ -21,10 +23,10 @@ public final class Launcher {
                 .getValue("JApp-Boot");
     }
 
-    private static void appendReferences(StringBuilder builder, int release, List<JAppResourceReference> references) throws Throwable {
+    private static void appendReferences(StringBuilder builder, int release, List<JAppResourceGroupReference> references) throws Throwable {
         boolean isFirst = true;
 
-        for (JAppResourceReference reference : references) {
+        for (JAppResourceGroupReference reference : references) {
             String name = reference.name;
 
             if (isFirst) {
@@ -35,8 +37,8 @@ public final class Launcher {
 
             builder.append(name).append(":");
 
-            if (reference instanceof JAppResourceReference.Local) {
-                JAppResourceReference.Local local = (JAppResourceReference.Local) reference;
+            if (reference instanceof JAppResourceGroupReference.Local) {
+                JAppResourceGroupReference.Local local = (JAppResourceGroupReference.Local) reference;
                 builder.append(Integer.toHexString(local.getIndex()));
 
                 TreeMap<Integer, Integer> multiReleaseIndexes = local.getMultiReleaseIndexes();
@@ -52,8 +54,8 @@ public final class Launcher {
                         }
                     }
                 }
-            } else if (reference instanceof JAppResourceReference.Maven) {
-                JAppResourceReference.Maven maven = (JAppResourceReference.Maven) reference;
+            } else if (reference instanceof JAppResourceGroupReference.Maven) {
+                JAppResourceGroupReference.Maven maven = (JAppResourceGroupReference.Maven) reference;
 
                 Path file = MavenResolver.resolve(
                         maven.getRepository(),

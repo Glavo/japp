@@ -1,6 +1,6 @@
 package org.glavo.japp.platform;
 
-import org.glavo.japp.launcher.JAppConfigGroup;
+import org.glavo.japp.JAppConfigGroup;
 
 import java.io.IOException;
 import java.io.InputStream;

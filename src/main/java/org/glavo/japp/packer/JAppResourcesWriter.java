@@ -1,6 +1,6 @@
 package org.glavo.japp.packer;
 
-import org.glavo.japp.launcher.JAppResourceReference;
+import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.packer.compressor.CompressResult;
 import org.glavo.japp.util.XxHash64;
 
@@ -69,6 +69,6 @@ public final class JAppResourcesWriter implements AutoCloseable {
             multiIndexes = null;
         }
 
-        packer.addReference(new JAppResourceReference.Local(name, baseIndex, multiIndexes), isModulePath);
+        packer.addReference(new JAppResourceGroupReference.Local(name, baseIndex, multiIndexes), isModulePath);
     }
 }
