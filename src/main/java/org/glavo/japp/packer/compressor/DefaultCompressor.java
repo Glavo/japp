@@ -28,7 +28,7 @@ final class DefaultCompressor implements Compressor {
 
     @Override
     public CompressResult compress(JAppPacker packer, byte[] source) throws IOException {
-        return compress(packer, source, (String) null);
+        return compress(packer, source, null);
     }
 
     @Override
@@ -37,9 +37,14 @@ final class DefaultCompressor implements Compressor {
             return new CompressResult(source);
         }
 
-        int sep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
-        int dot = filePath.lastIndexOf('.');
-        String ext = dot > sep ? filePath.substring(dot + 1) : null;
+        String ext;
+        if (filePath != null) {
+            int sep = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
+            int dot = filePath.lastIndexOf('.');
+            ext = dot > sep ? filePath.substring(dot + 1) : null;
+        } else {
+            ext = null;
+        }
 
         CompressionMethod method = map.getOrDefault(ext, defaultMethod);
         CompressResult result;
