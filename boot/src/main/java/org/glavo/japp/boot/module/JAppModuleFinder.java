@@ -4,7 +4,9 @@ import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.module.FindException;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -67,26 +69,15 @@ public final class JAppModuleFinder implements ModuleFinder {
                 }
 
                 List<String> providerClasses = new ArrayList<>();
-
-                JAppResource resource = group.get(name);
-                ByteBuffer resourceBody = reader.readResource(resource);
-                byte[] resourceArray;
-                int resourceOffset;
-                int resourceLen = Math.toIntExact(resource.getSize());
-                if (resourceBody.hasArray()) {
-                    resourceArray = resourceBody.array();
-                    resourceOffset = resourceBody.arrayOffset() + resourceBody.position();
-                } else {
-                    resourceArray = new byte[resourceLen];
-                    resourceOffset = 0;
-                    resourceBody.get(resourceArray);
-                }
-
-                for (String line : new String(resourceArray, resourceOffset, resourceLen, StandardCharsets.UTF_8).split("\\R")) {
-                    if (!line.isEmpty()) {
-                        providerClasses.add(line);
+                try (BufferedReader fileReader = new BufferedReader(new InputStreamReader(reader.openResource(group.get(name))))) {
+                    String line;
+                    while ((line = fileReader.readLine()) != null) {
+                        if (!line.isEmpty()) {
+                            providerClasses.add(line);
+                        }
                     }
                 }
+
                 if (!providerClasses.isEmpty())
                     builder.provides(sn, providerClasses);
             }
