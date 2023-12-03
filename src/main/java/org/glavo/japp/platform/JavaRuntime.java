@@ -70,13 +70,24 @@ public final class JavaRuntime {
     }
 
     static {
-        if (OperatingSystem.parseOperatingSystem(System.getProperty("os.name")) == OperatingSystem.LINUX) {
-            searchByJInfoFilesIn(Paths.get("/usr/lib/jvm"));
-            searchIn(JAppRuntimeContext.getHome().resolve("jvm"));
-            tryAddJava(Paths.get(System.getProperty("java.home")));
-        } else {
-            throw new TODO("Currently only supports Linux");
+        OperatingSystem os = OperatingSystem.parseOperatingSystem(System.getProperty("os.name"));
+        switch (os) {
+            case LINUX: {
+                searchByJInfoFilesIn(Paths.get("/usr/lib/jvm"));
+                break;
+            }
+            case WINDOWS: {
+                String programFiles = System.getenv("ProgramFiles");
+                if (programFiles == null) {
+                    programFiles = "C:\\Program Files";
+                }
+
+                searchIn(Paths.get(programFiles));
+            }
         }
+
+        searchIn(JAppRuntimeContext.getHome().resolve("jvm"));
+        tryAddJava(Paths.get(System.getProperty("java.home")));
     }
 
     public static Collection<JavaRuntime> getAllJava() {
