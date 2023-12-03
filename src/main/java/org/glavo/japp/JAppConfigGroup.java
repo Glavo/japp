@@ -18,92 +18,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class JAppConfigGroup {
 
-    public static final short MAJOR_VERSION = -1;
-    public static final short MINOR_VERSION = 0;
-
-    public static final int FILE_END_SIZE = 64;
-
-    private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
-
-    public static JAppConfigGroup readFile(Path file) throws IOException {
-        try (FileChannel channel = FileChannel.open(file)) {
-            long fileSize = channel.size();
-
-            if (fileSize < FILE_END_SIZE) {
-                throw new IOException("File is too small");
-            }
-
-            int endBufferSize = (int) Math.min(fileSize, 8192);
-            ByteBuffer endBuffer = ByteBuffer.allocate(endBufferSize).order(ByteOrder.LITTLE_ENDIAN);
-
-            channel.position(fileSize - endBufferSize);
-
-            IOUtils.readFully(channel, endBuffer);
-
-            endBuffer.limit(endBufferSize).position(endBufferSize - FILE_END_SIZE);
-
-            int magicNumber = endBuffer.getInt();
-            if (magicNumber != 0x5050414a) {
-                throw new IOException("Invalid magic number: " + Long.toHexString(magicNumber));
-            }
-
-            short majorVersion = endBuffer.getShort();
-            short minorVersion = endBuffer.getShort();
-
-            if (majorVersion != MAJOR_VERSION || minorVersion != MINOR_VERSION) {
-                throw new IOException("Version number mismatch");
-            }
-
-            long flags = endBuffer.getLong();
-
-            long fileContentSize = endBuffer.getLong();
-            long metadataOffset = endBuffer.getLong();
-            long bootMetadataOffset = endBuffer.getLong();
-
-            assert endBuffer.remaining() == 24;
-
-            if (flags != 0) {
-                throw new IOException("Unsupported flags: " + Long.toBinaryString(flags));
-            }
-
-            if (fileContentSize > fileSize || fileContentSize < FILE_END_SIZE) {
-                throw new IOException("Invalid file size: " + fileContentSize);
-            }
-
-            if (metadataOffset >= fileContentSize - FILE_END_SIZE) {
-                throw new IOException("Invalid metadata offset: " + metadataOffset);
-            }
-
-            long baseOffset = fileSize - fileContentSize;
-            long metadataSize = fileContentSize - FILE_END_SIZE - metadataOffset;
-
-            JAppConfigGroup metadata;
-            if (metadataSize < endBufferSize - FILE_END_SIZE) {
-                metadata = readConfigGroup(endBuffer.array(), (int) (endBufferSize - metadataSize - FILE_END_SIZE), (int) metadataSize);
-            } else {
-                if (metadataSize > (1 << 30)) {
-                    throw new IOException("Metadata is too large");
-                }
-
-                ByteBuffer metadataBuffer = ByteBuffer.allocate((int) metadataSize);
-                channel.position(baseOffset + metadataOffset);
-                IOUtils.readFully(channel, metadataBuffer);
-
-                metadata = readConfigGroup(metadataBuffer.array(), 0, (int) metadataSize);
-            }
-
-            metadata.baseOffset = baseOffset;
-            metadata.bootMetadataOffset = bootMetadataOffset;
-            return metadata;
-        }
-    }
-
-    private static JAppConfigGroup readConfigGroup(byte[] array, int offset, int length) throws IOException {
+    public static JAppConfigGroup readConfigGroup(byte[] array, int offset, int length) throws IOException {
         return JAppConfigGroup.fromJson(new JSONObject(new String(array, offset, length, UTF_8)));
     }
-
-    private long baseOffset;
-    private long bootMetadataOffset;
 
     public final List<JAppResourceGroupReference> modulePath = new ArrayList<>();
     public final List<JAppResourceGroupReference> classPath = new ArrayList<>();
@@ -120,14 +37,6 @@ public final class JAppConfigGroup {
 
     public String mainClass;
     public String mainModule;
-
-    public long getBaseOffset() {
-        return baseOffset;
-    }
-
-    public long getBootMetadataOffset() {
-        return bootMetadataOffset;
-    }
 
     public List<String> getJvmProperties() {
         return jvmProperties;

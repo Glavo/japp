@@ -10,6 +10,7 @@ import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.JAppConfigGroup;
 import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.condition.ConditionParser;
+import org.glavo.japp.launcher.JAppLauncherMetadata;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
@@ -157,7 +158,7 @@ public final class JAppPacker {
     }
 
     private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
-        long fileSize = output.getTotalBytes() + JAppConfigGroup.FILE_END_SIZE;
+        long fileSize = output.getTotalBytes() + JAppLauncherMetadata.FILE_END_SIZE;
 
         // magic number
         output.writeInt(MAGIC_NUMBER);

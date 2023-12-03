@@ -79,11 +79,13 @@ public final class Launcher {
             throw new TODO("Help Message");
         }
 
-        JAppConfigGroup config = JAppConfigGroup.readFile(Paths.get(args[0]));
-        JAppRuntimeContext context = JAppRuntimeContext.search(config);
+        JAppLauncherMetadata config = JAppLauncherMetadata.readFile(Paths.get(args[0]));
+        JAppConfigGroup group = config.getGroup();
+
+        JAppRuntimeContext context = JAppRuntimeContext.search(group);
         if (context == null) {
             System.err.println("Error: Unable to find suitable Java");
-            System.err.println("Condition: " + ConditionParser.parse(config.condition));
+            System.err.println("Condition: " + ConditionParser.parse(group.condition));
             System.err.println("Java:");
 
             for (JavaRuntime java : JavaRuntime.getAllJava()) {
@@ -93,12 +95,12 @@ public final class Launcher {
             System.exit(1);
         }
 
-        config.resolve(context);
+        config.getGroup().resolve(context);
 
         List<String> command = new ArrayList<>();
         command.add(context.getJava().getExec().toString());
 
-        for (String property : config.getJvmProperties()) {
+        for (String property : group.getJvmProperties()) {
             command.add("-D" + property);
         }
 
@@ -111,17 +113,17 @@ public final class Launcher {
         command.add("-Dorg.glavo.japp.file.metadataOffset=" + Long.toHexString(config.getBootMetadataOffset()));
 
         int index = 0;
-        for (String addReads : config.getAddReads()) {
+        for (String addReads : group.getAddReads()) {
             command.add("-Dorg.glavo.japp.addreads." + index++ + "=" + addReads);
         }
 
         index = 0;
-        for (String addOpen : config.getAddOpens()) {
+        for (String addOpen : group.getAddOpens()) {
             command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
         }
 
         index = 0;
-        for (String addExport : config.getAddExports()) {
+        for (String addExport : group.getAddExports()) {
             command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
         }
 
@@ -132,7 +134,7 @@ public final class Launcher {
 
         boolean isFirst = true;
         StringBuilder builder = new StringBuilder(80);
-        if (!config.getEnableNativeAccess().isEmpty()) {
+        if (!group.getEnableNativeAccess().isEmpty()) {
 
 
             if (release == 16) {
@@ -140,7 +142,7 @@ public final class Launcher {
             } else if (release >= 17) {
                 command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
 
-                for (String module : config.getEnableNativeAccess()) {
+                for (String module : group.getEnableNativeAccess()) {
                     if (module.equals("ALL-UNNAMED")) {
                         command.add("--enable-native-access=ALL-UNNAMED");
                     } else {
@@ -169,26 +171,26 @@ public final class Launcher {
             command.add("--enable-preview");
         }
 
-        if (!config.getModulePath().isEmpty()) {
+        if (!group.getModulePath().isEmpty()) {
             builder.setLength(0);
             builder.append("-Dorg.glavo.japp.modules=");
-            appendReferences(builder, release, config.getModulePath());
+            appendReferences(builder, release, group.getModulePath());
             command.add(builder.toString());
         }
 
-        if (!config.getClassPath().isEmpty()) {
+        if (!group.getClassPath().isEmpty()) {
             builder.setLength(0);
             builder.append("-Dorg.glavo.japp.classpath=");
-            appendReferences(builder, release, config.getClassPath());
+            appendReferences(builder, release, group.getClassPath());
             command.add(builder.toString());
         }
 
-        if (config.getMainClass() != null) {
-            command.add("-Dorg.glavo.japp.mainClass=" + config.getMainClass());
+        if (group.getMainClass() != null) {
+            command.add("-Dorg.glavo.japp.mainClass=" + group.getMainClass());
         }
 
-        if (config.getMainModule() != null) {
-            command.add("-Dorg.glavo.japp.mainModule=" + config.getMainModule());
+        if (group.getMainModule() != null) {
+            command.add("-Dorg.glavo.japp.mainModule=" + group.getMainModule());
         }
 
         Collections.addAll(command,
