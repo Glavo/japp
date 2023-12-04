@@ -20,6 +20,7 @@ import jdk.internal.loader.URLClassPath;
 import jdk.internal.module.Modules;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.module.JAppModuleFinder;
+import org.glavo.japp.util.IOUtils;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -261,7 +262,7 @@ public final class JAppBootLauncher {
         }
 
         ByteBuffer mappedBuffer = null;
-        if (!System.getProperty("org.glavo.japp.mmap", "true").equals("false")) {
+        if (false) { // fixme
             mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
         }
 
