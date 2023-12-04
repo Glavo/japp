@@ -13,7 +13,7 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 
 public final class ZstdUtils {
     public static int maxCompressedLength(int sourceLength) {
@@ -25,17 +25,17 @@ public final class ZstdUtils {
         return maxCompressedSize;
     }
 
-    private static final ThreadLocal<WeakReference<ZstdFrameDecompressor>> threadLocalDecompressor = new ThreadLocal<>();
+    private static final ThreadLocal<SoftReference<ZstdFrameDecompressor>> threadLocalDecompressor = new ThreadLocal<>();
 
     public static ZstdFrameDecompressor decompressor() {
-        WeakReference<ZstdFrameDecompressor> decompressorReference = threadLocalDecompressor.get();
+        SoftReference<ZstdFrameDecompressor> decompressorReference = threadLocalDecompressor.get();
         ZstdFrameDecompressor decompressor;
         if (decompressorReference != null && (decompressor = decompressorReference.get()) != null) {
             return decompressor;
         }
 
         decompressor = new ZstdFrameDecompressor();
-        threadLocalDecompressor.set(new WeakReference<>(decompressor));
+        threadLocalDecompressor.set(new SoftReference<>(decompressor));
         return decompressor;
     }
 

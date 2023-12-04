@@ -45,7 +45,7 @@ public final class JAppBootMetadata {
 
         int groupCount = headerBuffer.getInt();
 
-        ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+        ZstdFrameDecompressor decompressor = ZstdUtils.decompressor();
         ByteArrayPool pool = ByteArrayPool.readFrom(channel, decompressor);
 
         JAppResourceGroup[] groups = new JAppResourceGroup[groupCount];
