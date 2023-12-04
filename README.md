@@ -63,8 +63,14 @@ Currently supported options:
 
 Now you can run it:
 
+(For Linux/macOS)
 ```shell
 ./myapp.japp <args>
+```
+
+(For Windows)
+```powershell
+.\bin\japp.ps1 run myapp.japp <args>
 ```
 
 ## Thanks
