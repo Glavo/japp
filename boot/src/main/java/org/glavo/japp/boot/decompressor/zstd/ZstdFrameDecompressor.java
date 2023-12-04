@@ -16,8 +16,12 @@ package org.glavo.japp.boot.decompressor.zstd;
 import org.glavo.japp.util.UnsafeUtil;
 import org.glavo.japp.util.XxHash64;
 
+import java.lang.ref.Reference;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.glavo.japp.boot.decompressor.zstd.BitInputStream.peekBits;
 import static org.glavo.japp.boot.decompressor.zstd.Constants.COMPRESSED_BLOCK;
 import static org.glavo.japp.boot.decompressor.zstd.Constants.COMPRESSED_LITERALS_BLOCK;
@@ -56,7 +60,7 @@ import static org.glavo.japp.boot.decompressor.zstd.Util.mask;
 import static org.glavo.japp.boot.decompressor.zstd.Util.verify;
 import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 
-class ZstdFrameDecompressor {
+public final class ZstdFrameDecompressor {
     private static final int[] DEC_32_TABLE = {4, 1, 2, 1, 4, 4, 4, 4};
     private static final int[] DEC_64_TABLE = {0, 0, 0, -1, 0, 1, 2, 3};
 
@@ -943,6 +947,70 @@ class ZstdFrameDecompressor {
         }
 
         return SIZE_OF_INT;
+    }
+
+    // Utils
+
+    public int decompress(ByteBuffer input, ByteBuffer output) throws MalformedInputException {
+        Object inputBase;
+        long inputBaseAddress;
+        long inputAddress;
+        long inputLimit;
+
+        Object outputBase;
+        long outputBaseAddress;
+        long outputAddress;
+        long outputLimit;
+
+        if (input.hasArray()) {
+            inputBase = input.array();
+            inputBaseAddress = ARRAY_BYTE_BASE_OFFSET + input.arrayOffset();
+        } else {
+            inputBase = null;
+            inputBaseAddress = UnsafeUtil.getDirectBufferAddress(input);
+        }
+        inputAddress = inputBaseAddress + input.position();
+        inputLimit = inputBaseAddress + input.limit();
+
+        if (output.hasArray()) {
+            outputBase = output.array();
+            outputBaseAddress = ARRAY_BYTE_BASE_OFFSET + output.arrayOffset();
+        } else {
+            outputBase = null;
+            outputBaseAddress = UnsafeUtil.getDirectBufferAddress(output);
+        }
+        outputAddress = outputBaseAddress + output.position();
+        outputLimit = outputBaseAddress + output.limit();
+
+        input.position(input.limit());
+        int n = decompress(inputBase, inputAddress, inputLimit, outputBase, outputAddress, outputLimit);
+        output.position(output.position() + n);
+        return n;
+    }
+
+    public int decompress(byte[] input, int inputOffset, int inputLength, byte[] output, int outputOffset, int maxOutputLength)
+            throws MalformedInputException {
+        verifyRange(input, inputOffset, inputLength);
+        verifyRange(output, outputOffset, maxOutputLength);
+
+        long inputAddress = ARRAY_BYTE_BASE_OFFSET + inputOffset;
+        long inputLimit = inputAddress + inputLength;
+        long outputAddress = ARRAY_BYTE_BASE_OFFSET + outputOffset;
+        long outputLimit = outputAddress + maxOutputLength;
+
+        try {
+            return decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
+        } finally {
+            Reference.reachabilityFence(input);
+            Reference.reachabilityFence(output);
+        }
+    }
+
+    private static void verifyRange(byte[] data, int offset, int length) {
+        requireNonNull(data, "data is null");
+        if (offset < 0 || length < 0 || offset + length > data.length) {
+            throw new IllegalArgumentException(format("Invalid offset or length (%s, %s) in array of length %s", offset, length, data.length));
+        }
     }
 }
 

@@ -166,7 +166,7 @@ public final class ClassFileDecompressor {
 
             outputBuffer.put(compressed);
         } else if (compressionMethod == CompressionMethod.ZSTD) {
-            ZstdUtils.decompress(compressed, outputBuffer);
+            ZstdUtils.decompressor().decompress(compressed, outputBuffer);
             if (compressed.hasRemaining() || outputBuffer.hasRemaining()) {
                 throw new IOException();
             }

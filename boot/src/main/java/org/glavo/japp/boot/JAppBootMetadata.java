@@ -17,6 +17,7 @@ package org.glavo.japp.boot;
 
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
+import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.util.XxHash64;
@@ -44,7 +45,8 @@ public final class JAppBootMetadata {
 
         int groupCount = headerBuffer.getInt();
 
-        ByteArrayPool pool = ByteArrayPool.readFrom(channel);
+        ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+        ByteArrayPool pool = ByteArrayPool.readFrom(channel, decompressor);
 
         JAppResourceGroup[] groups = new JAppResourceGroup[groupCount];
         {
@@ -102,7 +104,7 @@ public final class JAppBootMetadata {
                     uncompressedBuffer.limit(uncompressedSize);
 
                     if (compressionMethod == CompressionMethod.ZSTD) {
-                        ZstdUtils.decompress(compressedBuffer, uncompressedBuffer);
+                        decompressor.decompress(compressedBuffer, uncompressedBuffer);
                         if (uncompressedBuffer.hasRemaining()) {
                             throw new IOException();
                         }

@@ -40,8 +40,10 @@ public class ZstdTest {
             compressed = Zstd.compress(bytes);
         }
 
+        ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+
         byte[] decompressed = new byte[bytes.length];
-        int decompressedLen = ZstdUtils.decompress(compressed, 0, compressed.length, decompressed, 0, decompressed.length);
+        int decompressedLen = decompressor.decompress(compressed, 0, compressed.length, decompressed, 0, decompressed.length);
         assertArrayEquals(bytes, decompressed);
         assertEquals(bytes.length, decompressedLen);
 
@@ -49,7 +51,7 @@ public class ZstdTest {
         ByteBuffer compressedBuffer = ByteBuffer.wrap(compressed);
         ByteBuffer decompressedBuffer = ByteBuffer.wrap(decompressed);
 
-        decompressedLen = ZstdUtils.decompress(compressedBuffer, decompressedBuffer);
+        decompressedLen = decompressor.decompress(compressedBuffer, decompressedBuffer);
         assertFalse(compressedBuffer.hasRemaining());
         assertFalse(decompressedBuffer.hasRemaining());
         assertArrayEquals(bytes, decompressed);
@@ -60,7 +62,7 @@ public class ZstdTest {
         compressedBuffer.flip();
         decompressedBuffer = ByteBuffer.allocateDirect(bytes.length);
 
-        decompressedLen = ZstdUtils.decompress(compressedBuffer, decompressedBuffer);
+        decompressedLen = decompressor.decompress(compressedBuffer, decompressedBuffer);
         assertFalse(compressedBuffer.hasRemaining());
         assertFalse(decompressedBuffer.hasRemaining());
 

@@ -18,6 +18,7 @@ package org.glavo.japp.packer.compressor.classfile;
 import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
+import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.ByteBufferOutputStream;
 
@@ -123,6 +124,7 @@ public final class ByteArrayPoolBuilder {
         ByteBufferOutputStream output = new ByteBufferOutputStream();
         writeTo(output);
         return ByteArrayPool.readFrom(Channels.newChannel(
-                new ByteArrayInputStream(output.getByteBuffer().array(), 0, output.getTotalBytes())));
+                        new ByteArrayInputStream(output.getByteBuffer().array(), 0, output.getTotalBytes())),
+                new ZstdFrameDecompressor());
     }
 }

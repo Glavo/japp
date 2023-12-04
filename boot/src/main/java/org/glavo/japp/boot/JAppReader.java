@@ -126,7 +126,7 @@ public final class JAppReader implements Closeable {
                 break;
             }
             case ZSTD: {
-                ZstdUtils.decompress(compressed, ByteBuffer.wrap(output, 0, size));
+                ZstdUtils.decompressor().decompress(compressed, ByteBuffer.wrap(output, 0, size));
                 break;
             }
             default: {

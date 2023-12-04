@@ -16,7 +16,7 @@
 package org.glavo.japp.boot.decompressor.classfile;
 
 import org.glavo.japp.CompressionMethod;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
+import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.util.IOUtils;
 
 import java.io.IOException;
@@ -35,7 +35,7 @@ public final class ByteArrayPool {
         this.offsetAndSize = offsetAndSize;
     }
 
-    public static ByteArrayPool readFrom(ReadableByteChannel channel) throws IOException {
+    public static ByteArrayPool readFrom(ReadableByteChannel channel, ZstdFrameDecompressor decompressor) throws IOException {
         ByteBuffer headerBuffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
         IOUtils.readFully(channel, headerBuffer);
         headerBuffer.flip();
@@ -77,7 +77,7 @@ public final class ByteArrayPool {
         } else {
             uncompressedBytes = new byte[uncompressedBytesSize];
             if (compressionMethod == CompressionMethod.ZSTD) {
-                ZstdUtils.decompress(compressedBytes, 0, compressedBytesSize, uncompressedBytes, 0, uncompressedBytesSize);
+                decompressor.decompress(compressedBytes, 0, compressedBytesSize, uncompressedBytes, 0, uncompressedBytesSize);
             } else {
                 throw new IOException("Unsupported compression method: " + compressionMethod);
             }
