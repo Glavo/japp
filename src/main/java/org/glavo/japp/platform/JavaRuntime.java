@@ -83,6 +83,7 @@ public final class JavaRuntime {
     }
 
     static {
+        // TODO: Check architecture compatibility
         OperatingSystem os = OperatingSystem.parseOperatingSystem(System.getProperty("os.name"));
         switch (os) {
             case LINUX: {
@@ -96,6 +97,11 @@ public final class JavaRuntime {
                 }
 
                 searchIn(Paths.get(programFiles));
+                break;
+            }
+            case MACOS: {
+                // TODO
+                break;
             }
         }
 
