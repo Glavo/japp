@@ -125,7 +125,8 @@ public final class Launcher {
             command.add("-Dorg.glavo.japp.file.offset=" + Long.toHexString(config.getBaseOffset()));
         }
 
-        command.add("-Dorg.glavo.japp.file.metadataOffset=" + Long.toHexString(config.getBootMetadataOffset()));
+        command.add("-Dorg.glavo.japp.file.metadata.offset=" + Long.toHexString(config.getBootMetadataOffset()));
+        command.add("-Dorg.glavo.japp.file.metadata.size=" + Long.toHexString(config.getBootMetadataSize()));
 
         int index = 0;
         for (String addReads : group.getAddReads()) {

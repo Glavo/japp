@@ -32,6 +32,7 @@ import java.lang.module.ModuleReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -178,7 +179,8 @@ public final class JAppBootLauncher {
         String file = getNecessaryProperty("org.glavo.japp.file");
         long baseOffset = (property = System.getProperty("org.glavo.japp.file.offset")) != null ? Long.parseLong(property, 16) : 0L;
 
-        long metadataOffset = Long.parseLong(getNecessaryProperty("org.glavo.japp.file.metadataOffset"), 16);
+        long metadataOffset = Long.parseLong(getNecessaryProperty("org.glavo.japp.file.metadata.offset"), 16);
+        long metadataSize = Long.parseLong(getNecessaryProperty("org.glavo.japp.file.metadata.size"), 16);
 
         String modulePaths = System.getProperty("org.glavo.japp.modules");
         String classPaths = System.getProperty("org.glavo.japp.classpath");
@@ -193,8 +195,10 @@ public final class JAppBootLauncher {
         ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
 
         FileChannel channel = FileChannel.open(Paths.get(file));
-        channel.position(baseOffset + metadataOffset);
-        JAppBootMetadata metadata = JAppBootMetadata.readFrom(channel, decompressor);
+        ByteBuffer metadataBuffer = ByteBuffer.allocate(Math.toIntExact(metadataSize)).order(ByteOrder.LITTLE_ENDIAN);
+        IOUtils.readFully(channel.position(baseOffset + metadataOffset), metadataBuffer);
+        metadataBuffer.flip();
+        JAppBootMetadata metadata = JAppBootMetadata.readFrom(metadataBuffer, decompressor);
 
         Map<String, JAppResourceGroup> modules = new HashMap<>();
         List<Path> externalModules = null;

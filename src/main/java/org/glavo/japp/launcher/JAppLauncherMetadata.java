@@ -97,18 +97,20 @@ public final class JAppLauncherMetadata {
                 group = JAppConfigGroup.readFrom(metadataBuffer);
             }
 
-            return new JAppLauncherMetadata(baseOffset, bootMetadataOffset, group);
+            return new JAppLauncherMetadata(baseOffset, bootMetadataOffset, launcherMetadataOffset - bootMetadataOffset, group);
         }
     }
 
     private final long baseOffset;
     private final long bootMetadataOffset;
+    private final long bootMetadataSize;
 
     private final JAppConfigGroup group;
 
-    public JAppLauncherMetadata(long baseOffset, long bootMetadataOffset, JAppConfigGroup group) {
+    public JAppLauncherMetadata(long baseOffset, long bootMetadataOffset, long bootMetadataSize, JAppConfigGroup group) {
         this.baseOffset = baseOffset;
         this.bootMetadataOffset = bootMetadataOffset;
+        this.bootMetadataSize = bootMetadataSize;
         this.group = group;
     }
 
@@ -118,6 +120,10 @@ public final class JAppLauncherMetadata {
 
     public long getBootMetadataOffset() {
         return bootMetadataOffset;
+    }
+
+    public long getBootMetadataSize() {
+        return bootMetadataSize;
     }
 
     public JAppConfigGroup getGroup() {

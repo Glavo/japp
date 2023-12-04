@@ -18,76 +18,55 @@ package org.glavo.japp.boot;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
-import org.glavo.japp.util.IOUtils;
+import org.glavo.japp.util.ByteBufferUtils;
 import org.glavo.japp.util.XxHash64;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.SeekableByteChannel;
 import java.util.Arrays;
 import java.util.List;
 
 public final class JAppBootMetadata {
     public static final int MAGIC_NUMBER = 0x544f4f42;
 
-    public static JAppBootMetadata readFrom(SeekableByteChannel channel, ZstdFrameDecompressor decompressor) throws IOException {
-        ByteBuffer headerBuffer = ByteBuffer.allocate(JAppResourceGroup.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN);
-        headerBuffer.limit(8);
-        IOUtils.readFully(channel, headerBuffer);
-        headerBuffer.flip();
-
-        int bootMagic = headerBuffer.getInt();
+    public static JAppBootMetadata readFrom(ByteBuffer buffer, ZstdFrameDecompressor decompressor) throws IOException {
+        int bootMagic = buffer.getInt();
         if (bootMagic != MAGIC_NUMBER) {
             throw new IOException(String.format("Wrong boot magic: %02x", bootMagic));
         }
 
-        int groupCount = headerBuffer.getInt();
+        int groupCount = buffer.getInt();
 
-        ByteArrayPool pool = ByteArrayPool.readFrom(channel, decompressor);
+        ByteArrayPool pool = ByteArrayPool.readFrom(buffer, decompressor);
 
         JAppResourceGroup[] groups = new JAppResourceGroup[groupCount];
         {
-            headerBuffer.limit(JAppResourceGroup.HEADER_LENGTH);
-
-            ByteBuffer compressedBuffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
+            // ByteBuffer compressedBuffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
             ByteBuffer uncompressedBuffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
 
             for (int i = 0; i < groupCount; i++) {
-                headerBuffer.position(0);
-                IOUtils.readFully(channel, headerBuffer);
-                headerBuffer.flip();
-
-                byte magic = headerBuffer.get();
+                byte magic = buffer.get();
                 if (magic != JAppResourceGroup.MAGIC_NUMBER) {
                     throw new IOException(String.format("Wrong resource magic: %02x", magic));
                 }
 
-                CompressionMethod compressionMethod = CompressionMethod.readFrom(headerBuffer);
+                CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);
 
-                short reserved = headerBuffer.getShort();
+                short reserved = buffer.getShort();
                 if (reserved != 0) {
                     throw new IOException("Reserved is not 0");
                 }
 
-                int uncompressedSize = headerBuffer.getInt();
-                int compressedSize = headerBuffer.getInt();
-                int resourcesCount = headerBuffer.getInt();
-                long checksum = headerBuffer.getLong();
-
-                assert !headerBuffer.hasRemaining();
+                int uncompressedSize = buffer.getInt();
+                int compressedSize = buffer.getInt();
+                int resourcesCount = buffer.getInt();
+                long checksum = buffer.getLong();
 
                 JAppResourceGroup group = new JAppResourceGroup();
 
-                if (compressedBuffer.capacity() >= compressedSize) {
-                    compressedBuffer.clear();
-                } else {
-                    int nextLen = Math.max(compressedSize, compressedBuffer.capacity() * 2);
-                    compressedBuffer = ByteBuffer.allocate(nextLen).order(ByteOrder.LITTLE_ENDIAN);
-                }
-                compressedBuffer.limit(compressedSize);
-                IOUtils.readFully(channel, compressedBuffer);
-                compressedBuffer.flip();
+                ByteBuffer compressedBuffer = ByteBufferUtils.slice(buffer, buffer.position(), compressedSize).order(ByteOrder.LITTLE_ENDIAN);
+                buffer.position(buffer.position() + compressedSize);
 
                 ByteBuffer uncompressed;
                 if (compressionMethod == CompressionMethod.NONE) {

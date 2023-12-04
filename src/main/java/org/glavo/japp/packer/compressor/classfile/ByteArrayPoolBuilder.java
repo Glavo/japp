@@ -22,11 +22,9 @@ import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.util.ZstdUtils;
 import org.glavo.japp.util.ByteBufferOutputStream;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.Channels;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -123,8 +121,6 @@ public final class ByteArrayPoolBuilder {
     public ByteArrayPool toPool() throws IOException {
         ByteBufferOutputStream output = new ByteBufferOutputStream();
         writeTo(output);
-        return ByteArrayPool.readFrom(Channels.newChannel(
-                        new ByteArrayInputStream(output.getByteBuffer().array(), 0, output.getTotalBytes())),
-                new ZstdFrameDecompressor());
+        return ByteArrayPool.readFrom(output.getByteBuffer().flip(), new ZstdFrameDecompressor());
     }
 }
