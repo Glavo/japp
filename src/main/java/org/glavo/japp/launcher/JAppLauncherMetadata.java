@@ -96,6 +96,7 @@ public final class JAppLauncherMetadata {
                 ByteBuffer metadataBuffer = ByteBuffer.allocate((int) metadataSize);
                 channel.position(baseOffset + launcherMetadataOffset);
                 IOUtils.readFully(channel, metadataBuffer);
+                metadataBuffer.flip();
 
                 group = JAppConfigGroup.readConfigGroup(metadataBuffer);
             }
