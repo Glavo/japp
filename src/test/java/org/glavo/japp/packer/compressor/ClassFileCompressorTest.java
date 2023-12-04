@@ -15,8 +15,10 @@
  */
 package org.glavo.japp.packer.compressor;
 
+import org.glavo.japp.boot.decompressor.DecompressContext;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
+import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
@@ -40,7 +42,20 @@ public class ClassFileCompressorTest {
 
             byte[] output = new byte[bytes.length];
             ClassFileDecompressor.decompress(
-                    poolBuilder.toPool(),
+                    new DecompressContext() {
+                        private final ByteArrayPool pool = poolBuilder.toPool();
+                        private final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+
+                        @Override
+                        public ByteArrayPool getPool() {
+                            return pool;
+                        }
+
+                        @Override
+                        public void decompressZstd(ByteBuffer input, ByteBuffer output) {
+                            decompressor.decompress(input, output);
+                        }
+                    },
                     result.getCompressed(),
                     output
             );
@@ -79,14 +94,24 @@ public class ClassFileCompressorTest {
                 allCompressed.put(entry.getKey(), result.getCompressed());
             }
 
-
-            ByteArrayPool pool = poolBuilder.toPool();
-
             Assertions.assertAll(entries.keySet().stream().map(key -> () -> {
                 byte[] expected = entries.get(key);
                 byte[] output = new byte[expected.length];
                 ClassFileDecompressor.decompress(
-                        pool,
+                        new DecompressContext() {
+                            private final ByteArrayPool pool = poolBuilder.toPool();
+                            private final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+
+                            @Override
+                            public ByteArrayPool getPool() {
+                                return pool;
+                            }
+
+                            @Override
+                            public void decompressZstd(ByteBuffer input, ByteBuffer output) {
+                                decompressor.decompress(input, output);
+                            }
+                        },
                         allCompressed.get(key),
                         output
                 );

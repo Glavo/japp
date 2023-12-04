@@ -16,6 +16,7 @@
 package org.glavo.japp.boot;
 
 import org.glavo.japp.CompressionMethod;
+import org.glavo.japp.boot.decompressor.DecompressContext;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
@@ -33,7 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
-public final class JAppReader implements Closeable {
+public final class JAppReader implements DecompressContext, Closeable {
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
     private static JAppReader reader;
@@ -93,8 +94,19 @@ public final class JAppReader implements Closeable {
         channel.close();
     }
 
+    @Override
     public ByteArrayPool getPool() {
         return pool;
+    }
+
+    @Override
+    public void decompressZstd(ByteBuffer input, ByteBuffer output) {
+        zstdLock.lock();
+        try {
+            decompressor.decompress(input, output);
+        } finally {
+            zstdLock.unlock();
+        }
     }
 
     public Map<String, JAppResourceGroup> getRoot(JAppResourceRoot root) {
@@ -117,16 +129,6 @@ public final class JAppReader implements Closeable {
         }
 
         return g.get(path);
-    }
-
-    public // For ClassFileDecompressor
-    void decompressZstd(ByteBuffer input, ByteBuffer output) {
-        zstdLock.lock();
-        try {
-            decompressor.decompress(input, output);
-        } finally {
-            zstdLock.unlock();
-        }
     }
 
     private ByteBuffer decompressResource(
