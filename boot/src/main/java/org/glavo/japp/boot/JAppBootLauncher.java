@@ -200,6 +200,20 @@ public final class JAppBootLauncher {
         metadataBuffer.flip();
         JAppBootMetadata metadata = JAppBootMetadata.readFrom(metadataBuffer, decompressor);
 
+        ByteBuffer mappedBuffer = null;
+        if (metadataOffset < 16 * 1024 * 1024) { // TODO: Configurable threshold
+            mappedBuffer = ByteBuffer.allocate((int) metadataOffset);
+            IOUtils.readFully(channel.position(baseOffset), mappedBuffer);
+            mappedBuffer.flip();
+        } else if (metadataOffset < Integer.MAX_VALUE) {
+            mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
+        }
+
+        if (mappedBuffer != null) {
+            channel.close();
+            channel = null;
+        }
+
         Map<String, JAppResourceGroup> modules = new HashMap<>();
         List<Path> externalModules = null;
 
@@ -266,20 +280,6 @@ public final class JAppBootLauncher {
                     throw new TODO();
                 }
             }
-        }
-
-        ByteBuffer mappedBuffer = null;
-        if (metadataOffset < 16 * 1024 * 1024) { // TODO: Configurable threshold
-            mappedBuffer = ByteBuffer.allocate((int) metadataOffset);
-            IOUtils.readFully(channel.position(baseOffset), mappedBuffer);
-            mappedBuffer.flip();
-        } else if (metadataOffset < Integer.MAX_VALUE) {
-            mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
-        }
-
-        if (mappedBuffer != null) {
-            channel.close();
-            channel = null;
         }
 
         JAppReader reader = new JAppReader(channel, baseOffset, mappedBuffer, metadata.getPool(), decompressor, modules, classPath);
