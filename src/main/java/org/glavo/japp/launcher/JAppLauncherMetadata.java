@@ -43,30 +43,26 @@ public final class JAppLauncherMetadata {
             ByteBuffer endBuffer = ByteBuffer.allocate(endBufferSize).order(ByteOrder.LITTLE_ENDIAN);
 
             channel.position(fileSize - endBufferSize);
-
             IOUtils.readFully(channel, endBuffer);
-
-            endBuffer.limit(endBufferSize).position(endBufferSize - FILE_END_SIZE);
+            endBuffer.position(endBufferSize - FILE_END_SIZE);
 
             int magicNumber = endBuffer.getInt();
-            if (magicNumber != 0x5050414a) {
-                throw new IOException("Invalid magic number: " + Long.toHexString(magicNumber));
-            }
-
             short majorVersion = endBuffer.getShort();
             short minorVersion = endBuffer.getShort();
-
-            if (majorVersion != MAJOR_VERSION || minorVersion != MINOR_VERSION) {
-                throw new IOException("Version number mismatch");
-            }
-
             long flags = endBuffer.getLong();
-
             long fileContentSize = endBuffer.getLong();
             long bootMetadataOffset = endBuffer.getLong();
             long launcherMetadataOffset = endBuffer.getLong();
 
-            assert endBuffer.remaining() == 24;
+            assert endBuffer.remaining() == 24; // reserved
+
+            if (magicNumber != 0x5050414a) {
+                throw new IOException("Invalid magic number: " + Long.toHexString(magicNumber));
+            }
+
+            if (majorVersion != MAJOR_VERSION || minorVersion != MINOR_VERSION) {
+                throw new IOException("Version number mismatch");
+            }
 
             if (flags != 0) {
                 throw new IOException("Unsupported flags: " + Long.toBinaryString(flags));
