@@ -15,7 +15,6 @@ package org.glavo.japp.util;
 
 import jdk.internal.misc.Unsafe;
 
-import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -49,23 +48,15 @@ public final class UnsafeUtil {
     }
 
     public static short getShort(Object o, long offset) {
-        short res = UNSAFE.getShort(o, offset);
-        if (IS_BIG_ENDIAN) {
-            res = Short.reverseBytes(res);
-        }
-        return res;
+        return UNSAFE.getShortUnaligned(o, offset, IS_BIG_ENDIAN);
     }
 
     public static void putShort(Object o, long offset, short x) {
-        UNSAFE.putShort(o, offset, IS_BIG_ENDIAN ? Short.reverseBytes(x) : x);
+        UNSAFE.putShortUnaligned(o, offset, x, IS_BIG_ENDIAN);
     }
 
     public static int getInt(Object o, long offset) {
-        int res = UNSAFE.getInt(o, offset);
-        if (IS_BIG_ENDIAN) {
-            res = Integer.reverseBytes(res);
-        }
-        return res;
+        return UNSAFE.getIntUnaligned(o, offset, IS_BIG_ENDIAN);
     }
 
     public static long getUnsignedInt(Object o, long offset) {
@@ -73,19 +64,15 @@ public final class UnsafeUtil {
     }
 
     public static void putInt(Object o, long offset, int x) {
-        UNSAFE.putInt(o, offset, IS_BIG_ENDIAN ? Integer.reverseBytes(x) : x);
+        UNSAFE.putIntUnaligned(o, offset, x, IS_BIG_ENDIAN);
     }
 
     public static long getLong(Object o, long offset) {
-        long res = UNSAFE.getLong(o, offset);
-        if (IS_BIG_ENDIAN) {
-            res = Long.reverseBytes(res);
-        }
-        return res;
+        return UNSAFE.getLongUnaligned(o, offset, IS_BIG_ENDIAN);
     }
 
     public static void putLong(Object o, long offset, long x) {
-        UNSAFE.putLong(o, offset, IS_BIG_ENDIAN ? Long.reverseBytes(x) : x);
+        UNSAFE.putLongUnaligned(o, offset, x, IS_BIG_ENDIAN);
     }
 
     public static void copyMemory(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes) {
