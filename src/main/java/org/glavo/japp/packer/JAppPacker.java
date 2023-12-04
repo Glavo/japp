@@ -26,6 +26,7 @@ import org.glavo.japp.JAppConfigGroup;
 import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.launcher.JAppLauncherMetadata;
+import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.packer.compressor.Compressor;
 import org.glavo.japp.packer.compressor.Compressors;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
@@ -42,7 +43,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.jar.Manifest;
 
-public final class JAppPacker {
+public final class JAppPacker implements CompressContext {
 
     private static final int MAGIC_NUMBER = 0x5050414a;
     private static final short MAJOR_VERSION = -1;
@@ -76,6 +77,7 @@ public final class JAppPacker {
         return output.getTotalBytes();
     }
 
+    @Override
     public ByteArrayPoolBuilder getPool() {
         return pool;
     }

@@ -17,7 +17,6 @@ package org.glavo.japp.packer.compressor;
 
 import org.glavo.japp.TODO;
 import org.glavo.japp.CompressionMethod;
-import org.glavo.japp.packer.JAppPacker;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -42,12 +41,12 @@ final class DefaultCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(JAppPacker packer, byte[] source) throws IOException {
-        return compress(packer, source, null);
+    public CompressResult compress(CompressContext context, byte[] source) throws IOException {
+        return compress(context, source, null);
     }
 
     @Override
-    public CompressResult compress(JAppPacker packer, byte[] source, String filePath) throws IOException {
+    public CompressResult compress(CompressContext context, byte[] source, String filePath) throws IOException {
         if (source.length <= 16) {
             return new CompressResult(source);
         }
@@ -69,17 +68,17 @@ final class DefaultCompressor implements Compressor {
                 break;
             case CLASSFILE:
                 try {
-                    result = Compressors.CLASSFILE.compress(packer, source);
+                    result = Compressors.CLASSFILE.compress(context, source);
                 } catch (Throwable e) {
                     // Malformed class file
 
                     // TODO: Test ClassFileCompressor
                     e.printStackTrace();
-                    result = Compressors.ZSTD.compress(packer, source);
+                    result = Compressors.ZSTD.compress(context, source);
                 }
                 break;
             case ZSTD:
-                result = Compressors.ZSTD.compress(packer, source);
+                result = Compressors.ZSTD.compress(context, source);
                 break;
             default:
                 throw new TODO("Method: " + method);

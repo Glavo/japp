@@ -17,7 +17,7 @@ package org.glavo.japp.packer.compressor.classfile;
 
 import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
-import org.glavo.japp.packer.JAppPacker;
+import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.util.CompressedNumber;
 import org.glavo.japp.packer.compressor.CompressResult;
 import org.glavo.japp.packer.compressor.Compressor;
@@ -36,7 +36,7 @@ public final class ClassFileCompressor implements Compressor {
     }
 
     @Override
-    public CompressResult compress(JAppPacker packer, byte[] source) throws IOException {
+    public CompressResult compress(CompressContext context, byte[] source) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(source);
 
         ClassFileReader reader = new ClassFileReader(buffer);
@@ -62,13 +62,13 @@ public final class ClassFileCompressor implements Compressor {
                 buffer.get(mutf8);
 
                 if (tag == CONSTANT_EXTERNAL_STRING_Class) {
-                    putConstantClassName(packer, mutf8, outputBuffer);
+                    putConstantClassName(context, mutf8, outputBuffer);
                 } else if (tag == CONSTANT_EXTERNAL_STRING_Descriptor) {
-                    putConstantDescriptor(packer, mutf8, outputBuffer);
+                    putConstantDescriptor(context, mutf8, outputBuffer);
                 } else if (tag == CONSTANT_EXTERNAL_STRING_Signature) {
-                    putConstantSignature(packer, mutf8, outputBuffer);
+                    putConstantSignature(context, mutf8, outputBuffer);
                 } else {
-                    putConstantUTF8(packer, mutf8, outputBuffer);
+                    putConstantUTF8(context, mutf8, outputBuffer);
                 }
             } else {
                 outputBuffer.put(tag);
@@ -93,12 +93,12 @@ public final class ClassFileCompressor implements Compressor {
         return new CompressResult(CompressionMethod.CLASSFILE, output, 0, outputBuffer.position());
     }
 
-    private static void putConstantUTF8(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+    private static void putConstantUTF8(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         outputBuffer.put(CONSTANT_EXTERNAL_STRING);
-        CompressedNumber.putInt(outputBuffer, packer.getPool().add(mutf8));
+        CompressedNumber.putInt(outputBuffer, context.getPool().add(mutf8));
     }
 
-    private static void writeClassName(JAppPacker packer, byte[] mutf8, int offset, int end, int lastSlash, ByteBuffer outputBuffer) {
+    private static void writeClassName(CompressContext context, byte[] mutf8, int offset, int end, int lastSlash, ByteBuffer outputBuffer) {
         byte[] packageBytes;
         byte[] classNameBytes;
 
@@ -110,11 +110,11 @@ public final class ClassFileCompressor implements Compressor {
             classNameBytes = Arrays.copyOfRange(mutf8, offset, end);
         }
 
-        CompressedNumber.putInt(outputBuffer, packer.getPool().add(packageBytes));
-        CompressedNumber.putInt(outputBuffer, packer.getPool().add(classNameBytes));
+        CompressedNumber.putInt(outputBuffer, context.getPool().add(packageBytes));
+        CompressedNumber.putInt(outputBuffer, context.getPool().add(classNameBytes));
     }
 
-    private static void putConstantDescriptor(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+    private static void putConstantDescriptor(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         int offset = 0;
         for (; offset < mutf8.length; offset++) {
             if (mutf8[offset] == 'L') {
@@ -123,7 +123,7 @@ public final class ClassFileCompressor implements Compressor {
         }
 
         if (offset == mutf8.length) {
-            putConstantUTF8(packer, mutf8, outputBuffer);
+            putConstantUTF8(context, mutf8, outputBuffer);
             return;
         }
 
@@ -152,19 +152,19 @@ public final class ClassFileCompressor implements Compressor {
                 }
 
                 descriptorBuffer.put(b);
-                writeClassName(packer, mutf8, offset + 1, semicolon, lastSlash, descriptorBuffer);
+                writeClassName(context, mutf8, offset + 1, semicolon, lastSlash, descriptorBuffer);
                 offset = semicolon;
             } else {
                 descriptorBuffer.put(b);
             }
         }
 
-        int index = packer.getPool().add(Arrays.copyOf(descriptorBuffer.array(), descriptorBuffer.position()));
+        int index = context.getPool().add(Arrays.copyOf(descriptorBuffer.array(), descriptorBuffer.position()));
         outputBuffer.put(CONSTANT_EXTERNAL_STRING_Descriptor);
         CompressedNumber.putInt(outputBuffer, index);
     }
 
-    private static void putConstantSignature(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+    private static void putConstantSignature(CompressContext packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         ByteBuffer signatureBuffer = ByteBuffer.allocate(mutf8.length * 2);
 
         for (int offset = 0; offset < mutf8.length; offset++) {
@@ -204,13 +204,13 @@ public final class ClassFileCompressor implements Compressor {
         CompressedNumber.putInt(outputBuffer, index);
     }
 
-    private static void putConstantClassName(JAppPacker packer, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
+    private static void putConstantClassName(CompressContext context, byte[] mutf8, ByteBuffer outputBuffer) throws IOException {
         if (mutf8.length == 0) {
             throw new IOException("Class name is empty");
         }
 
         if (mutf8[0] == '[') {
-            putConstantDescriptor(packer, mutf8, outputBuffer);
+            putConstantDescriptor(context, mutf8, outputBuffer);
             return;
         }
 
@@ -226,6 +226,6 @@ public final class ClassFileCompressor implements Compressor {
         }
 
         outputBuffer.put(CONSTANT_EXTERNAL_STRING_Class);
-        writeClassName(packer, mutf8, 0, mutf8.length, lastSlash, outputBuffer);
+        writeClassName(context, mutf8, 0, mutf8.length, lastSlash, outputBuffer);
     }
 }

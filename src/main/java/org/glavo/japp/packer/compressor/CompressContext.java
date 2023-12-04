@@ -15,14 +15,8 @@
  */
 package org.glavo.japp.packer.compressor;
 
-import java.io.IOException;
+import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 
-@FunctionalInterface
-public interface Compressor {
-
-    CompressResult compress(CompressContext context, byte[] source) throws IOException;
-
-    default CompressResult compress(CompressContext context, byte[] source, String filePath) throws IOException {
-        return compress(context, source);
-    }
+public interface CompressContext {
+    ByteArrayPoolBuilder getPool();
 }
