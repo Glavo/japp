@@ -16,6 +16,7 @@ package org.glavo.japp.boot.decompressor.zstd;
 import org.glavo.japp.util.UnsafeUtil;
 
 import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 
 import static java.lang.String.format;
@@ -23,8 +24,6 @@ import static java.util.Objects.requireNonNull;
 import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
 
 public final class ZstdUtils {
-    private static final ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
-
     public static int maxCompressedLength(int sourceLength) {
         int maxCompressedSize = sourceLength + (sourceLength >>> 8);
 
@@ -32,6 +31,20 @@ public final class ZstdUtils {
             maxCompressedSize += (128 * 1024 - sourceLength) >>> 11;
         }
         return maxCompressedSize;
+    }
+
+    private static final ThreadLocal<WeakReference<ZstdFrameDecompressor>> threadLocalDecompressor = new ThreadLocal<>();
+
+    private static ZstdFrameDecompressor decompressor() {
+        WeakReference<ZstdFrameDecompressor> decompressorReference = threadLocalDecompressor.get();
+        ZstdFrameDecompressor decompressor;
+        if (decompressorReference != null && (decompressor = decompressorReference.get()) != null) {
+            return decompressor;
+        }
+
+        decompressor = new ZstdFrameDecompressor();
+        threadLocalDecompressor.set(new WeakReference<>(decompressor));
+        return decompressor;
     }
 
     public static int decompress(ByteBuffer input, ByteBuffer output) throws MalformedInputException {
@@ -66,7 +79,7 @@ public final class ZstdUtils {
         outputLimit = outputBaseAddress + output.limit();
 
         input.position(input.limit());
-        int n = decompressor.decompress(inputBase, inputAddress, inputLimit, outputBase, outputAddress, outputLimit);
+        int n = decompressor().decompress(inputBase, inputAddress, inputLimit, outputBase, outputAddress, outputLimit);
         output.position(output.position() + n);
         return n;
     }
@@ -82,7 +95,7 @@ public final class ZstdUtils {
         long outputLimit = outputAddress + maxOutputLength;
 
         try {
-            return decompressor.decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
+            return decompressor().decompress(input, inputAddress, inputLimit, output, outputAddress, outputLimit);
         } finally {
             Reference.reachabilityFence(input);
             Reference.reachabilityFence(output);
