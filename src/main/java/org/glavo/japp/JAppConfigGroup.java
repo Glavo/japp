@@ -33,8 +33,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public final class JAppConfigGroup {
 
-    public static JAppConfigGroup readConfigGroup(byte[] array, int offset, int length) throws IOException {
-        return JAppConfigGroup.fromJson(new JSONObject(new String(array, offset, length, UTF_8)));
+    public static JAppConfigGroup readConfigGroup(ByteBuffer buffer) throws IOException {
+        return JAppConfigGroup.fromJson(new JSONObject(new String(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining(), UTF_8)));
     }
 
     public final List<JAppResourceGroupReference> modulePath = new ArrayList<>();
