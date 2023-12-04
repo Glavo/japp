@@ -122,7 +122,7 @@ public final class JAppReader implements Closeable {
 
         switch (method) {
             case CLASSFILE: {
-                ClassFileDecompressor.decompress(this, compressed, output);
+                ClassFileDecompressor.decompress(pool, compressed, output);
                 break;
             }
             case ZSTD: {

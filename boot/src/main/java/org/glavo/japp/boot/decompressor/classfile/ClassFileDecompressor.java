@@ -28,10 +28,9 @@ import java.nio.ByteOrder;
 import static org.glavo.japp.classfile.ClassFile.*;
 
 public final class ClassFileDecompressor {
-    public static void decompress(JAppReader reader, ByteBuffer compressed, byte[] output) throws IOException {
+    public static void decompress(ByteArrayPool pool, ByteBuffer compressed, byte[] output) throws IOException {
         compressed.order(ByteOrder.BIG_ENDIAN);
         ByteBuffer outputBuffer = ByteBuffer.wrap(output);
-        ByteArrayPool pool = reader.getPool();
 
         int magic = compressed.getInt();
         if (magic != ClassFile.MAGIC_NUMBER) {
