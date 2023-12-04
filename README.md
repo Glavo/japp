@@ -41,8 +41,14 @@ To try this project, you first need to build it:
 
 Then, package your program as a japp file:
 
+(For Linux/macOS)
 ```shell
-./bin/japp.sh create --module-path <your-app-module-path> --class-path <your-app-class-path> -o myapp.japp <main-class>
+./bin/japp.sh create -o myapp.japp --module-path <your-app-module-path> --class-path <your-app-class-path> <main-class>
+```
+
+(For Windows)
+```powershell
+.\bin\japp.ps1 create -o myapp.japp --module-path <your-app-module-path> --class-path <your-app-class-path> <main-class>
 ```
 
 Currently supported options:
