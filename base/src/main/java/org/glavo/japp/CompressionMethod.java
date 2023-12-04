@@ -35,7 +35,7 @@ public enum CompressionMethod {
             return METHODS[id];
         }
 
-        throw new IOException(String.format("Unknown compression method: %02x", Byte.toUnsignedInt(id)));
+        throw new IOException(String.format("Unknown compression method: 0x%02x", Byte.toUnsignedInt(id)));
     }
 
     public byte id() {

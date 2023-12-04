@@ -169,7 +169,7 @@ public final class JAppPacker {
     }
 
     private void writeLauncherMetadata() throws IOException {
-        output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
+        current.writeTo(output);
     }
 
     private void writeFileEnd(long bootMetadataOffset, long launcherMetadataOffset) throws IOException {
@@ -291,7 +291,7 @@ public final class JAppPacker {
                 case "--group": {
                     JAppConfigGroup group = new JAppConfigGroup();
                     packer.stack.push(group);
-                    packer.current.subConfigs.add(group);
+                    packer.current.subGroups.add(group);
                     packer.current = group;
                     break;
                 }

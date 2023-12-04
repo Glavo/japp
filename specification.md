@@ -35,6 +35,7 @@ BootMetadata {
 ```
 
 [ByteArrayPool]():
+
 ```
 ByteArrayPool {
     u1 magic_number; // 0xf0
@@ -84,7 +85,53 @@ Resource {
 
 ## launcher
 
-TODO
+[LauncherMetadata](src/main/java/org/glavo/japp/launcher/JAppLauncherMetadata.java):
+
+```
+LauncherMetadata {
+    ConfigGroup root_group;
+}
+```
+
+[ConfigGroup](src/main/java/org/glavo/japp/JAppConfigGroup.java):
+
+```
+ConfigGroup {
+    u4 magic_number; // "GRP\0"
+    ConfigGroupFieldList fields;
+}
+```
+
+[ResourceGroupReference](src/main/java/org/glavo/japp/JAppResourceGroupReference.java):
+
+```
+ResourceGroupReference {
+    u1 id;
+    String name;
+    union {
+        LocalResourceGroupReference local_reference;
+        MavenResourceGroupReference maven_reference;
+    } reference;
+}
+
+LocalResourceGroupReference {
+    
+    u4 index;
+    u4 multi_count;
+    {
+        u4 multi_version;
+        u4 multi_index;  
+    }[multi_count] multi_index_pairs;
+}
+
+MavenResourceGroupReference {
+    String repository;
+    String group;
+    String artifact;
+    String version;
+    String classifier;
+}
+```
 
 ## share
 

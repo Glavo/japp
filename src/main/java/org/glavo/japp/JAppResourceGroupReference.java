@@ -15,46 +15,66 @@
  */
 package org.glavo.japp;
 
-import org.glavo.japp.json.JSONObject;
+import org.glavo.japp.util.ByteBufferOutputStream;
+import org.glavo.japp.util.ByteBufferUtils;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.TreeMap;
 
 public abstract class JAppResourceGroupReference {
 
+    public static final byte MAGIC_NUMBER = 0x01;
+
     protected JAppResourceGroupReference(String name) {
         this.name = name;
     }
 
-    public static JAppResourceGroupReference fromJson(JSONObject obj) {
-        String type = obj.getString("Type");
-        String name = obj.optString("Name", null);
-        if (type.equals(Local.class.getSimpleName())) {
-            int index = obj.getInt("Index");
-            JSONObject multiRelease = obj.optJSONObject("Multi-Release");
-            TreeMap<Integer, Integer> multiReleaseIndexes;
+    public static JAppResourceGroupReference readFrom(ByteBuffer buffer) throws IOException {
+        byte magic = buffer.get();
+        if (magic != MAGIC_NUMBER) {
+            throw new IOException(String.format("Wrong reference magic: 0x%02x", Byte.toUnsignedInt(magic)));
+        }
 
-            if (multiRelease != null) {
-                multiReleaseIndexes = new TreeMap<>();
-                for (String key : multiRelease.keySet()) {
-                    multiReleaseIndexes.put(Integer.parseInt(key), multiRelease.getInt(key));
+        byte id = buffer.get();
+        String name = ByteBufferUtils.readString(buffer);
+        switch (id) {
+            case Local.ID: {
+                int index = buffer.getInt();
+                int multiCount = buffer.getInt();
+                TreeMap<Integer, Integer> multiReleaseIndexes;
+                if (multiCount == 0) {
+                    multiReleaseIndexes = null;
+                } else {
+                    multiReleaseIndexes = new TreeMap<>();
+                    for (int i = 0; i < multiCount; i++) {
+                        int multiVersion = buffer.getInt();
+                        int multiIndex = buffer.getInt();
+
+                        if (multiVersion < 9) {
+                            throw new IOException("Version should not less than 9");
+                        }
+
+                        if (multiReleaseIndexes.put(multiVersion, multiIndex) != null) {
+                            throw new IOException("Duplicate version: " + multiVersion);
+                        }
+                    }
                 }
 
-            } else {
-                multiReleaseIndexes = null;
+                return new Local(name, index, multiReleaseIndexes);
             }
+            case Maven.ID: {
+                String repository = ByteBufferUtils.readStringOrNull(buffer);
+                String group = ByteBufferUtils.readStringOrNull(buffer);
+                String artifact = ByteBufferUtils.readStringOrNull(buffer);
+                String version = ByteBufferUtils.readStringOrNull(buffer);
+                String classifier = ByteBufferUtils.readStringOrNull(buffer);
 
-            return new Local(name, index, multiReleaseIndexes);
-        } else if (type.equals(Maven.class.getSimpleName())) {
-            String repository = obj.optString("Repository", null);
-            String group = obj.getString("Group");
-            String artifact = obj.getString("Artifact");
-            String version = obj.getString("Version");
-            String classifier = obj.optString("Classifier", null);
-
-            return new Maven(name, repository, group, artifact, version, classifier);
-        } else {
-            throw new AssertionError("Type: " + type);
+                return new Maven(name, repository, group, artifact, version, classifier);
+            }
+            default:
+                throw new IOException(String.format("Unknown reference id: 0x%02x", Byte.toUnsignedInt(id)));
         }
     }
 
@@ -64,39 +84,11 @@ public abstract class JAppResourceGroupReference {
         return name;
     }
 
-    public JSONObject toJson() {
-        JSONObject res = new JSONObject();
-        res.put("Type", getClass().getSimpleName());
-        if (this instanceof Local) {
-            Local local = (Local) this;
-            res.putOpt("Name", local.name);
-            res.put("Index", local.index);
-
-            if (local.getMultiReleaseIndexes() != null) {
-                JSONObject multiRelease = new JSONObject();
-
-                for (Map.Entry<Integer, Integer> entry : local.getMultiReleaseIndexes().entrySet()) {
-                    multiRelease.put(String.valueOf(entry.getKey()), entry.getValue());
-                }
-
-                res.put("Multi-Release", multiRelease);
-            }
-
-        } else if (this instanceof Maven) {
-            Maven maven = (Maven) this;
-            res.putOpt("Repository", maven.getRepository());
-            res.put("Group", maven.getGroup());
-            res.put("Artifact", maven.getArtifact());
-            res.put("Version", maven.getVersion());
-            res.putOpt("Classifier", maven.getClassifier());
-        } else {
-            throw new AssertionError("Type: " + this.getClass());
-        }
-
-        return res;
-    }
+    public abstract void writeTo(ByteBufferOutputStream out) throws IOException;
 
     public static final class Local extends JAppResourceGroupReference {
+        public static final byte ID = 0;
+
         private final int index;
         private final TreeMap<Integer, Integer> multiReleaseIndexes;
 
@@ -119,6 +111,24 @@ public abstract class JAppResourceGroupReference {
         }
 
         @Override
+        public void writeTo(ByteBufferOutputStream out) {
+            out.writeByte(MAGIC_NUMBER);
+            out.writeByte(ID);
+            out.writeString(name);
+            out.writeInt(index);
+
+            if (multiReleaseIndexes == null) {
+                out.writeInt(0);
+            } else {
+                out.writeInt(multiReleaseIndexes.size());
+                for (Map.Entry<Integer, Integer> entry : multiReleaseIndexes.entrySet()) {
+                    out.writeInt(entry.getKey());
+                    out.writeInt(entry.getValue());
+                }
+            }
+        }
+
+        @Override
         public String toString() {
             if (multiReleaseIndexes == null) {
                 return "Local[index=" + index + ']';
@@ -129,6 +139,8 @@ public abstract class JAppResourceGroupReference {
     }
 
     public static final class Maven extends JAppResourceGroupReference {
+        public static final byte ID = 1;
+
         private final String repository;
         private final String group;
         private final String artifact;
@@ -162,6 +174,18 @@ public abstract class JAppResourceGroupReference {
 
         public String getClassifier() {
             return classifier;
+        }
+
+        @Override
+        public void writeTo(ByteBufferOutputStream out) {
+            out.writeByte(MAGIC_NUMBER);
+            out.writeByte(ID);
+            out.writeString(name);
+            out.writeString(repository);
+            out.writeString(group);
+            out.writeString(artifact);
+            out.writeString(version);
+            out.writeString(classifier);
         }
 
         @Override

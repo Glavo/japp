@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public final class ByteBufferOutputStream extends OutputStream {
@@ -112,6 +113,16 @@ public final class ByteBufferOutputStream extends OutputStream {
     public void writeBytes(byte[] array, int offset, int len) {
         prepare(len);
         buffer.put(array, offset, len);
+    }
+
+    public void writeString(String str) {
+        if (str != null) {
+            byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+            writeInt(bytes.length);
+            writeBytes(bytes);
+        } else {
+            writeInt(0);
+        }
     }
 
     public void writeTo(OutputStream out) throws IOException {

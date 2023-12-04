@@ -16,6 +16,8 @@
 package org.glavo.japp.util;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 public final class ByteBufferUtils {
 
@@ -25,9 +27,34 @@ public final class ByteBufferUtils {
     public static ByteBuffer slice(ByteBuffer buffer, int index, int length) {
         if (release >= 13) {
             //noinspection Since15
-            return buffer.slice(index,length);
+            return buffer.slice(index, length);
         } else {
             return buffer.duplicate().limit(index + length).position(index).slice();
+        }
+    }
+
+    public static String readString(ByteBuffer buffer) {
+        int length = buffer.getInt();
+        byte[] array = new byte[length];
+        buffer.get(array);
+        return new String(array, StandardCharsets.UTF_8);
+    }
+
+    public static String readStringOrNull(ByteBuffer buffer) {
+        int length = buffer.getInt();
+        if (length == 0) {
+            return null;
+        }
+
+        byte[] array = new byte[length];
+        buffer.get(array);
+        return new String(array, StandardCharsets.UTF_8);
+    }
+
+    public static void readStringList(ByteBuffer buffer, List<? super String> out) {
+        int count = buffer.getInt();
+        for (int i = 0; i < count; i++) {
+            out.add(readString(buffer));
         }
     }
 

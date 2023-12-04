@@ -83,7 +83,7 @@ public final class JAppLauncherMetadata {
             if (metadataSize < endBufferSize - FILE_END_SIZE) {
                 int endBufferPosition = (int) (endBufferSize - metadataSize - FILE_END_SIZE);
                 endBuffer.position(endBufferPosition).limit(endBufferPosition + (int) metadataSize);
-                group = JAppConfigGroup.readConfigGroup(endBuffer);
+                group = JAppConfigGroup.readFrom(endBuffer);
             } else {
                 if (metadataSize > (1 << 30)) {
                     throw new IOException("Metadata is too large");
@@ -94,7 +94,7 @@ public final class JAppLauncherMetadata {
                 IOUtils.readFully(channel, metadataBuffer);
                 metadataBuffer.flip();
 
-                group = JAppConfigGroup.readConfigGroup(metadataBuffer);
+                group = JAppConfigGroup.readFrom(metadataBuffer);
             }
 
             return new JAppLauncherMetadata(baseOffset, bootMetadataOffset, group);

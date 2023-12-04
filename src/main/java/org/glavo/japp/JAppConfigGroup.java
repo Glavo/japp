@@ -18,23 +18,124 @@ package org.glavo.japp;
 import org.glavo.japp.annotation.Visibility;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.platform.JAppRuntimeContext;
-import org.glavo.japp.json.JSONArray;
-import org.glavo.japp.json.JSONObject;
-import org.glavo.japp.util.IOUtils;
+import org.glavo.japp.util.ByteBufferOutputStream;
+import org.glavo.japp.util.ByteBufferUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.channels.FileChannel;
-import java.nio.file.Path;
-import java.util.*;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class JAppConfigGroup {
 
-    public static JAppConfigGroup readConfigGroup(ByteBuffer buffer) throws IOException {
-        return JAppConfigGroup.fromJson(new JSONObject(new String(buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining(), UTF_8)));
+    public enum Field {
+        END,
+        CONDITION,
+        MAIN_CLASS,
+        MAIN_MODULE,
+        MODULE_PATH,
+        CLASS_PATH,
+        JVM_PROPERTIES,
+        ADD_READS,
+        ADD_EXPORTS,
+        ADD_OPENS,
+        ENABLE_NATIVE_ACCESS,
+        SUB_GROUPS;
+
+        private static final Field[] VALUES = values();
+
+        public static Field readFrom(ByteBuffer buffer) throws IOException {
+            byte id = buffer.get();
+            if (id >= 0 && id < VALUES.length) {
+                return VALUES[id];
+            }
+            throw new IOException(String.format("Unknown field: 0x%02x", Byte.toUnsignedInt(id)));
+        }
+
+        public byte id() {
+            return (byte) ordinal();
+        }
+    }
+
+    public static final int MAGIC_NUMBER = 0x00505247;
+
+    public static JAppConfigGroup readFrom(ByteBuffer buffer) throws IOException {
+        JAppConfigGroup group = new JAppConfigGroup();
+
+        int magic = buffer.getInt();
+        if (magic != MAGIC_NUMBER) {
+            throw new IOException(String.format("Wrong group magic: 0x%02x", magic));
+        }
+
+        Field field;
+        while ((field = Field.readFrom(buffer)) != Field.END) {
+            switch (field) {
+                case CONDITION: {
+                    if (group.condition != null) {
+                        throw new IOException();
+                    }
+                    group.condition = ByteBufferUtils.readString(buffer);
+                    break;
+                }
+                case MAIN_CLASS: {
+                    if (group.mainClass != null) {
+                        throw new IOException();
+                    }
+                    group.mainClass = ByteBufferUtils.readString(buffer);
+                    break;
+                }
+                case MAIN_MODULE: {
+                    if (group.mainModule != null) {
+                        throw new IOException();
+                    }
+                    group.mainModule = ByteBufferUtils.readString(buffer);
+                    break;
+                }
+                case JVM_PROPERTIES:
+                case ADD_READS:
+                case ADD_EXPORTS:
+                case ADD_OPENS:
+                case ENABLE_NATIVE_ACCESS: {
+                    List<String> list;
+                    if (field == Field.JVM_PROPERTIES) {
+                        list = group.jvmProperties;
+                    } else if (field == Field.ADD_READS) {
+                        list = group.addReads;
+                    } else if (field == Field.ADD_EXPORTS) {
+                        list = group.addExports;
+                    } else if (field == Field.ADD_OPENS) {
+                        list = group.addOpens;
+                    } else if (field == Field.ENABLE_NATIVE_ACCESS) {
+                        list = group.enableNativeAccess;
+                    } else {
+                        throw new AssertionError("Field: " + field);
+                    }
+                    ByteBufferUtils.readStringList(buffer, list);
+                    break;
+                }
+                case CLASS_PATH:
+                case MODULE_PATH: {
+                    List<JAppResourceGroupReference> list = field == Field.MODULE_PATH ? group.modulePath : group.classPath;
+
+                    int count = buffer.getInt();
+                    for (int i = 0; i < count; i++) {
+                        list.add(JAppResourceGroupReference.readFrom(buffer));
+                    }
+                    break;
+                }
+                case SUB_GROUPS: {
+                    int count = buffer.getInt();
+                    for (int i = 0; i < count; i++) {
+                        group.subGroups.add(readFrom(buffer));
+                    }
+                    break;
+                }
+                default:
+                    throw new AssertionError("Field: " + field);
+            }
+        }
+
+        return group;
     }
 
     public final List<JAppResourceGroupReference> modulePath = new ArrayList<>();
@@ -48,7 +149,7 @@ public final class JAppConfigGroup {
 
     public String condition;
 
-    public final List<JAppConfigGroup> subConfigs = new ArrayList<>();
+    public final List<JAppConfigGroup> subGroups = new ArrayList<>();
 
     public String mainClass;
     public String mainModule;
@@ -89,101 +190,64 @@ public final class JAppConfigGroup {
         return classPath;
     }
 
-    private static void readJsonArray(List<String> list, JSONObject obj, String key) {
-        JSONArray arr = obj.optJSONArray(key);
-        if (arr == null) {
-            return;
-        }
-
-        for (Object o : arr) {
-            list.add((String) o);
-        }
-    }
-
-    private void readReferences(boolean isModulePath, JSONArray array) throws IOException {
-        List<JAppResourceGroupReference> list = isModulePath ? this.modulePath : this.classPath;
-
-        if (array != null) {
-            for (Object jsonItem : array) {
-                list.add(JAppResourceGroupReference.fromJson((JSONObject) jsonItem));
-            }
-        }
-    }
-
-    public static JAppConfigGroup fromJson(JSONObject obj) throws IOException {
-        JAppConfigGroup config = new JAppConfigGroup();
-
-        config.readReferences(false, obj.optJSONArray("Class-Path"));
-        config.readReferences(true, obj.optJSONArray("Module-Path"));
-
-        readJsonArray(config.jvmProperties, obj, "Properties");
-        readJsonArray(config.addReads, obj, "Add-Reads");
-        readJsonArray(config.addExports, obj, "Add-Exports");
-        readJsonArray(config.addOpens, obj, "Add-Opens");
-        readJsonArray(config.enableNativeAccess, obj, "Enable-Native-Access");
-
-        config.condition = obj.optString("Condition", null);
-        config.mainClass = obj.optString("Main-Class", null);
-        config.mainModule = obj.optString("Main-Module", null);
-
-        JSONArray subGroups = obj.optJSONArray("Groups");
-        if (subGroups != null) {
-            for (Object group : subGroups) {
-                config.subConfigs.add(fromJson((JSONObject) group));
-            }
-        }
-
-        return config;
-    }
-
-    public JSONObject toJson() {
-        JSONObject res = new JSONObject();
-
-        JSONArray modulePath = new JSONArray();
-        JSONArray classPath = new JSONArray();
-
-        for (JAppResourceGroupReference reference : this.modulePath) {
-            modulePath.put(reference.toJson());
-        }
-
-        for (JAppResourceGroupReference reference : this.classPath) {
-            classPath.put(reference.toJson());
-        }
-
-        res.put("Module-Path", modulePath);
-        res.put("Class-Path", classPath);
-
-        putJsonArray(res, "Properties", jvmProperties);
-        putJsonArray(res, "Add-Reads", addReads);
-        putJsonArray(res, "Add-Exports", addExports);
-        putJsonArray(res, "Add-Opens", addOpens);
-        putJsonArray(res, "Enable-Native-Access", enableNativeAccess);
-
-        res.putOpt("Condition", condition);
-
-        res.putOpt("Main-Class", mainClass);
-        res.putOpt("Main-Module", mainModule);
-
-        if (!subConfigs.isEmpty()) {
-            JSONArray arr = new JSONArray();
-            for (JAppConfigGroup config : subConfigs) {
-                arr.put(config.toJson());
-            }
-            res.put("Groups", arr);
-        }
-
-        return res;
-    }
-
-    private static void putJsonArray(JSONObject obj, String key, List<String> list) {
+    private static void writeReferencesField(ByteBufferOutputStream out, Field field, List<JAppResourceGroupReference> list) throws IOException {
         if (list.isEmpty()) {
             return;
         }
-        JSONArray arr = new JSONArray();
-        for (String s : list) {
-            arr.put(s);
+
+        out.writeByte(field.id());
+        out.writeInt(list.size());
+        for (JAppResourceGroupReference reference : list) {
+            reference.writeTo(out);
         }
-        obj.put(key, arr);
+    }
+
+    private static void writeStringField(ByteBufferOutputStream out, Field field, String string) throws IOException {
+        if (string == null) {
+            return;
+        }
+
+        out.writeByte(field.id());
+        out.writeString(string);
+    }
+
+    private static void writeStringListField(ByteBufferOutputStream out, Field field, List<String> list) throws IOException {
+        if (list.isEmpty()) {
+            return;
+        }
+
+        out.writeByte(field.id());
+        out.writeInt(list.size());
+        for (String string : list) {
+            out.writeString(string);
+        }
+    }
+
+    public void writeTo(ByteBufferOutputStream out) throws IOException {
+        out.writeInt(MAGIC_NUMBER);
+
+        writeReferencesField(out, Field.MODULE_PATH, modulePath);
+        writeReferencesField(out, Field.CLASS_PATH, classPath);
+
+        writeStringField(out, Field.CONDITION, condition);
+        writeStringField(out, Field.MAIN_CLASS, mainClass);
+        writeStringField(out, Field.MAIN_MODULE, mainModule);
+
+        writeStringListField(out, Field.JVM_PROPERTIES, jvmProperties);
+        writeStringListField(out, Field.ADD_READS, addReads);
+        writeStringListField(out, Field.ADD_EXPORTS, addExports);
+        writeStringListField(out, Field.ADD_OPENS, addOpens);
+        writeStringListField(out, Field.ENABLE_NATIVE_ACCESS, enableNativeAccess);
+
+        if (!subGroups.isEmpty()) {
+            out.writeByte(Field.SUB_GROUPS.id());
+            out.writeInt(subGroups.size());
+            for (JAppConfigGroup subGroup : subGroups) {
+                subGroup.writeTo(out);
+            }
+        }
+
+        out.writeByte(Field.END.id());
     }
 
     @Visibility(Visibility.Context.LAUNCHER)
@@ -225,7 +289,7 @@ public final class JAppConfigGroup {
                 mainClass = source.mainClass;
             }
 
-            for (JAppConfigGroup subConfig : source.subConfigs) {
+            for (JAppConfigGroup subConfig : source.subGroups) {
                 resolve(context, subConfig);
             }
         }
@@ -233,13 +297,9 @@ public final class JAppConfigGroup {
 
     @Visibility(Visibility.Context.LAUNCHER)
     public void resolve(JAppRuntimeContext context) {
-        for (JAppConfigGroup group : subConfigs) {
+        for (JAppConfigGroup group : subGroups) {
             resolve(context, group);
         }
     }
 
-    @Override
-    public String toString() {
-        return this.getClass().getName() + toJson();
-    }
 }
