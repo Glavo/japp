@@ -18,7 +18,7 @@ package org.glavo.japp.boot;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
+import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.util.ByteBufferInputStream;
 import org.glavo.japp.util.ByteBufferUtils;
 import org.glavo.japp.util.IOUtils;
@@ -53,7 +53,8 @@ public final class JAppReader implements Closeable {
         return reader;
     }
 
-    private final ReentrantLock lock = new ReentrantLock();
+    private final ReentrantLock fileLock = new ReentrantLock();
+    private final ReentrantLock zstdLock = new ReentrantLock();
 
     private final FileChannel channel;
     private final long baseOffset;
@@ -65,15 +66,19 @@ public final class JAppReader implements Closeable {
     private final Map<String, JAppResourceGroup> resources;
 
     private final ByteArrayPool pool;
+    private final ZstdFrameDecompressor decompressor;
 
     public JAppReader(FileChannel channel, long baseOffset,
                       ByteBuffer mappedBuffer,
                       ByteArrayPool pool,
-                      Map<String, JAppResourceGroup> modules, Map<String, JAppResourceGroup> classpath) throws IOException {
+                      ZstdFrameDecompressor decompressor,
+                      Map<String, JAppResourceGroup> modules,
+                      Map<String, JAppResourceGroup> classpath) throws IOException {
         this.channel = channel;
         this.baseOffset = baseOffset;
         this.mappedBuffer = mappedBuffer;
         this.pool = pool;
+        this.decompressor = decompressor;
         this.modules = modules;
         this.classpath = classpath;
         this.resources = new LinkedHashMap<>();
@@ -114,6 +119,16 @@ public final class JAppReader implements Closeable {
         return g.get(path);
     }
 
+    public // For ClassFileDecompressor
+    void decompressZstd(ByteBuffer input, ByteBuffer output) {
+        zstdLock.lock();
+        try {
+            decompressor.decompress(input, output);
+        } finally {
+            zstdLock.unlock();
+        }
+    }
+
     private void decompressResource(
             CompressionMethod method,
             ByteBuffer compressed,
@@ -122,11 +137,11 @@ public final class JAppReader implements Closeable {
 
         switch (method) {
             case CLASSFILE: {
-                ClassFileDecompressor.decompress(pool, compressed, output);
+                ClassFileDecompressor.decompress(this, compressed, output);
                 break;
             }
             case ZSTD: {
-                ZstdUtils.decompressor().decompress(compressed, ByteBuffer.wrap(output, 0, size));
+                decompressZstd(compressed, ByteBuffer.wrap(output, 0, size));
                 break;
             }
             default: {
@@ -159,12 +174,12 @@ public final class JAppReader implements Closeable {
         } else {
             compressed = ByteBuffer.allocate(compressedSize);
 
-            lock.lock();
+            fileLock.lock();
             try {
                 IOUtils.readFully(channel.position(offset + baseOffset), compressed);
                 compressed.flip();
             } finally {
-                lock.unlock();
+                fileLock.unlock();
             }
         }
 

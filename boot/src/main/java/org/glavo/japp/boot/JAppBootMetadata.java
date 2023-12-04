@@ -18,7 +18,6 @@ package org.glavo.japp.boot;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.util.IOUtils;
 import org.glavo.japp.util.XxHash64;
 
@@ -32,7 +31,7 @@ import java.util.List;
 public final class JAppBootMetadata {
     public static final int MAGIC_NUMBER = 0x544f4f42;
 
-    public static JAppBootMetadata readFrom(SeekableByteChannel channel) throws IOException {
+    public static JAppBootMetadata readFrom(SeekableByteChannel channel, ZstdFrameDecompressor decompressor) throws IOException {
         ByteBuffer headerBuffer = ByteBuffer.allocate(JAppResourceGroup.HEADER_LENGTH).order(ByteOrder.LITTLE_ENDIAN);
         headerBuffer.limit(8);
         IOUtils.readFully(channel, headerBuffer);
@@ -45,7 +44,6 @@ public final class JAppBootMetadata {
 
         int groupCount = headerBuffer.getInt();
 
-        ZstdFrameDecompressor decompressor = ZstdUtils.decompressor();
         ByteArrayPool pool = ByteArrayPool.readFrom(channel, decompressor);
 
         JAppResourceGroup[] groups = new JAppResourceGroup[groupCount];

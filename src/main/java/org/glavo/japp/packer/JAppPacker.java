@@ -21,7 +21,7 @@ import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceField;
 import org.glavo.japp.boot.JAppResourceGroup;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
+import org.glavo.japp.util.ZstdUtils;
 import org.glavo.japp.JAppConfigGroup;
 import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.condition.ConditionParser;

@@ -17,7 +17,7 @@ package org.glavo.japp.packer.compressor;
 
 import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
+import org.glavo.japp.util.ZstdUtils;
 import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
 
 public final class Compressors {

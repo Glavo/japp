@@ -17,7 +17,6 @@ package org.glavo.japp.boot.decompressor.classfile;
 
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.JAppReader;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
 import org.glavo.japp.classfile.ClassFile;
 import org.glavo.japp.util.CompressedNumber;
 
@@ -28,9 +27,10 @@ import java.nio.ByteOrder;
 import static org.glavo.japp.classfile.ClassFile.*;
 
 public final class ClassFileDecompressor {
-    public static void decompress(ByteArrayPool pool, ByteBuffer compressed, byte[] output) throws IOException {
+    public static void decompress(JAppReader reader, ByteBuffer compressed, byte[] output) throws IOException {
         compressed.order(ByteOrder.BIG_ENDIAN);
         ByteBuffer outputBuffer = ByteBuffer.wrap(output);
+        ByteArrayPool pool = reader.getPool();
 
         int magic = compressed.getInt();
         if (magic != ClassFile.MAGIC_NUMBER) {
@@ -166,7 +166,7 @@ public final class ClassFileDecompressor {
 
             outputBuffer.put(compressed);
         } else if (compressionMethod == CompressionMethod.ZSTD) {
-            ZstdUtils.decompressor().decompress(compressed, outputBuffer);
+            reader.decompressZstd(compressed, outputBuffer);
             if (compressed.hasRemaining() || outputBuffer.hasRemaining()) {
                 throw new IOException();
             }

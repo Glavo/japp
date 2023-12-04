@@ -19,7 +19,7 @@ import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
-import org.glavo.japp.boot.decompressor.zstd.ZstdUtils;
+import org.glavo.japp.util.ZstdUtils;
 import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.ByteArrayInputStream;

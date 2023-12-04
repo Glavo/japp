@@ -19,6 +19,7 @@ import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.URLClassPath;
 import jdk.internal.module.Modules;
 import org.glavo.japp.TODO;
+import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
 import org.glavo.japp.boot.module.JAppModuleFinder;
 import org.glavo.japp.util.IOUtils;
 
@@ -189,9 +190,11 @@ public final class JAppBootLauncher {
             throw new IllegalStateException("No main class specified");
         }
 
+        ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+
         FileChannel channel = FileChannel.open(Paths.get(file));
         channel.position(baseOffset + metadataOffset);
-        JAppBootMetadata metadata = JAppBootMetadata.readFrom(channel);
+        JAppBootMetadata metadata = JAppBootMetadata.readFrom(channel, decompressor);
 
         Map<String, JAppResourceGroup> modules = new HashMap<>();
         List<Path> externalModules = null;
@@ -266,7 +269,7 @@ public final class JAppBootLauncher {
             mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
         }
 
-        JAppReader reader = new JAppReader(channel, baseOffset, mappedBuffer, metadata.getPool(), modules, classPath);
+        JAppReader reader = new JAppReader(channel, baseOffset, mappedBuffer, metadata.getPool(), decompressor, modules, classPath);
         JAppReader.initSystemReader(reader);
 
         ModuleLayer layer;
