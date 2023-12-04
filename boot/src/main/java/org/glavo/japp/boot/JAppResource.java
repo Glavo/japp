@@ -168,7 +168,7 @@ public final class JAppResource {
     @Override
     public String toString() {
         return String.format(
-                "JAppResource{name=%s, offset=%d, size=%d, method=%s, compressedSize=%d, creationTime=%d, lastModifiedTime=%d, lastAccessTime=%d, needCheck=%s, checksum=%d}",
+                "JAppResource[name=%s, offset=%d, size=%d, method=%s, compressedSize=%d, creationTime=%d, lastModifiedTime=%d, lastAccessTime=%d, needCheck=%s, checksum=%d]",
                 name, offset, size, method, compressedSize, creationTime, lastModifiedTime, lastAccessTime, needCheck, checksum);
     }
 }

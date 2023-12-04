@@ -173,7 +173,14 @@ public final class JAppReader implements Closeable {
             uncompressed = compressed;
         } else {
             uncompressed = ByteBuffer.allocate(size);
-            decompressResource(method, compressed, uncompressed.array());
+
+            try {
+                decompressResource(method, compressed, uncompressed.array());
+            } catch (Throwable e) {
+                // TODO: For DEBUG
+                System.err.println("Failed to decompress " + resource);
+                e.printStackTrace();
+            }
         }
 
         if (resource.needCheck) {
