@@ -17,6 +17,7 @@ package org.glavo.japp.packer.compressor;
 
 import org.glavo.japp.CompressionMethod;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public final class CompressResult {
@@ -43,6 +44,10 @@ public final class CompressResult {
 
     public CompressionMethod getMethod() {
         return method;
+    }
+
+    public ByteBuffer getCompressed() {
+        return ByteBuffer.wrap(compressedData, offset, length);
     }
 
     public byte[] getCompressedData() {
