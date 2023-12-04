@@ -129,11 +129,13 @@ public final class JAppReader implements Closeable {
         }
     }
 
-    private void decompressResource(
+    private ByteBuffer decompressResource(
             CompressionMethod method,
             ByteBuffer compressed,
-            byte[] output) throws IOException {
-        int size = output.length;
+            int size) throws IOException {
+
+        byte[] output = new byte[size];
+        ByteBuffer outputBuffer = ByteBuffer.wrap(output);
 
         switch (method) {
             case CLASSFILE: {
@@ -141,13 +143,16 @@ public final class JAppReader implements Closeable {
                 break;
             }
             case ZSTD: {
-                decompressZstd(compressed, ByteBuffer.wrap(output, 0, size));
+                decompressZstd(compressed, outputBuffer);
+                outputBuffer.flip();
                 break;
             }
             default: {
                 throw new IOException("Unsupported compression method: " + method);
             }
         }
+
+        return outputBuffer;
     }
 
     private int castArrayLength(long value) {
@@ -183,20 +188,7 @@ public final class JAppReader implements Closeable {
             }
         }
 
-        ByteBuffer uncompressed;
-        if (method == CompressionMethod.NONE) {
-            uncompressed = compressed;
-        } else {
-            uncompressed = ByteBuffer.allocate(size);
-
-            try {
-                decompressResource(method, compressed, uncompressed.array());
-            } catch (Throwable e) {
-                // TODO: For DEBUG
-                System.err.println("Failed to decompress " + resource);
-                e.printStackTrace();
-            }
-        }
+        ByteBuffer uncompressed = method == CompressionMethod.NONE ? compressed : decompressResource(method, compressed, size);
 
         if (resource.needCheck) {
             long checksum = XxHash64.hashByteBufferWithoutUpdate(uncompressed);
