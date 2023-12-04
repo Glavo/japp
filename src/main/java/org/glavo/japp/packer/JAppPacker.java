@@ -172,7 +172,7 @@ public final class JAppPacker {
         output.writeBytes(current.toJson().toString().getBytes(StandardCharsets.UTF_8));
     }
 
-    private void writeFileEnd(long metadataOffset, long bootMetadataOffset) throws IOException {
+    private void writeFileEnd(long bootMetadataOffset, long launcherMetadataOffset) throws IOException {
         long fileSize = output.getTotalBytes() + JAppLauncherMetadata.FILE_END_SIZE;
 
         // magic number
@@ -188,11 +188,11 @@ public final class JAppPacker {
         // file size
         output.writeLong(fileSize);
 
-        // launcher metadata offset
-        output.writeLong(metadataOffset);
-
         // boot metadata offset
         output.writeLong(bootMetadataOffset);
+
+        // launcher metadata offset
+        output.writeLong(launcherMetadataOffset);
 
         // reserved
         output.writeLong(0L);
@@ -211,10 +211,10 @@ public final class JAppPacker {
             long bootMetadataOffset = getCurrentOffset();
             writeBootMetadata();
 
-            long metadataOffset = getCurrentOffset();
+            long launcherMetadataOffset = getCurrentOffset();
             writeLauncherMetadata();
 
-            writeFileEnd(metadataOffset, bootMetadataOffset);
+            writeFileEnd(bootMetadataOffset, launcherMetadataOffset);
         }
 
         this.output.writeTo(outputStream);

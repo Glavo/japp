@@ -14,8 +14,8 @@ JAppFile {
          u2 minor_version;
          u8 flags;
          u8 file_size;
-         u8 launcher_metadata_offset;
          u8 boot_metadata_offset;
+         u8 launcher_metadata_offset;
          u1[24] reserved;
     } end;
 }

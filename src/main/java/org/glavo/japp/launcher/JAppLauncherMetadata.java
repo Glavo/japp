@@ -63,8 +63,8 @@ public final class JAppLauncherMetadata {
             long flags = endBuffer.getLong();
 
             long fileContentSize = endBuffer.getLong();
-            long metadataOffset = endBuffer.getLong();
             long bootMetadataOffset = endBuffer.getLong();
+            long launcherMetadataOffset = endBuffer.getLong();
 
             assert endBuffer.remaining() == 24;
 
@@ -76,12 +76,12 @@ public final class JAppLauncherMetadata {
                 throw new IOException("Invalid file size: " + fileContentSize);
             }
 
-            if (metadataOffset >= fileContentSize - FILE_END_SIZE) {
-                throw new IOException("Invalid metadata offset: " + metadataOffset);
+            if (launcherMetadataOffset >= fileContentSize - FILE_END_SIZE) {
+                throw new IOException("Invalid metadata offset: " + launcherMetadataOffset);
             }
 
             long baseOffset = fileSize - fileContentSize;
-            long metadataSize = fileContentSize - FILE_END_SIZE - metadataOffset;
+            long metadataSize = fileContentSize - FILE_END_SIZE - launcherMetadataOffset;
 
             JAppConfigGroup group;
             if (metadataSize < endBufferSize - FILE_END_SIZE) {
@@ -92,7 +92,7 @@ public final class JAppLauncherMetadata {
                 }
 
                 ByteBuffer metadataBuffer = ByteBuffer.allocate((int) metadataSize);
-                channel.position(baseOffset + metadataOffset);
+                channel.position(baseOffset + launcherMetadataOffset);
                 IOUtils.readFully(channel, metadataBuffer);
 
                 group = JAppConfigGroup.readConfigGroup(metadataBuffer.array(), 0, (int) metadataSize);
