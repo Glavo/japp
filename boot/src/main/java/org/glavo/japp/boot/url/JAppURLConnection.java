@@ -25,7 +25,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
-public class JAppURLConnection extends URLConnection {
+public final class JAppURLConnection extends URLConnection {
+
+    private final JAppReader reader;
 
     private JAppResource resource;
 
@@ -33,8 +35,10 @@ public class JAppURLConnection extends URLConnection {
     private final String group;
     private final String path;
 
-    JAppURLConnection(URL url) throws MalformedURLException {
+    JAppURLConnection(JAppReader reader, URL url) throws MalformedURLException {
         super(url);
+
+        this.reader = reader;
 
         String fullPath = url.getPath();
         if (!fullPath.startsWith("/")) {
@@ -78,7 +82,7 @@ public class JAppURLConnection extends URLConnection {
             return;
         }
 
-        resource = JAppReader.getSystemReader().findResource(root, group, path);
+        resource = reader.findResource(root, group, path);
         if (resource == null) {
             throw new IOException("Resource not found");
         }
@@ -89,7 +93,7 @@ public class JAppURLConnection extends URLConnection {
     @Override
     public InputStream getInputStream() throws IOException {
         connect();
-        return JAppReader.getSystemReader().openResource(resource);
+        return reader.openResource(resource);
     }
 
     @Override
