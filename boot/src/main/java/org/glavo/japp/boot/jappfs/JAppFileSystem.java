@@ -15,7 +15,6 @@
  */
 package org.glavo.japp.boot.jappfs;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
@@ -34,14 +33,69 @@ public final class JAppFileSystem extends FileSystem {
     final JAppReader reader;
 
     private final JAppPath root = new JAppPath(this, "/", true);
+    private final RootNode rootNode;
 
     JAppFileSystem(JAppFileSystemProvider provider, JAppReader reader) throws IOException {
         this.provider = provider;
         this.reader = reader;
+
+        rootNode = buildNodeTree(reader);
     }
 
-    public Node resolve(JAppPath path) {
-        throw new TODO();
+    private static RootNode buildNodeTree(JAppReader reader) {
+        JAppResourceRoot[] resourceRoots = JAppResourceRoot.values();
+        ResourceRootNode[] resourceRootNodes = new ResourceRootNode[resourceRoots.length];
+
+        for (int i = 0; i < resourceRoots.length; i++) {
+            JAppResourceRoot resourceRoot = resourceRoots[i];
+            Map<String, JAppResourceGroup> rootMap = reader.getRoot(resourceRoot);
+
+            ResourceGroupNode[] resourceGroupNodes = new ResourceGroupNode[rootMap.size()];
+            int j = 0;
+            for (JAppResourceGroup group : rootMap.values()) {
+                resourceGroupNodes[j++] = new ResourceGroupNode(group);
+            }
+
+            resourceRootNodes[i] = new ResourceRootNode(resourceRoot, Arrays.asList(resourceGroupNodes));
+        }
+
+        return new RootNode(Arrays.asList(resourceRootNodes));
+    }
+
+    public Node resolve(JAppPath path) throws IOException {
+        if (path.toString().isEmpty() || path.toString().equals("/")) {
+            return rootNode;
+        }
+
+        String[] elements = path.getPathElements();
+        assert elements.length > 0;
+
+        DirectoryNode<?> dirNode = rootNode;
+
+        for (int i = 0; i < elements.length; i++) {
+            String currentName = elements[i];
+            Node current = null;
+            for (Node subNode : dirNode.children) {
+                if (subNode.getName().equals(currentName)) {
+                    current = subNode;
+                    break;
+                }
+            }
+
+            if (i == elements.length - 1) {
+                if (current == null) {
+                    throw new NoSuchFileException(path.toString());
+                }
+                return current;
+            } else {
+                if (!(current instanceof DirectoryNode)) {
+                    throw new NoSuchFileException(path.toString());
+                }
+                dirNode = (DirectoryNode<?>) current;
+            }
+        }
+
+        throw new AssertionError("Unreachable");
     }
 
     @Override

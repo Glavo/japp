@@ -97,7 +97,7 @@ public final class JAppPath implements Path {
         return new JAppPath(fileSystem, path.substring(0, off), true);
     }
 
-    private String[] getPathElements() {
+    String[] getPathElements() {
         if (pathElements == null) {
             pathElements = path.split("/");
         }
