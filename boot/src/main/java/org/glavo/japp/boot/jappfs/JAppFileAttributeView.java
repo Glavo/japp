@@ -18,6 +18,7 @@ package org.glavo.japp.boot.jappfs;
 import org.glavo.japp.TODO;
 
 import java.io.IOException;
+import java.nio.file.LinkOption;
 import java.nio.file.ReadOnlyFileSystemException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
@@ -26,10 +27,12 @@ public final class JAppFileAttributeView implements BasicFileAttributeView {
 
     private final JAppPath path;
     private final boolean isJAppView;
+    private final LinkOption[] options;
 
-    public JAppFileAttributeView(JAppPath path, boolean isJAppView) {
+    public JAppFileAttributeView(JAppPath path, boolean isJAppView, LinkOption... options) {
         this.path = path;
         this.isJAppView = isJAppView;
+        this.options = options;
     }
 
     @Override

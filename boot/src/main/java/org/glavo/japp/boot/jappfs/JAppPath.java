@@ -221,11 +221,10 @@ public final class JAppPath implements Path {
         if (this.isAbsolute()) {
             res.append('/');
         }
+        res.append(list.get(0));
 
-        for (int i = 0; i < list.size(); i++) {
-            if (i > 0 || this.isAbsolute()) {
-                res.append('/');
-            }
+        for (int i = 1; i < list.size(); i++) {
+            res.append('/');
             res.append(list.get(i));
         }
 
@@ -260,14 +259,15 @@ public final class JAppPath implements Path {
 
     @Override
     public Path toAbsolutePath() {
-        if (isAbsolute())
+        if (isAbsolute()) {
             return this;
-        return new JAppPath(fileSystem, "/" + path);
+        }
+        return new JAppPath(fileSystem, "/" + path, true);
     }
 
     @Override
     public Path toRealPath(LinkOption... options) throws IOException {
-        return toAbsolutePath().normalize(); // TODO
+        return toAbsolutePath().normalize();
     }
 
     @Override

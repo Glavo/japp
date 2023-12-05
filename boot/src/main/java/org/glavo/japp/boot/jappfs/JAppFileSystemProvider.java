@@ -16,7 +16,10 @@
 package org.glavo.japp.boot.jappfs;
 
 import org.glavo.japp.boot.JAppReader;
+import org.glavo.japp.boot.JAppResource;
+import org.glavo.japp.util.ByteBufferChannel;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,6 +33,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static java.nio.file.StandardOpenOption.*;
 
 public final class JAppFileSystemProvider extends FileSystemProvider {
 
@@ -49,6 +54,10 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
         return "japp";
     }
 
+    public JAppFileSystem getFileSystem() {
+        return fileSystem;
+    }
+
     @Override
     public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
         throw new FileSystemAlreadyExistsException();
@@ -62,18 +71,44 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
 
     @Override
     public Path getPath(URI uri) {
-        String spec = uri.getSchemeSpecificPart();
-        int sep = spec.indexOf("!/");
-        if (sep == -1)
-            throw new IllegalArgumentException("URI: " + uri + " does not contain japp path info");
-        return getFileSystem(uri).getPath(spec.substring(sep + 1));
+        String path = uri.getPath();
+        if (!path.startsWith("/")) {
+            throw new IllegalArgumentException();
+        }
+        return fileSystem.getPath(path);
+    }
+
+    private static void checkOptions(Set<? extends OpenOption> options) {
+        for (OpenOption option : options) {
+            if (option == null) {
+                throw new NullPointerException();
+            }
+            if (!(option instanceof StandardOpenOption)) {
+                throw new IllegalArgumentException();
+            }
+        }
+        if (options.contains(WRITE) || options.contains(APPEND)) {
+            throw new ReadOnlyFileSystemException();
+        }
     }
 
     @Override
     public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-        JAppPath jappPath = toJAppPath(path);
+        checkOptions(options);
 
-        return null; // TODO
+        JAppPath jappPath = toJAppPath(path);
+        JAppFileSystem fs = jappPath.getFileSystem();
+        JAppFileSystem.Node node = fs.resolve(jappPath);
+        if (node == null) {
+            throw new FileNotFoundException(path.toString());
+        }
+
+        if (node instanceof JAppFileSystem.DirectoryNode) {
+            throw new FileSystemException(path + " is a directory");
+        }
+
+        JAppResource resource = ((JAppFileSystem.ResourceNode) node).getResource();
+        return new ByteBufferChannel(fs.reader.readResource(resource));
     }
 
     @Override
@@ -113,7 +148,7 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     public boolean isSameFile(Path path1, Path path2) throws IOException {
         JAppPath jappPath1 = toJAppPath(path1);
         JAppPath jappPath2 = toJAppPath(path2);
-        return false; // TODO
+        return jappPath1.toRealPath().equals(jappPath2.toRealPath());
     }
 
     @Override
@@ -123,11 +158,7 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileStore getFileStore(Path path) throws IOException {
-        Objects.requireNonNull(path);
-        if (!(path instanceof JAppPath)) {
-            throw new ProviderMismatchException();
-        }
-        return new JAppFileStore((JAppFileSystem) path.getFileSystem());
+        return new JAppFileStore(toJAppPath(path).getFileSystem());
     }
 
     @Override

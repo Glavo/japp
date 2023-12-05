@@ -15,6 +15,7 @@
  */
 package org.glavo.japp.boot.jappfs;
 
+import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceGroup;
@@ -30,15 +31,17 @@ import java.util.regex.Pattern;
 public final class JAppFileSystem extends FileSystem {
 
     private final JAppFileSystemProvider provider;
-    private final JAppReader reader;
+    final JAppReader reader;
 
     private final JAppPath root = new JAppPath(this, "/", true);
-    private final List<Path> roots = Collections.singletonList(root);
-    private static final Set<String> supportedFileAttributeViews = Collections.singleton("basic");
 
     JAppFileSystem(JAppFileSystemProvider provider, JAppReader reader) throws IOException {
         this.provider = provider;
         this.reader = reader;
+    }
+
+    public Node resolve(JAppPath path) {
+        throw new TODO();
     }
 
     @Override
@@ -72,7 +75,7 @@ public final class JAppFileSystem extends FileSystem {
 
     @Override
     public Iterable<Path> getRootDirectories() {
-        return roots;
+        return Collections.singleton(root);
     }
 
     @Override
@@ -82,7 +85,7 @@ public final class JAppFileSystem extends FileSystem {
 
     @Override
     public Set<String> supportedFileAttributeViews() {
-        return supportedFileAttributeViews;
+        return Collections.singleton("basic");
     }
 
     @Override
