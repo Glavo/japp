@@ -40,7 +40,7 @@ public final class JAppLauncherMetadata {
             }
 
             int endBufferSize = (int) Math.min(fileSize, 8192);
-            ByteBuffer endBuffer = ByteBuffer.allocate(endBufferSize).order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer endBuffer = ByteBuffer.allocateDirect(endBufferSize).order(ByteOrder.LITTLE_ENDIAN);
 
             channel.position(fileSize - endBufferSize);
             IOUtils.readFully(channel, endBuffer);
@@ -89,7 +89,7 @@ public final class JAppLauncherMetadata {
                     throw new IOException("Metadata is too large");
                 }
 
-                ByteBuffer metadataBuffer = ByteBuffer.allocate((int) metadataSize);
+                ByteBuffer metadataBuffer = ByteBuffer.allocateDirect((int) metadataSize);
                 channel.position(baseOffset + launcherMetadataOffset);
                 IOUtils.readFully(channel, metadataBuffer);
                 metadataBuffer.flip();

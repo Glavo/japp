@@ -61,14 +61,14 @@ public final class JAppReader implements DecompressContext, Closeable {
         ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
 
         FileChannel channel = FileChannel.open(Paths.get(file));
-        ByteBuffer metadataBuffer = ByteBuffer.allocate(Math.toIntExact(metadataSize)).order(ByteOrder.LITTLE_ENDIAN);
+        ByteBuffer metadataBuffer = ByteBuffer.allocateDirect(Math.toIntExact(metadataSize)).order(ByteOrder.LITTLE_ENDIAN);
         IOUtils.readFully(channel.position(baseOffset + metadataOffset), metadataBuffer);
         metadataBuffer.flip();
         JAppBootMetadata metadata = JAppBootMetadata.readFrom(metadataBuffer, decompressor);
 
         ByteBuffer mappedBuffer = null;
         if (metadataOffset < 16 * 1024 * 1024) { // TODO: Configurable threshold
-            mappedBuffer = ByteBuffer.allocate((int) metadataOffset);
+            mappedBuffer = ByteBuffer.allocateDirect((int) metadataOffset);
             IOUtils.readFully(channel.position(baseOffset), mappedBuffer);
             mappedBuffer.flip();
         } else if (metadataOffset < Integer.MAX_VALUE) {
