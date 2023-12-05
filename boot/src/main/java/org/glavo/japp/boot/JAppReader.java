@@ -22,10 +22,7 @@ import org.glavo.japp.boot.decompressor.DecompressContext;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
-import org.glavo.japp.util.ByteBufferInputStream;
-import org.glavo.japp.util.ByteBufferUtils;
-import org.glavo.japp.util.IOUtils;
-import org.glavo.japp.util.XxHash64;
+import org.glavo.japp.util.*;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -206,6 +203,8 @@ public final class JAppReader implements DecompressContext, Closeable {
     private final ByteArrayPool pool;
     private final ZstdFrameDecompressor decompressor;
 
+    private volatile boolean isClosed = false;
+
     public JAppReader(FileChannel channel, long baseOffset,
                       ByteBuffer mappedBuffer,
                       ByteArrayPool pool,
@@ -223,12 +222,21 @@ public final class JAppReader implements DecompressContext, Closeable {
     }
 
     public boolean isOpen() {
-        return channel.isOpen();
+        return !isClosed;
     }
 
     @Override
     public void close() throws IOException {
-        channel.close();
+        if (isClosed) {
+            return;
+        }
+
+        isClosed = true;
+        if (channel != null) {
+            channel.close();
+        } else {
+            UnsafeUtil.invokeCleaner(mappedBuffer);
+        }
     }
 
     @Override
