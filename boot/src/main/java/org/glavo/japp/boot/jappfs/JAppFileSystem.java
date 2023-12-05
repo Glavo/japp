@@ -75,7 +75,7 @@ public final class JAppFileSystem extends FileSystem {
         for (int i = 0; i < elements.length; i++) {
             String currentName = elements[i];
             Node current = null;
-            for (Node subNode : dirNode.children) {
+            for (Node subNode : dirNode.getChildren()) {
                 if (subNode.getName().equals(currentName)) {
                     current = subNode;
                     break;

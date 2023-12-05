@@ -254,9 +254,6 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
         if (uri.getPath() == null) {
             throw new IllegalArgumentException("Path component is undefined");
         }
-        if (!uri.getPath().equals("/")) {
-            throw new IllegalArgumentException("Path component should be '/'");
-        }
         if (uri.getQuery() != null) {
             throw new IllegalArgumentException("Query component present");
         }

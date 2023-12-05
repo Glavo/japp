@@ -99,7 +99,13 @@ public final class JAppPath implements Path {
 
     String[] getPathElements() {
         if (pathElements == null) {
-            pathElements = path.split("/");
+            if (path.equals("/")) {
+                pathElements = new String[0];
+            } else if (path.startsWith("/")) {
+                pathElements = path.substring(1).split("/");
+            } else {
+                pathElements = path.split("/");
+            }
         }
 
         return pathElements;
