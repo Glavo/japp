@@ -41,76 +41,73 @@ public final class JAppBootMetadata {
         ByteArrayPool pool = ByteArrayPool.readFrom(buffer, decompressor);
 
         JAppResourceGroup[] groups = new JAppResourceGroup[groupCount];
-        {
-            // ByteBuffer compressedBuffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
-            ByteBuffer uncompressedBuffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
 
-            for (int i = 0; i < groupCount; i++) {
-                byte magic = buffer.get();
-                if (magic != JAppResourceGroup.MAGIC_NUMBER) {
-                    throw new IOException(String.format("Wrong resource group magic: 0x%02x", magic));
-                }
-
-                CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);
-
-                short reserved = buffer.getShort();
-                if (reserved != 0) {
-                    throw new IOException("Reserved is not 0");
-                }
-
-                int uncompressedSize = buffer.getInt();
-                int compressedSize = buffer.getInt();
-                int resourcesCount = buffer.getInt();
-                long checksum = buffer.getLong();
-
-                JAppResourceGroup group = new JAppResourceGroup();
-
-                ByteBuffer compressedBuffer = ByteBufferUtils.slice(buffer, buffer.position(), compressedSize).order(ByteOrder.LITTLE_ENDIAN);
-                buffer.position(buffer.position() + compressedSize);
-
-                ByteBuffer uncompressed;
-                if (compressionMethod == CompressionMethod.NONE) {
-                    uncompressed = compressedBuffer;
-                } else {
-                    if (uncompressedBuffer.capacity() >= uncompressedSize) {
-                        uncompressedBuffer.clear();
-                    } else {
-                        int nextLen = Math.max(uncompressedSize, uncompressedBuffer.capacity() * 2);
-                        uncompressedBuffer = ByteBuffer.allocate(nextLen).order(ByteOrder.LITTLE_ENDIAN);
-                    }
-                    uncompressedBuffer.limit(uncompressedSize);
-
-                    if (compressionMethod == CompressionMethod.ZSTD) {
-                        decompressor.decompress(compressedBuffer, uncompressedBuffer);
-                        if (uncompressedBuffer.hasRemaining()) {
-                            throw new IOException();
-                        }
-                        uncompressedBuffer.flip();
-                    } else {
-                        throw new IOException("Unsupported compression method: " + compressionMethod);
-                    }
-                    uncompressed = uncompressedBuffer;
-                }
-
-                long actualChecksum = XxHash64.hashByteBufferWithoutUpdate(uncompressed);
-                if (actualChecksum != checksum) {
-                    throw new IOException(String.format(
-                            "Failed while verifying resource group at index %d (expected=%x, actual=%x)",
-                            i, checksum, actualChecksum
-                    ));
-                }
-
-                for (int j = 0; j < resourcesCount; j++) {
-                    JAppResource resource = JAppResource.readFrom(uncompressed);
-                    group.put(resource.getName(), resource);
-                }
-
-                if (uncompressedBuffer.hasRemaining()) {
-                    throw new IOException();
-                }
-
-                groups[i] = group;
+        ByteBuffer uncompressedBuffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
+        for (int i = 0; i < groupCount; i++) {
+            byte magic = buffer.get();
+            if (magic != JAppResourceGroup.MAGIC_NUMBER) {
+                throw new IOException(String.format("Wrong resource group magic: 0x%02x", magic));
             }
+
+            CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);
+
+            short reserved = buffer.getShort();
+            if (reserved != 0) {
+                throw new IOException("Reserved is not 0");
+            }
+
+            int uncompressedSize = buffer.getInt();
+            int compressedSize = buffer.getInt();
+            int resourcesCount = buffer.getInt();
+            long checksum = buffer.getLong();
+
+            JAppResourceGroup group = new JAppResourceGroup();
+
+            ByteBuffer compressedBuffer = ByteBufferUtils.slice(buffer, buffer.position(), compressedSize).order(ByteOrder.LITTLE_ENDIAN);
+            buffer.position(buffer.position() + compressedSize);
+
+            ByteBuffer uncompressed;
+            if (compressionMethod == CompressionMethod.NONE) {
+                uncompressed = compressedBuffer;
+            } else {
+                if (uncompressedBuffer.capacity() >= uncompressedSize) {
+                    uncompressedBuffer.clear();
+                } else {
+                    int nextLen = Math.max(uncompressedSize, uncompressedBuffer.capacity() * 2);
+                    uncompressedBuffer = ByteBuffer.allocate(nextLen).order(ByteOrder.LITTLE_ENDIAN);
+                }
+                uncompressedBuffer.limit(uncompressedSize);
+
+                if (compressionMethod == CompressionMethod.ZSTD) {
+                    decompressor.decompress(compressedBuffer, uncompressedBuffer);
+                    if (uncompressedBuffer.hasRemaining()) {
+                        throw new IOException();
+                    }
+                    uncompressedBuffer.flip();
+                } else {
+                    throw new IOException("Unsupported compression method: " + compressionMethod);
+                }
+                uncompressed = uncompressedBuffer;
+            }
+
+            long actualChecksum = XxHash64.hashByteBufferWithoutUpdate(uncompressed);
+            if (actualChecksum != checksum) {
+                throw new IOException(String.format(
+                        "Failed while verifying resource group at index %d (expected=%x, actual=%x)",
+                        i, checksum, actualChecksum
+                ));
+            }
+
+            for (int j = 0; j < resourcesCount; j++) {
+                JAppResource resource = JAppResource.readFrom(uncompressed);
+                group.put(resource.getName(), resource);
+            }
+
+            if (uncompressedBuffer.hasRemaining()) {
+                throw new IOException();
+            }
+
+            groups[i] = group;
         }
 
         return new JAppBootMetadata(Arrays.asList(groups), pool);
