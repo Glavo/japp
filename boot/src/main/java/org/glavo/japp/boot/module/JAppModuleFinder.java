@@ -28,7 +28,6 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.Supplier;
 
 public final class JAppModuleFinder implements ModuleFinder {
 
@@ -49,19 +48,17 @@ public final class JAppModuleFinder implements ModuleFinder {
         this.externalModulesFinder = externalModules == null ? null : ModuleFinder.of(externalModules.toArray(new Path[0]));
     }
 
-    private static Supplier<Set<String>> packageFinder(JAppResourceGroup group) {
-        return () -> {
-            Set<String> packages = new HashSet<>();
-            for (String name : group.keySet()) {
-                if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
-                    int index = name.lastIndexOf("/");
-                    if (index >= 0) {
-                        packages.add(name.substring(0, index).replace('/', '.'));
-                    }
+    private static Set<String> findPackages(JAppResourceGroup group) {
+        Set<String> packages = new HashSet<>();
+        for (String name : group.keySet()) {
+            if (name.endsWith(".class") && !name.startsWith("META-INF/")) {
+                int index = name.lastIndexOf("/");
+                if (index >= 0) {
+                    packages.add(name.substring(0, index).replace('/', '.'));
                 }
             }
-            return packages;
-        };
+        }
+        return packages;
     }
 
     private ModuleDescriptor deriveModuleDescriptor(JAppResourceGroup group) throws IOException {
@@ -105,7 +102,7 @@ public final class JAppModuleFinder implements ModuleFinder {
         JAppResource resource = group.get(MODULE_INFO);
         ModuleDescriptor descriptor;
         if (resource != null) {
-            descriptor = ModuleDescriptor.read(reader.readResource(resource), packageFinder(group));
+            descriptor = ModuleDescriptor.read(reader.readResource(resource), () -> findPackages(group));
         } else {
             descriptor = deriveModuleDescriptor(group);
         }
