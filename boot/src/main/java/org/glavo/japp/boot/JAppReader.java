@@ -15,6 +15,8 @@
  */
 package org.glavo.japp.boot;
 
+import jdk.internal.loader.BuiltinClassLoader;
+import jdk.internal.loader.URLClassPath;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.DecompressContext;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
@@ -28,30 +30,164 @@ import org.glavo.japp.util.XxHash64;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public final class JAppReader implements DecompressContext, Closeable {
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
 
-    private static JAppReader reader;
-
-    public static void initSystemReader(JAppReader reader) {
-        if (JAppReader.reader != null) {
-            throw new IllegalStateException("System JAppReader has been initialized");
-        }
-
-        JAppReader.reader = reader;
-    }
+    private static JAppReader systemReader;
 
     public static JAppReader getSystemReader() {
-        if (reader == null) {
+        if (systemReader == null) {
             throw new IllegalStateException("System JAppReader not initialized");
         }
-        return reader;
+        return systemReader;
+    }
+
+    public static JAppBootArgs openSystemReader(ByteBuffer bootArgs) throws IOException {
+        String file = ByteBufferUtils.readString(bootArgs);
+
+        long baseOffset = bootArgs.getLong();
+        long metadataOffset = bootArgs.getLong();
+        long metadataSize = bootArgs.getLong();
+
+        ZstdFrameDecompressor decompressor = new ZstdFrameDecompressor();
+
+        FileChannel channel = FileChannel.open(Paths.get(file));
+        ByteBuffer metadataBuffer = ByteBuffer.allocate(Math.toIntExact(metadataSize)).order(ByteOrder.LITTLE_ENDIAN);
+        IOUtils.readFully(channel.position(baseOffset + metadataOffset), metadataBuffer);
+        metadataBuffer.flip();
+        JAppBootMetadata metadata = JAppBootMetadata.readFrom(metadataBuffer, decompressor);
+
+        ByteBuffer mappedBuffer = null;
+        if (metadataOffset < 16 * 1024 * 1024) { // TODO: Configurable threshold
+            mappedBuffer = ByteBuffer.allocate((int) metadataOffset);
+            IOUtils.readFully(channel.position(baseOffset), mappedBuffer);
+            mappedBuffer.flip();
+        } else if (metadataOffset < Integer.MAX_VALUE) {
+            mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
+        }
+
+        if (mappedBuffer != null) {
+            channel.close();
+            channel = null;
+        }
+
+        JAppBootArgs args = new JAppBootArgs();
+        Map<String, JAppResourceGroup> modules = new HashMap<>();
+        Map<String, JAppResourceGroup> classPath = new LinkedHashMap<>();
+
+        int unnamedCount = 0;
+        JAppBootArgs.Field field;
+        while ((field = JAppBootArgs.Field.readFrom(bootArgs)) != JAppBootArgs.Field.END) {
+            switch (field) {
+                case MAIN_CLASS: {
+                    if (args.mainClass != null) {
+                        throw new IOException("Duplicate field: " + field);
+                    }
+                    args.mainClass = ByteBufferUtils.readString(bootArgs);
+                    break;
+                }
+                case MAIN_MODULE: {
+                    if (args.mainModule != null) {
+                        throw new IOException("Duplicate field: " + field);
+                    }
+                    args.mainModule = ByteBufferUtils.readString(bootArgs);
+                    break;
+                }
+                case CLASS_PATH:
+                case MODULE_PATH: {
+                    boolean isModulePath = field == JAppBootArgs.Field.MODULE_PATH;
+                    Map<String, JAppResourceGroup> map;
+                    URLClassPath ucp;
+                    if (isModulePath) {
+                        map = modules;
+                        ucp = null;
+                    } else {
+                        map = classPath;
+                        try {
+                            ucp = (URLClassPath) MethodHandles.privateLookupIn(BuiltinClassLoader.class, MethodHandles.lookup())
+                                    .findGetter(BuiltinClassLoader.class, "ucp", URLClassPath.class)
+                                    .invokeExact((BuiltinClassLoader) ClassLoader.getSystemClassLoader());
+                        } catch (Throwable e) {
+                            throw new AssertionError(e);
+                        }
+                    }
+
+                    byte type;
+
+                    while ((type = bootArgs.get()) != JAppBootArgs.ID_RESOLVED_REFERENCE_END) {
+                        String name = ByteBufferUtils.readStringOrNull(bootArgs);
+                        if (type == JAppBootArgs.ID_RESOLVED_REFERENCE_LOCAL) {
+                            int index = bootArgs.getInt();
+                            JAppResourceGroup group = metadata.getGroups().get(index);
+                            if (name != null) {
+                                group.initName(name);
+                            } else {
+                                if (isModulePath) {
+                                    throw new IOException("Modules cannot be anonymous");
+                                }
+
+                                group.initName("unnamed@" + unnamedCount++);
+                            }
+
+                            while ((index = bootArgs.getInt()) != -1) {
+                                group.putAll(metadata.getGroups().get(index));
+                            }
+
+                            map.put(group.getName(), group);
+
+                            if (!isModulePath) {
+                                ucp.addURL(JAppResourceRoot.CLASSPATH.toURI(group).toURL());
+                            }
+                        } else if (type == JAppBootArgs.ID_RESOLVED_REFERENCE_EXTERNAL) { // External
+                            Path path = Paths.get(ByteBufferUtils.readString(bootArgs));
+
+                            if (isModulePath) {
+                                args.externalModules.add(path);
+                            } else {
+                                ucp.addURL(path.toUri().toURL());
+                            }
+                        } else {
+                            throw new IOException();
+                        }
+                    }
+
+                    break;
+                }
+                case ADD_READS:
+                case ADD_EXPORTS:
+                case ADD_OPENS:
+                case ENABLE_NATIVE_ACCESS: {
+                    List<String> list;
+                    if (field == JAppBootArgs.Field.ADD_READS) {
+                        list = args.addReads;
+                    } else if (field == JAppBootArgs.Field.ADD_EXPORTS) {
+                        list = args.addExports;
+                    } else if (field == JAppBootArgs.Field.ADD_OPENS) {
+                        list = args.addOpens;
+                    } else if (field == JAppBootArgs.Field.ENABLE_NATIVE_ACCESS) {
+                        list = args.enableNativeAccess;
+                    } else {
+                        throw new AssertionError("Field: " + field);
+                    }
+                    ByteBufferUtils.readStringList(bootArgs, list);
+                    break;
+                }
+                default:
+                    throw new AssertionError("Field: " + field);
+            }
+        }
+
+        JAppReader.systemReader = new JAppReader(channel, baseOffset, mappedBuffer, metadata.getPool(), decompressor, modules, classPath);
+        return args;
     }
 
     private final ReentrantLock fileLock = new ReentrantLock();

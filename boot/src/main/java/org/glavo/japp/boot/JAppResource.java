@@ -86,7 +86,7 @@ public final class JAppResource {
     public static JAppResource readFrom(ByteBuffer buffer) throws IOException {
         byte magic = buffer.get();
         if (magic != MAGIC_NUMBER) {
-            throw new IOException(String.format("Wrong resource magic: %02x", magic));
+            throw new IOException(String.format("Wrong resource magic: 0x%02x", magic));
         }
 
         CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);
@@ -112,7 +112,7 @@ public final class JAppResource {
         while ((fieldId = Byte.toUnsignedInt(buffer.get())) != 0) {
             JAppResourceField field = JAppResourceField.of(fieldId);
             if (field == null) {
-                throw new IOException(String.format("Unknown field: %02x", fieldId));
+                throw new IOException(String.format("Unknown field: 0x%02x", fieldId));
             }
 
             switch (field) {

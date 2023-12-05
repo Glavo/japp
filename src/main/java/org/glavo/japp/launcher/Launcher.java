@@ -18,10 +18,12 @@ package org.glavo.japp.launcher;
 import org.glavo.japp.JAppConfigGroup;
 import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.TODO;
+import org.glavo.japp.boot.JAppBootArgs;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.platform.JAppRuntimeContext;
 import org.glavo.japp.platform.JavaRuntime;
 import org.glavo.japp.maven.MavenResolver;
+import org.glavo.japp.util.ByteBufferOutputStream;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,23 +40,35 @@ public final class Launcher {
                 .getValue("JApp-Boot");
     }
 
-    private static void appendReferences(StringBuilder builder, int release, List<JAppResourceGroupReference> references) throws Throwable {
-        boolean isFirst = true;
+    private static void writeStringListField(ByteBufferOutputStream out, JAppBootArgs.Field field, List<String> list) throws IOException {
+        if (list.isEmpty()) {
+            return;
+        }
 
+        out.writeByte(field.id());
+        out.writeInt(list.size());
+        for (String string : list) {
+            out.writeString(string);
+        }
+    }
+
+    private static void writeClassOrModulePath(
+            ByteBufferOutputStream out, JAppBootArgs.Field field,
+            int release, List<JAppResourceGroupReference> references) throws Throwable {
+        if (references.isEmpty()) {
+            return;
+        }
+
+        out.writeByte(field.id());
         for (JAppResourceGroupReference reference : references) {
             String name = reference.name;
 
-            if (isFirst) {
-                isFirst = false;
-            } else {
-                builder.append(',');
-            }
-
-            builder.append(name).append(":");
-
             if (reference instanceof JAppResourceGroupReference.Local) {
                 JAppResourceGroupReference.Local local = (JAppResourceGroupReference.Local) reference;
-                builder.append(Integer.toHexString(local.getIndex()));
+
+                out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_LOCAL);
+                out.writeString(name);
+                out.writeInt(local.getIndex());
 
                 TreeMap<Integer, Integer> multiReleaseIndexes = local.getMultiReleaseIndexes();
                 if (multiReleaseIndexes != null) {
@@ -63,12 +77,14 @@ public final class Launcher {
                         int i = entry.getValue();
 
                         if (r <= release) {
-                            builder.append('+').append(Integer.toHexString(i));
+                            out.writeInt(i);
                         } else {
                             break;
                         }
                     }
                 }
+
+                out.writeInt(-1);
             } else if (reference instanceof JAppResourceGroupReference.Maven) {
                 JAppResourceGroupReference.Maven maven = (JAppResourceGroupReference.Maven) reference;
 
@@ -80,13 +96,14 @@ public final class Launcher {
                         maven.getClassifier()
                 ).toAbsolutePath().normalize();
 
-                builder.append('E').append(file);
+                out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_EXTERNAL);
+                out.writeString(name);
+                out.writeString(file.toString());
             } else {
                 throw new TODO("Type: " + reference.getClass());
             }
-
-
         }
+        out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_END);
     }
 
     public static void main(String[] args) throws Throwable {
@@ -94,7 +111,9 @@ public final class Launcher {
             throw new TODO("Help Message");
         }
 
-        JAppLauncherMetadata config = JAppLauncherMetadata.readFile(Paths.get(args[0]));
+        Path file = Paths.get(args[0]).toAbsolutePath().normalize();
+
+        JAppLauncherMetadata config = JAppLauncherMetadata.readFile(file);
         JAppConfigGroup group = config.getGroup();
 
         JAppRuntimeContext context = JAppRuntimeContext.search(group);
@@ -115,98 +134,72 @@ public final class Launcher {
         List<String> command = new ArrayList<>();
         command.add(context.getJava().getExec().toString());
 
-        for (String property : group.getJvmProperties()) {
-            command.add("-D" + property);
-        }
-
-        command.add("-Dorg.glavo.japp.file=" + args[0]);
-
-        if (config.getBaseOffset() != 0) {
-            command.add("-Dorg.glavo.japp.file.offset=" + Long.toHexString(config.getBaseOffset()));
-        }
-
-        command.add("-Dorg.glavo.japp.file.metadata.offset=" + Long.toHexString(config.getBootMetadataOffset()));
-        command.add("-Dorg.glavo.japp.file.metadata.size=" + Long.toHexString(config.getBootMetadataSize()));
-
-        int index = 0;
-        for (String addReads : group.getAddReads()) {
-            command.add("-Dorg.glavo.japp.addreads." + index++ + "=" + addReads);
-        }
-
-        index = 0;
-        for (String addOpen : group.getAddOpens()) {
-            command.add("-Dorg.glavo.japp.addopens." + index++ + "=" + addOpen);
-        }
-
-        index = 0;
-        for (String addExport : group.getAddExports()) {
-            command.add("-Dorg.glavo.japp.addexports." + index++ + "=" + addExport);
-        }
-
         @SuppressWarnings("deprecation")
         int release = context.getJava().getVersion().major();
 
         boolean enablePreview = false;
 
-        boolean isFirst = true;
-        StringBuilder builder = new StringBuilder(80);
-        if (!group.getEnableNativeAccess().isEmpty()) {
+        for (String property : group.getJvmProperties()) {
+            command.add("-D" + property);
+        }
 
+        try (ByteBufferOutputStream argsBuilder = new ByteBufferOutputStream()) {
+            argsBuilder.writeString(file.toString());
+            argsBuilder.writeLong(config.getBaseOffset());
+            argsBuilder.writeLong(config.getBootMetadataOffset());
+            argsBuilder.writeLong(config.getBootMetadataSize());
 
-            if (release == 16) {
-                command.add("-Dforeign.restricted=permit");
-            } else if (release >= 17) {
-                command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
+            writeStringListField(argsBuilder, JAppBootArgs.Field.ADD_READS, group.getAddReads());
+            writeStringListField(argsBuilder, JAppBootArgs.Field.ADD_OPENS, group.getAddOpens());
+            writeStringListField(argsBuilder, JAppBootArgs.Field.ADD_EXPORTS, group.getAddExports());
 
-                for (String module : group.getEnableNativeAccess()) {
-                    if (module.equals("ALL-UNNAMED")) {
+            if (!group.getEnableNativeAccess().isEmpty()) {
+                if (release == 16) {
+                    command.add("-Dforeign.restricted=permit");
+                } else if (release >= 17) {
+                    command.add("--enable-native-access=" + BOOT_LAUNCHER_MODULE);
+
+                    List<String> list;
+                    if (group.getEnableNativeAccess().contains("ALL-UNNAMED")) {
                         command.add("--enable-native-access=ALL-UNNAMED");
-                    } else {
-                        if (isFirst) {
-                            builder.append("-Dorg.glavo.japp.enableNativeAccess=");
-                        } else {
-                            builder.append(',');
+                        list = new ArrayList<>();
+                        for (String module : group.getEnableNativeAccess()) {
+                            if (!module.equals("ALL-UNNAMED")) {
+                                list.add(module);
+                            }
                         }
-
-                        isFirst = false;
-                        builder.append(module);
+                    } else {
+                        list = group.getEnableNativeAccess();
                     }
+
+                    writeStringListField(argsBuilder, JAppBootArgs.Field.ENABLE_NATIVE_ACCESS, list);
                 }
 
-                if (!isFirst) {
-                    command.add(builder.toString());
+                if (release <= 21) {
+                    enablePreview = true;
                 }
             }
 
-            if (release <= 21) {
-                enablePreview = true;
+            writeClassOrModulePath(argsBuilder, JAppBootArgs.Field.MODULE_PATH, release, group.getModulePath());
+            writeClassOrModulePath(argsBuilder, JAppBootArgs.Field.CLASS_PATH, release, group.getClassPath());
+
+            if (group.getMainClass() != null) {
+                argsBuilder.writeByte(JAppBootArgs.Field.MAIN_CLASS.id());
+                argsBuilder.writeString(group.getMainClass());
             }
+
+            if (group.getMainModule() != null) {
+                argsBuilder.writeByte(JAppBootArgs.Field.MAIN_MODULE.id());
+                argsBuilder.writeString(group.getMainModule());
+            }
+
+            argsBuilder.writeByte(JAppBootArgs.Field.END.id());
+
+            command.add("-Dorg.glavo.japp.boot.args=" + Base64.getEncoder().encodeToString(argsBuilder.toByteArray()));
         }
 
         if (enablePreview) {
             command.add("--enable-preview");
-        }
-
-        if (!group.getModulePath().isEmpty()) {
-            builder.setLength(0);
-            builder.append("-Dorg.glavo.japp.modules=");
-            appendReferences(builder, release, group.getModulePath());
-            command.add(builder.toString());
-        }
-
-        if (!group.getClassPath().isEmpty()) {
-            builder.setLength(0);
-            builder.append("-Dorg.glavo.japp.classpath=");
-            appendReferences(builder, release, group.getClassPath());
-            command.add(builder.toString());
-        }
-
-        if (group.getMainClass() != null) {
-            command.add("-Dorg.glavo.japp.mainClass=" + group.getMainClass());
-        }
-
-        if (group.getMainModule() != null) {
-            command.add("-Dorg.glavo.japp.mainModule=" + group.getMainModule());
         }
 
         Collections.addAll(command,

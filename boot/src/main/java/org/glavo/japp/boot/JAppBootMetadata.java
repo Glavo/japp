@@ -33,7 +33,7 @@ public final class JAppBootMetadata {
     public static JAppBootMetadata readFrom(ByteBuffer buffer, ZstdFrameDecompressor decompressor) throws IOException {
         int bootMagic = buffer.getInt();
         if (bootMagic != MAGIC_NUMBER) {
-            throw new IOException(String.format("Wrong boot magic: %02x", bootMagic));
+            throw new IOException(String.format("Wrong boot magic: 0x%02x", bootMagic));
         }
 
         int groupCount = buffer.getInt();
@@ -48,7 +48,7 @@ public final class JAppBootMetadata {
             for (int i = 0; i < groupCount; i++) {
                 byte magic = buffer.get();
                 if (magic != JAppResourceGroup.MAGIC_NUMBER) {
-                    throw new IOException(String.format("Wrong resource magic: %02x", magic));
+                    throw new IOException(String.format("Wrong resource group magic: 0x%02x", magic));
                 }
 
                 CompressionMethod compressionMethod = CompressionMethod.readFrom(buffer);

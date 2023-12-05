@@ -98,7 +98,7 @@ LauncherMetadata {
 ```
 ConfigGroup {
     u4 magic_number; // "GRP\0"
-    ConfigGroupFieldList fields;
+    ConfigGroupFields fields;
 }
 ```
 
@@ -135,14 +135,14 @@ MavenResourceGroupReference {
 
 ## share
 
-Pass module path and class path:
+Pass data from launcher to boot launcher: `-Dorg.glavo.japp.args=<boot args encoded with base64>`
 
 ```
-PathList  : PathItem (',' PathItem)*
-PathItem  : Name ':' PathValue
-PathValue : 'E' ExternalPath 
-          | GroupIndexList
-
-GroupIndexList : GroupIndex ('+' GroupIndex)*
-GroupIndex: [0-9a-f]+ 
+BootArgs {
+    String japp_file;
+    u8 base_offset;
+    u8 boot_metadata_offset;
+    u8 boot_metadata_size;
+    BootArgFields fields;
+}
 ```
