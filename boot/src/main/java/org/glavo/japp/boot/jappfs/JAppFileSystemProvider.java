@@ -201,6 +201,7 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
         if (type == BasicFileAttributes.class || type == JAppFileAttributes.class) {
             JAppPath jappPath = toJAppPath(path);
@@ -209,6 +210,7 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
             if (node == null) {
                 throw new NoSuchFileException(path.toString());
             }
+            return (A) new JAppFileAttributes(fileSystem, node);
         }
         return null;
     }
