@@ -115,8 +115,11 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     @Override
     public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
         JAppPath jappPath = toJAppPath(dir);
-
-        return null; // TODO
+        JAppFileSystem.Node node = jappPath.getFileSystem().resolve(jappPath);
+        if (!(node instanceof JAppFileSystem.DirectoryNode)) {
+            throw new NotDirectoryException(dir.toString());
+        }
+        return new JAppDirectoryStream(jappPath, (JAppFileSystem.DirectoryNode<?>) node, filter);
     }
 
     @Override

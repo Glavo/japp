@@ -26,12 +26,12 @@ public final class JAppDirectoryStream implements DirectoryStream<Path> {
 
     private final JAppPath path;
     private final JAppFileSystem.DirectoryNode<?> node;
-    private final DirectoryStream.Filter<Path> filter;
+    private final DirectoryStream.Filter<? super Path> filter;
     private Itr itr;
 
     private boolean isClosed = false;
 
-    public JAppDirectoryStream(JAppPath path, JAppFileSystem.DirectoryNode<?> node, Filter<Path> filter) {
+    public JAppDirectoryStream(JAppPath path, JAppFileSystem.DirectoryNode<?> node, Filter<? super Path> filter) {
         this.path = path;
         this.filter = filter;
         this.node = node;
@@ -71,16 +71,7 @@ public final class JAppDirectoryStream implements DirectoryStream<Path> {
 
             while (nodeIterator.hasNext()) {
                 JAppFileSystem.Node node = nodeIterator.next();
-                String fullPath;
-                if (path.toString().isEmpty()) {
-                    fullPath = node.getName();
-                } else if (path.toString().equals("/")) {
-                    fullPath = "/" + node.getName();
-                } else {
-                    fullPath = path + "/" + node.getName();
-                }
-
-                JAppPath p = new JAppPath(path.getFileSystem(), fullPath, true);
+                JAppPath p = (JAppPath) path.resolve(node.getName());
                 try {
                     if (filter == null || filter.accept(p)) {
                         nextPath = p;
