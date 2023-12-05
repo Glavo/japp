@@ -38,9 +38,7 @@ public final class JAppModuleFinder implements ModuleFinder {
     private final Map<String, JAppResourceGroup> modules;
     private final ModuleFinder externalModulesFinder;
 
-    private final Map<String, ModuleReference> cachedModules = new HashMap<>();
-
-    private Set<ModuleReference> all;
+    private Map<String, ModuleReference> all;
 
     public JAppModuleFinder(JAppReader reader, Map<String, JAppResourceGroup> modules, List<Path> externalModules) {
         this.reader = reader;
@@ -109,52 +107,50 @@ public final class JAppModuleFinder implements ModuleFinder {
         return new JAppModuleReference(reader, descriptor, group);
     }
 
-    @Override
-    public Optional<ModuleReference> find(String name) {
-        ModuleReference ref = cachedModules.get(name);
-        if (ref != null) {
-            return Optional.of(ref);
+    private void loadAll() {
+        if (all != null) {
+            return;
         }
 
-        JAppResourceGroup group = modules.get(name);
-        if (group != null) {
+        Map<String, ModuleReference> map = new HashMap<>();
+
+        for (Map.Entry<String, JAppResourceGroup> entry : modules.entrySet()) {
+            String name = entry.getKey();
+            JAppResourceGroup group = entry.getValue();
+            ModuleReference ref;
             try {
                 ref = load(group);
             } catch (Throwable e) {
                 throw new FindException(e);
             }
-            cachedModules.put(name, ref);
-            return Optional.of(ref);
+
+            if (map.put(name, ref) != null) {
+                throw new FindException("Duplicate module " + name);
+            }
         }
 
         if (externalModulesFinder != null) {
-            Optional<ModuleReference> res = externalModulesFinder.find(name);
-            res.ifPresent(moduleReference -> cachedModules.put(name, moduleReference));
-            return res;
+            Set<ModuleReference> allExternal = externalModulesFinder.findAll();
+            for (ModuleReference external : allExternal) {
+                String name = external.descriptor().name();
+                if (map.put(name, external) != null) {
+                    throw new FindException("Duplicate module " + name);
+                }
+            }
         }
 
-        return Optional.empty();
+        all = map;
+    }
+
+    @Override
+    public Optional<ModuleReference> find(String name) {
+        loadAll();
+        return Optional.ofNullable(all.get(name));
     }
 
     @Override
     public Set<ModuleReference> findAll() {
-        if (all == null) {
-            Set<ModuleReference> set = new LinkedHashSet<>();
-            modules.forEach((name, item) -> {
-                set.add(cachedModules.computeIfAbsent(name, key -> {
-                    try {
-                        return load(item);
-                    } catch (Throwable e) {
-                        throw new FindException(e);
-                    }
-                }));
-            });
-            if (externalModulesFinder != null) {
-                set.addAll(externalModulesFinder.findAll());
-            }
-            all = Collections.unmodifiableSet(set);
-        }
-
-        return all;
+        loadAll();
+        return new HashSet<>(all.values());
     }
 }
