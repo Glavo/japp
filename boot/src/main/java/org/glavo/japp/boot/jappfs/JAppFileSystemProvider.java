@@ -30,6 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -214,7 +215,27 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
 
     @Override
     public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
-        return null; // TODO
+        int colonPos = attributes.indexOf(':');
+        if (colonPos >= 0) {
+            String type = attributes.substring(0, colonPos++);
+            if (!type.equals("basic") && !type.equals("japp")) {
+                throw new UnsupportedOperationException(String.format("view <%s> is not supported", type));
+            }
+            attributes = attributes.substring(colonPos);
+        }
+        JAppFileAttributes attrs = readAttributes(path, JAppFileAttributes.class, options);
+        LinkedHashMap<String, Object> res = new LinkedHashMap<>();
+        if ("*".equals(attributes)) {
+            for (JAppFileAttributes.Attribute attr : JAppFileAttributes.Attribute.values()) {
+                res.put(attr.name(), attrs.getAttribute(attr));
+            }
+        } else {
+            String[] as = attributes.split(",");
+            for (String a : as) {
+                res.put(a, attrs.getAttribute(JAppFileAttributes.Attribute.valueOf(a)));
+            }
+        }
+        return res;
     }
 
     @Override

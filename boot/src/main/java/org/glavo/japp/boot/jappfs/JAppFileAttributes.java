@@ -20,6 +20,22 @@ import java.nio.file.attribute.FileTime;
 
 public class JAppFileAttributes implements BasicFileAttributes {
 
+    enum Attribute {
+        // basic
+        size,
+        creationTime,
+        lastAccessTime,
+        lastModifiedTime,
+        isDirectory,
+        isRegularFile,
+        isSymbolicLink,
+        isOther,
+        fileKey,
+
+        // japp
+        compressedSize
+    }
+
     private final JAppFileSystem fileSystem;
     private final JAppFileSystem.Node node;
 
@@ -30,6 +46,33 @@ public class JAppFileAttributes implements BasicFileAttributes {
 
     private FileTime getDefaultFileTime() {
         return FileTime.fromMillis(0);
+    }
+
+    Object getAttribute(Attribute attribute) {
+        switch (attribute) {
+            case size:
+                return size();
+            case creationTime:
+                return creationTime();
+            case lastAccessTime:
+                return lastAccessTime();
+            case lastModifiedTime:
+                return lastModifiedTime();
+            case isDirectory:
+                return isDirectory();
+            case isRegularFile:
+                return isRegularFile();
+            case isSymbolicLink:
+                return isSymbolicLink();
+            case isOther:
+                return isOther();
+            case fileKey:
+                return fileKey();
+            case compressedSize:
+                return compressedSize();
+            default:
+                return null;
+        }
     }
 
     @Override
@@ -87,5 +130,11 @@ public class JAppFileAttributes implements BasicFileAttributes {
     @Override
     public Object fileKey() {
         return node;
+    }
+
+    // JApp
+
+    public long compressedSize() {
+        return (node instanceof JAppFileSystem.ResourceNode) ? ((JAppFileSystem.ResourceNode) node).getResource().getCompressedSize() : 0L;
     }
 }
