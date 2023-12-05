@@ -15,10 +15,9 @@
  */
 package org.glavo.japp.boot.jappfs;
 
-import org.glavo.japp.TODO;
-
 import java.io.IOException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.ReadOnlyFileSystemException;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.FileTime;
@@ -42,7 +41,12 @@ public final class JAppFileAttributeView implements BasicFileAttributeView {
 
     @Override
     public JAppFileAttributes readAttributes() throws IOException {
-        throw new TODO();
+        JAppFileSystem fileSystem = path.getFileSystem();
+        JAppFileSystem.Node node = fileSystem.resolve(path);
+        if (node == null) {
+            throw new NoSuchFileException(path.toString());
+        }
+        return new JAppFileAttributes(fileSystem, node);
     }
 
     @Override

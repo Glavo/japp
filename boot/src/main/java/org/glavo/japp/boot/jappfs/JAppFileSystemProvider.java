@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -183,13 +184,29 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
-        return null; // TODO
+        JAppPath jappPath = toJAppPath(path);
+        if (type == BasicFileAttributeView.class) {
+            return (V) new JAppFileAttributeView(jappPath, false, options);
+        }
+        if (type == JAppFileAttributeView.class) {
+            return (V) new JAppFileAttributeView(jappPath, true, options);
+        }
+        return null;
     }
 
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
-        return null; // TODO
+        if (type == BasicFileAttributes.class || type == JAppFileAttributes.class) {
+            JAppPath jappPath = toJAppPath(path);
+            JAppFileSystem fileSystem = jappPath.getFileSystem();
+            JAppFileSystem.Node node = fileSystem.resolve(jappPath);
+            if (node == null) {
+                throw new NoSuchFileException(path.toString());
+            }
+        }
+        return null;
     }
 
     @Override

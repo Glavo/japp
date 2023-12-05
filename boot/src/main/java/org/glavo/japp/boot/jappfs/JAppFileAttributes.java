@@ -15,61 +15,77 @@
  */
 package org.glavo.japp.boot.jappfs;
 
-import org.glavo.japp.TODO;
-
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
 public class JAppFileAttributes implements BasicFileAttributes {
 
+    private final JAppFileSystem fileSystem;
     private final JAppFileSystem.Node node;
 
-    public JAppFileAttributes(JAppFileSystem.Node node) {
+    public JAppFileAttributes(JAppFileSystem fileSystem, JAppFileSystem.Node node) {
+        this.fileSystem = fileSystem;
         this.node = node;
+    }
+
+    private FileTime getDefaultFileTime() {
+        return FileTime.fromMillis(0);
     }
 
     @Override
     public FileTime lastModifiedTime() {
-        throw new TODO();
+        if (node instanceof JAppFileSystem.ResourceNode) {
+            return ((JAppFileSystem.ResourceNode) node).getResource().getLastModifiedTime();
+        } else {
+            return getDefaultFileTime();
+        }
     }
 
     @Override
     public FileTime lastAccessTime() {
-        throw new TODO();
+        if (node instanceof JAppFileSystem.ResourceNode) {
+            return ((JAppFileSystem.ResourceNode) node).getResource().getLastAccessTime();
+        } else {
+            return getDefaultFileTime();
+        }
     }
 
     @Override
     public FileTime creationTime() {
-        throw new TODO();
+        if (node instanceof JAppFileSystem.ResourceNode) {
+            return ((JAppFileSystem.ResourceNode) node).getResource().getCreationTime();
+        } else {
+            return getDefaultFileTime();
+        }
     }
 
     @Override
     public boolean isRegularFile() {
-        throw new TODO();
+        return node instanceof JAppFileSystem.ResourceNode;
     }
 
     @Override
     public boolean isDirectory() {
-        throw new TODO();
+        return node instanceof JAppFileSystem.DirectoryNode;
     }
 
     @Override
     public boolean isSymbolicLink() {
-        throw new TODO();
+        return false;
     }
 
     @Override
     public boolean isOther() {
-        throw new TODO();
+        return false;
     }
 
     @Override
     public long size() {
-        throw new TODO();
+        return (node instanceof JAppFileSystem.ResourceNode) ? ((JAppFileSystem.ResourceNode) node).getResource().getSize() : 0L;
     }
 
     @Override
     public Object fileKey() {
-        throw new TODO();
+        return node;
     }
 }
