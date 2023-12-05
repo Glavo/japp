@@ -15,11 +15,9 @@
  */
 package org.glavo.japp.util;
 
-import java.io.UTFDataFormatException;
-
 public final class MUTF8 {
-    public static int charsFromMUTF8Length(byte[] bytes, int offset, int count) {
-        int length = 0;
+    public static String stringFromMUTF8(byte[] bytes, int offset, int count) {
+        StringBuilder builder = new StringBuilder(count);
 
         for (int i = offset; i < offset + count; i++) {
             byte ch = bytes[i];
@@ -28,35 +26,17 @@ public final class MUTF8 {
                 break;
             }
 
-            if ((ch & 0xC0) != 0x80) {
-                length++;
-            }
-        }
-
-        return length;
-    }
-
-    public static void charsFromMUTF8(char[] chars, byte[] bytes, int offset, int count) throws UTFDataFormatException {
-        int j = 0;
-
-        for (int i = offset; i < offset + count; i++) {
-            byte ch = bytes[i];
-
-            if (ch == 0) {
-                break;
-            }
-
-            boolean is_unicode = (ch & 0x80) != 0;
+            boolean isUnicode = (ch & 0x80) != 0;
             int uch = ch & 0x7F;
 
-            if (is_unicode) {
+            if (isUnicode) {
                 int mask = 0x40;
 
                 while ((uch & mask) != 0) {
                     ch = bytes[++i];
 
                     if ((ch & 0xC0) != 0x80) {
-                        throw new UTFDataFormatException("bad continuation 0x" + Integer.toHexString(ch));
+                        throw new IllegalArgumentException("bad continuation 0x" + Integer.toHexString(ch));
                     }
 
                     uch = ((uch & ~mask) << 6) | (ch & 0x3F);
@@ -64,25 +44,14 @@ public final class MUTF8 {
                 }
 
                 if ((uch & 0xFFFF) != uch) {
-                    throw new UTFDataFormatException("character out of range \\u" + Integer.toHexString(uch));
+                    throw new IllegalArgumentException("character out of range \\u" + Integer.toHexString(uch));
                 }
             }
 
-            chars[j++] = (char) uch;
-        }
-    }
-
-    public static String stringFromMUTF8(byte[] bytes, int offset, int count) {
-        int length = charsFromMUTF8Length(bytes, offset, count);
-        char[] chars = new char[length];
-
-        try {
-            charsFromMUTF8(chars, bytes, offset, count);
-        } catch (UTFDataFormatException ex) {
-            throw new InternalError("Attempt to convert non modified UTF-8 byte sequence", ex);
+            builder.append(uch);
         }
 
-        return new String(chars);
+        return builder.toString();
     }
 
     public static String stringFromMUTF8(byte[] bytes) {
