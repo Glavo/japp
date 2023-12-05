@@ -71,6 +71,7 @@ public final class JAppReader implements DecompressContext, Closeable {
             mappedBuffer = ByteBuffer.allocateDirect((int) metadataOffset);
             IOUtils.readFully(channel.position(baseOffset), mappedBuffer);
             mappedBuffer.flip();
+            mappedBuffer = mappedBuffer.asReadOnlyBuffer();
         } else if (metadataOffset < Integer.MAX_VALUE) {
             mappedBuffer = channel.map(FileChannel.MapMode.READ_ONLY, baseOffset, metadataOffset);
         }
