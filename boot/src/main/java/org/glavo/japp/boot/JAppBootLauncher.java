@@ -29,10 +29,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class JAppBootLauncher {
     private static void addExportsOrOpens(ModuleLayer layer, boolean opens, List<String> list) {
@@ -111,10 +108,13 @@ public final class JAppBootLauncher {
         }
 
         for (String m : list) {
-            Module module = layer.findModule(m).get();
+            Optional<Module> module = layer.findModule(m);
+            if (!module.isPresent()) {
+                throw new IllegalArgumentException("Module " + m + " not found");
+            }
 
             try {
-                Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module);
+                Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module.get());
             } catch (Throwable e) {
                 throw new IllegalArgumentException(e);
             }
@@ -141,13 +141,16 @@ public final class JAppBootLauncher {
             layer = ModuleLayer.boot();
         } else {
             JAppModuleFinder finder = new JAppModuleFinder(reader, modules, args.externalModules);
+            Set<ModuleReference> references = finder.findAll();
+            Set<String> allModuleNames = new HashSet<>();
 
-            for (ModuleReference mref : finder.findAll()) {
+            for (ModuleReference mref : references) {
                 loader.loadModule(mref);
+                allModuleNames.add(mref.descriptor().name());
             }
 
             Configuration configuration = ModuleLayer.boot().configuration()
-                    .resolve(finder, ModuleFinder.of(), reader.getRoot(JAppResourceRoot.MODULES).keySet());
+                    .resolve(finder, ModuleFinder.of(), allModuleNames);
 
             layer = ModuleLayer.defineModules(configuration, Collections.singletonList(ModuleLayer.boot()), mn -> loader).layer();
         }
