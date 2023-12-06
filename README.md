@@ -2,22 +2,54 @@
 
 A new packaging format for Java programs. 
 
-In the early stages and under active development, stay tuned.
-
-Features implemented:
+Features:
 
 * Pack multiple modular or non-modular JARs into one file;
-* Preserves all `module-info.class`, works well with the JPMS (Java Platform Module System);
-* Includes necessary JVM options (e.g. `--add-opens`/`--enable-native-access`) so no need for user to add them;
-* Supports adding shebang to the header of the file, so it can be executed as easily as a script;
-* Supports adding classpath/module/JVM options conditionally;
-* Download some dependencies from maven repository (or elsewhere) before running;
-* Share data between class files to reduce file size;
-* Automatic selection of applicable Java.
+  * Unlike Shadow JAR (Fat JAR), JApp has good support for the Java module system;
+    Resources from different JARs will be isolated under different prefixes instead of being mixed.
 
-Features being implemented:
+    For example, if we put Gson and Apache Commons Lang 3 as modules into a JApp file,
+    their `module-info.class` URIs are as follows:
+    
+    ```
+    japp:/modules/com.google.gson/module-info.class
+    japp:/modules/org.apache.commons.lang3/module-info.class
+    ```
 
-* Includes some default JVM options that can be easily overridden by the user;
+    JApp also supports using the class path and module path at the same time.
+    After adding the above two modules, you can also put Guava into the class path,
+    the URI of class `com.google.common.collect.Multimap` is as follows:
+    
+    ```
+    japp:/classpath/guava-32.1.3-jre.jar/com/google/common/collect/Multimap.class
+    ```
+* JApp files can declare dependencies on JARs from other sources (such as maven repositories).
+  The contents of these JARs are not included in the JApp file, but are resolved on demand before running, 
+  and then added to the module path or classpath like the JARs within the JApp file.
+* Using the [Zstandard](https://github.com/facebook/zstd) compression method, the file size is smaller than JAR;
+  * JApp compresses files using the zstd, which decompresses faster and has smaller file sizes than the deflate compression method used by JAR.
+    In addition, JApp also compresses file metadata and shares strings in the constant pool of Java Class files,
+    so JApp files are usually smaller than JAR files.
+
+    As a test case, I packed the [aya language](https://github.com/aya-prover/aya-dev) as a japp file,
+    the original fat jar is 6.81MiB, while the resulting JApp file is only 5.08MiB (-25.40%).
+* Automatically select a suitable Java Runtime to start the program based on user-specified conditions;
+  * Users can specify some conditions (such as Java version >= 17),
+    and then the JApp launcher will find a suitable Java Runtime installed by the user to start the program based on these conditions.
+* JApp files can contain JVM options (such as `--add-exports`, `--enable-native-access`, `-D`, etc.), which are passed to the JVM at runtime;
+* It supports shebang, so you can run it with just `./myapp.japp <args>`;
+* Supports conditional addition of JVM options, classpath, and module paths.
+
+Work in progress:
+
+* Reimplement launcher in native language;
+  * The japp launcher's job is to find suitable Java, synthesize JVM options and class/module paths based on conditions.
+    In the current prototype it is implemented in Java, which brings some limitations, I will rewrite it in native language in the future.
+* Implement a manager that manages a set of Java;
+  * Now that the japp launcher will only scan Java from a fixed list of paths, 
+    we need a way to manage the list of available Java runtimes instead.
+
+To be investigated:
 
 * Support bundling and loading native libraries;
 * Build time optimization.
