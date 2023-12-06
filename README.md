@@ -43,7 +43,7 @@ Features:
 Work in progress:
 
 * Reimplement launcher in native language;
-  * The japp launcher's job is to find suitable Java, synthesize JVM options and class/module paths based on conditions.
+  * The japp launcher's job is to find suitable Java, synthesize JVM options, and class/module paths based on conditions.
     In the current prototype it is implemented in Java, which brings some limitations, I will rewrite it in native language in the future.
 * Implement a manager that manages a set of Java;
   * Now that the japp launcher will only scan Java from a fixed list of paths, 
@@ -53,6 +53,7 @@ Work in progress:
 To be investigated:
 
 * Support bundling and loading native libraries;
+* Supports reading JMod files when creating;
 * Build time optimization.
 
 Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
