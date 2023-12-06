@@ -48,6 +48,8 @@ Work in progress:
 * Implement a manager that manages a set of Java;
   * Now that the japp launcher will only scan Java from a fixed list of paths, 
     we need a way to manage the list of available Java runtimes instead.
+* Java 8 Support.
+  * 
 
 To be investigated:
 
@@ -83,16 +85,6 @@ Then, package your program as a japp file:
 .\bin\japp.ps1 create -o myapp.japp --module-path <your-app-module-path> --class-path <your-app-class-path> <main-class>
 ```
 
-Currently supported options:
-
-* `-o <output file>`
-* `--module-path <module path>`
-* `--class-path <class path>`
-* `--add-opens <module>/<package>=<target-module>(,<target-module>)*`
-* `--add-exports <module>/<package>=<target-module>(,<target-module>)*`
-* `--enable-native-access <module name>[,<module name>...]`
-* `-D<name>=<value>`
-
 Now you can run it:
 
 (For Linux/macOS)
@@ -104,6 +96,95 @@ Now you can run it:
 ```powershell
 .\bin\japp.ps1 run myapp.japp <args>
 ```
+
+## Options
+
+The `japp create` command accepts the following basic options:
+
+* `-o <output file>`
+
+### Config Group and Conditions
+
+JApp packages class paths, module paths, JVM options, etc. into **config group**s.
+You can add these things to the config group using the following command line options:
+
+* `--module-path <module path>`
+* `--class-path <class path>`
+* `--add-opens <module>/<package>=<target-module>(,<target-module>)*`
+* `--add-exports <module>/<package>=<target-module>(,<target-module>)*`
+* `--enable-native-access <module name>[,<module name>...]`
+* `-D<name>=<value>`
+
+A config group can have a set of sub-config groups.
+By default, these options are added to the root config group.
+Use the `--group` command line option to start a new sub-config group, and use the `--end-group` option to end it.
+
+Each config group can specify a **condition** using the `--condition <condition>` option.
+
+Conditions represent requirements for the Java runtime and environment.
+For example, condition `java(version: 11, arch: x86-64|aarch64)` indicates 
+that the Java runtime version must be at least 11 and the architecture must be x86-64 or AArch64.
+You can also combine multiple conditions using `&&` or `||`, such as `java(version: 11) || java(arch: x86-64)`.
+
+The japp launcher will search for a suitable Java runtime based on the condition of the root config group;
+If there is no Java runtime that meets the condition, an error will be reported.
+
+The conditions of sub-config groups are used to determine whether the group should be applied.
+
+Example:
+
+```bash
+./bin/japp.sh create -o myapp.japp \
+  --condition java(version: 11) --module-path ./myapp.jar \
+  --group --condition java(version: 22) --enable-native-access=org.glavo.myapp --end-group \
+  -m org.glavo.myapp
+```
+
+In the above example, assuming that `myapp.jar` exists in the current directory (the java module name is `org.glavo.myapp`),
+this command will generate a japp file named `myapp.japp`.
+The main module (also the only module in the `myapp.japp`) is `org.glavo.myapp`.
+
+All you need to run it is this:
+
+```bash
+./myapp.japp
+```
+
+The japp launcher looks for a Java runtime version 11 or higher to run the program.
+If the Java runtime found is of version 22 or higher, the JVM option `--enable-native-access=org.glavo.myapp` is added.
+
+### Classpath and Module Path
+
+The `--module-path` and `--classpath` options above accept arguments similar to the `java`/`javac` command:
+
+(For Windows, please replace the path separator with `;`)
+```
+--module-path <path 1>:...:<path n>
+```
+
+For the `java`/`javac` command, each path must be a file.
+But for japp, each path can contain an optional prefix `[<key1>=<value1>,...,<key n>=<value n>]` to specify options.
+We can use this syntax to specify to look for jars from the maven repository instead of locally:
+
+```
+[type=maven]<group>/<artifact>/<version>
+```
+
+For example, the following option will add gson to the module path:
+
+```
+--module-path [type=maven]com.google.code.gson/gson/2.10
+```
+
+By default, this dependency is bundled into the japp file just like a normal module path item.
+However, you can use the `bundle=false` option to tell japp to only declare a dependency on it and not bundle its contents into the japp file:
+
+```
+--module-path [type=maven,bundle=false]com.google.code.gson/gson/2.10
+```
+
+When running this japp file, the japp launcher will first download the dependencies locally,
+then add it to the module path and then start the program.
 
 ## Thanks
 
