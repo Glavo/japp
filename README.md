@@ -114,6 +114,8 @@ You can add these things to the config group using the following command line op
 * `--add-exports <module>/<package>=<target-module>(,<target-module>)*`
 * `--enable-native-access <module name>[,<module name>...]`
 * `-D<name>=<value>`
+* `-m <main module>`
+* `<main class>`
 
 A config group can have a set of sub-config groups.
 By default, these options are added to the root config group.
