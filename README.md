@@ -49,7 +49,6 @@ Work in progress:
   * Now that the japp launcher will only scan Java from a fixed list of paths, 
     we need a way to manage the list of available Java runtimes instead.
 * Java 8 Support.
-  * 
 
 To be investigated:
 
@@ -60,12 +59,10 @@ Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
 
 ## Try it
 
-This project is still in its early stages, but we already have a working prototype.
-
-Note: The purpose of the current prototype is for exploration and verification, 
-many important features have not yet been implemented.
-The current prototype only supports Java 9+, it will be compatible with Java 8 in the future.
-Compatibility with Java 7 or earlier is not a goal.
+NOTE: This project is in its early stages.
+Some designs have been simplified for convenience, and they will be improved in the future.
+The japp file created so far should be used for testing only;
+The format of japp files is not yet stable and is subject to change.
 
 To try this project, you first need to build it:
 
