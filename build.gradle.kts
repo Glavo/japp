@@ -66,13 +66,7 @@ tasks.jar {
 }
 
 tasks.shadowJar {
-    outputs.file(rootProject.layout.buildDirectory.file("japp.jar"))
-    doLast {
-        copy {
-            from(this@shadowJar.archiveFile)
-            into(rootProject.layout.buildDirectory)
-            rename(".*", "japp.jar")
-        }
-    }
+    destinationDirectory.set(rootProject.layout.buildDirectory)
+    archiveFileName.set("japp.jar")
 }
 
