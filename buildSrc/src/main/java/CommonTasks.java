@@ -13,30 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.japp.platform;
 
-import org.glavo.japp.JAppConfigGroup;
+import org.gradle.api.Project;
+import org.gradle.api.tasks.TaskProvider;
+import org.gradle.jvm.tasks.Jar;
 
-public final class JAppRuntimeContext {
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
-    public static JAppRuntimeContext search(JAppConfigGroup config) {
-        for (JavaRuntime java : JavaRuntime.getAllJava()) {
-            JAppRuntimeContext context = new JAppRuntimeContext(java);
-            if (config.canApply(context)) {
-                return context;
-            }
-        }
-
+public final class CommonTasks {
+    public static TaskProvider<Jar> fatJar() {
+        // TODO
         return null;
-    }
-
-    private final JavaRuntime java;
-
-    public JAppRuntimeContext(JavaRuntime java) {
-        this.java = java;
-    }
-
-    public JavaRuntime getJava() {
-        return java;
     }
 }

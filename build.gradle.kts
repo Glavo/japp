@@ -20,15 +20,6 @@ allprojects {
         sourceCompatibility = "9"
         targetCompatibility = "9"
     }
-
-    tasks.jar {
-        manifest {
-            attributes(
-                // In the early stages we isolate the configuration in the project directory
-                "Project-Directory" to rootProject.layout.projectDirectory.asFile.absolutePath,
-            )
-        }
-    }
 }
 
 tasks.create("buildAll") {

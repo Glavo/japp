@@ -17,6 +17,7 @@ package org.glavo.japp.packer;
 
 import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
+import org.glavo.japp.JAppProperties;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResource;
 import org.glavo.japp.boot.JAppResourceField;
@@ -41,7 +42,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.util.*;
-import java.util.jar.Manifest;
 
 public final class JAppPacker implements CompressContext {
 
@@ -353,9 +353,7 @@ public final class JAppPacker implements CompressContext {
         String header;
         try (InputStream input = JAppPacker.class.getResourceAsStream("header.sh")) {
             header = new String(input.readAllBytes(), StandardCharsets.UTF_8)
-                    .replace("%japp.project.directory%", new Manifest(JAppPacker.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
-                            .getMainAttributes()
-                            .getValue("Project-Directory"));
+                    .replace("%japp.project.directory%", JAppProperties.getProjectDirectory().toString());
         }
 
         try (OutputStream out = Files.newOutputStream(outputFile)) {

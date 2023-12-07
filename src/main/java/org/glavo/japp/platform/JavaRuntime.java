@@ -15,6 +15,8 @@
  */
 package org.glavo.japp.platform;
 
+import org.glavo.japp.JAppProperties;
+
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -105,7 +107,7 @@ public final class JavaRuntime {
             }
         }
 
-        searchIn(JAppRuntimeContext.getHome().resolve("jvm"));
+        searchIn(JAppProperties.getHomeDirectory().resolve("jvm"));
         tryAddJava(Paths.get(System.getProperty("java.home")));
     }
 

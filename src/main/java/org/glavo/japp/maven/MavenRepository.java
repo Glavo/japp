@@ -15,7 +15,7 @@
  */
 package org.glavo.japp.maven;
 
-import org.glavo.japp.platform.JAppRuntimeContext;
+import org.glavo.japp.JAppProperties;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -93,7 +93,7 @@ public abstract class MavenRepository {
         public Path resolve(String group, String artifact, String version, String classifier) throws Exception {
             String fileName = fileName(artifact, version, classifier);
 
-            Path cacheDir = JAppRuntimeContext.getHome()
+            Path cacheDir = JAppProperties.getHomeDirectory()
                     .resolve("cache")
                     .resolve("maven")
                     .resolve(name)
