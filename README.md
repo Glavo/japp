@@ -42,6 +42,7 @@ Features:
 
 Work in progress:
 
+* More tests;
 * Reimplement launcher in native language;
   * The japp launcher's job is to find suitable Java, synthesize JVM options, and class/module paths based on conditions.
     In the current prototype it is implemented in Java, which brings some limitations, I will rewrite it in native language in the future.
