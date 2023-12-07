@@ -49,12 +49,14 @@ Work in progress:
 * Implement a manager that manages a set of Java;
   * Now that the japp launcher will only scan Java from a fixed list of paths, 
     we need a way to manage the list of available Java runtimes instead.
-* Java 8 Support.
+* Support for filtering unused classes;
+* Support for Java 8.
 
 To be investigated:
 
 * Support bundling and loading native libraries;
 * Supports reading JMod files when creating;
+* Proguard support;
 * Build time optimization.
 
 Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
