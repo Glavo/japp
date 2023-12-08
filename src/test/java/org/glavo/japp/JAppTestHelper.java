@@ -19,21 +19,36 @@ import org.glavo.japp.platform.JavaRuntime;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public final class JAppTestHelper {
-    private static final Path jar = Paths.get(System.getProperty("org.glavo.japp.jar"));
+    private static final String jar = System.getProperty("org.glavo.japp.jar");
 
-    private static void runProcess(String[] commands) throws IOException {
+    private static String runJApp(String mode, List<String> args) throws IOException {
+        ArrayList<String> list = new ArrayList<>();
+        list.add(JavaRuntime.fromDir(Paths.get(System.getProperty("java.home"))).getExec().toString());
+        list.add("-Dsun.stdout.encoding=UTF-8");
+        list.add("-Dsun.stderr.encoding=UTF-8");
+        list.add("-Dstdout.encoding=UTF-8");
+        list.add("-Dstderr.encoding=UTF-8");
+        list.add("-jar");
+        list.add(jar);
+        list.add(mode);
+        list.addAll(args);
+
         try {
-            Process process = Runtime.getRuntime().exec(commands);
+            Process process = Runtime.getRuntime().exec(list.toArray(new String[0]));
             int res = process.waitFor();
             if (res != 0) {
-                throw new RuntimeException(new String(process.getErrorStream().readAllBytes()));
+                throw new RuntimeException(new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
             }
+            return new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         } catch (InterruptedException e) {
             throw new AssertionError(e);
         }
@@ -56,13 +71,19 @@ public final class JAppTestHelper {
     public static FileHolder create(String... args) throws IOException {
         Path targetFile = Files.createTempFile("japp-test-", ".japp").toAbsolutePath();
 
-        String execPath = JavaRuntime.fromDir(Paths.get(System.getProperty("java.home"))).getExec().toString();
-
-        runProcess(Stream.concat(
-                Stream.of(execPath, "-o", targetFile.toString()),
-                Stream.of(args)
-        ).toArray(String[]::new));
+        ArrayList<String> argsList = new ArrayList<>();
+        argsList.add("-o");
+        argsList.add(targetFile.toString());
+        Collections.addAll(argsList, args);
+        runJApp("create", argsList);
 
         return new FileHolder(targetFile);
+    }
+
+    public static void launch(Path file, String... args) throws IOException {
+        ArrayList<String> argsList = new ArrayList<>();
+        argsList.add(file.toAbsolutePath().normalize().toString());
+        Collections.addAll(argsList, args);
+        runJApp("run", argsList);
     }
 }
