@@ -46,8 +46,11 @@ tasks.compileTestJava {
 
 tasks.test {
     useJUnitPlatform()
-    jvmArgs = listOf(
+    jvmArgs(
         "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
+    )
+    systemProperties(
+        "org.glavo.japp.jar" to tasks.getByName<Jar>("shadowJar").archiveFile.get().asFile.absolutePath
     )
 }
 
