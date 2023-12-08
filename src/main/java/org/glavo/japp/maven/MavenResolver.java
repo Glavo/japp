@@ -23,7 +23,7 @@ import java.util.Map;
 public final class MavenResolver {
 
     public static final MavenRepository CENTRAL = new MavenRepository.Remote("central", "https://repo1.maven.org/maven2");
-    public static final MavenRepository LOCAL = new MavenRepository.Local("local", Paths.get("user.home", ".m2", ".repository"));
+    public static final MavenRepository LOCAL = new MavenRepository.Local("local", Paths.get(System.getProperty("user.home"), ".m2", ".repository"));
 
     private static final Map<String, MavenRepository> repos = new HashMap<>();
 
