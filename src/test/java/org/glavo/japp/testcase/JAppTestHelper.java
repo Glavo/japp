@@ -26,10 +26,11 @@ import java.util.List;
 
 public final class JAppTestHelper {
     private static final String jar = System.getProperty("japp.jar");
+    private static final boolean isWindows = System.getProperty("os.name").startsWith("Win");
 
     private static String runJApp(String mode, List<String> args) throws IOException {
         ArrayList<String> list = new ArrayList<>();
-        list.add(System.getProperty("java.home") + (System.getProperty("os.name").startsWith("Win") ? "\\bin\\java.exe" : "/bin/java"));
+        list.add(System.getProperty("java.home") + (isWindows ? "\\bin\\java.exe" : "/bin/java"));
         list.add("-Dsun.stdout.encoding=UTF-8");
         list.add("-Dsun.stderr.encoding=UTF-8");
         list.add("-Dstdout.encoding=UTF-8");

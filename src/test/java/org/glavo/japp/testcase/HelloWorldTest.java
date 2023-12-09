@@ -27,7 +27,7 @@ public final class HelloWorldTest {
                 "--module-path", System.getProperty("japp.testcase.helloworld"),
                 "org.glavo.japp.testcase.helloworld.HelloWorld"
         )) {
-            Assertions.assertEquals("Hello World!\n", JAppTestHelper.launch(holder.file));
+            Assertions.assertEquals("Hello World!" + System.lineSeparator(), JAppTestHelper.launch(holder.file));
         }
     }
 }
