@@ -45,7 +45,8 @@ tasks.compileTestJava {
 }
 
 tasks.test {
-    dependsOn(":test-case:HelloWorld:jar")
+    dependsOn("buildAll",
+        ":test-case:HelloWorld:jar")
 
     useJUnitPlatform()
     jvmArgs(

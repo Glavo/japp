@@ -39,8 +39,6 @@ public final class JAppTestHelper {
         list.add(mode);
         list.addAll(args);
 
-        System.out.println(list);
-
         try {
             Process process = Runtime.getRuntime().exec(list.toArray(new String[0]));
             int res = process.waitFor();
