@@ -21,13 +21,18 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 public final class HelloWorldTest {
-    @Test
-    public void test() throws IOException {
+    private void test(boolean useModulePath) throws IOException {
         try (JAppTestHelper.FileHolder holder = JAppTestHelper.create(
-                "--module-path", System.getProperty("japp.testcase.helloworld"),
+                useModulePath ? "--module-path" : "--classpath", System.getProperty("japp.testcase.helloworld"),
                 "org.glavo.japp.testcase.helloworld.HelloWorld"
         )) {
             Assertions.assertEquals("Hello World!" + System.lineSeparator(), JAppTestHelper.launch(holder.file));
         }
+    }
+
+    @Test
+    public void test() throws IOException {
+        test(true);
+        test(false);
     }
 }
