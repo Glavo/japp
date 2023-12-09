@@ -45,13 +45,24 @@ tasks.compileTestJava {
 }
 
 tasks.test {
+    dependsOn(":test-case:HelloWorld:jar")
+
     useJUnitPlatform()
     jvmArgs(
         "--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED"
     )
+
+    fun jarPath(projectName: String) =
+        project(projectName).tasks.getByName<Jar>("jar").archiveFile.get().asFile.absolutePath
+
     systemProperties(
-        "org.glavo.japp.jar" to tasks.getByName<Jar>("shadowJar").archiveFile.get().asFile.absolutePath
+        "japp.jar" to tasks.getByName<Jar>("shadowJar").archiveFile.get().asFile.absolutePath,
+        "japp.testcase.helloworld" to jarPath(":test-case:HelloWorld")
     )
+
+    testLogging {
+        this.showStandardStreams = true
+    }
 }
 
 dependencies {

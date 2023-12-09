@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.japp;
-
-import org.glavo.japp.platform.JavaRuntime;
+package org.glavo.japp.testcase;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public final class JAppTestHelper {
-    private static final String jar = System.getProperty("org.glavo.japp.jar");
+    private static final String jar = System.getProperty("japp.jar");
 
     private static String runJApp(String mode, List<String> args) throws IOException {
         ArrayList<String> list = new ArrayList<>();
-        list.add(JavaRuntime.fromDir(Paths.get(System.getProperty("java.home"))).getExec().toString());
+        list.add(System.getProperty("java.home") + (System.getProperty("os.name").startsWith("Win") ? "\\bin\\java.exe" : "/bin/java"));
         list.add("-Dsun.stdout.encoding=UTF-8");
         list.add("-Dsun.stderr.encoding=UTF-8");
         list.add("-Dstdout.encoding=UTF-8");
@@ -42,11 +39,14 @@ public final class JAppTestHelper {
         list.add(mode);
         list.addAll(args);
 
+        System.out.println(list);
+
         try {
             Process process = Runtime.getRuntime().exec(list.toArray(new String[0]));
             int res = process.waitFor();
             if (res != 0) {
-                throw new RuntimeException(new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
+                throw new RuntimeException("Process exit code is " + res + ", stderr=" +
+                                           new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
             }
             return new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         } catch (InterruptedException e) {
@@ -80,10 +80,10 @@ public final class JAppTestHelper {
         return new FileHolder(targetFile);
     }
 
-    public static void launch(Path file, String... args) throws IOException {
+    public static String launch(Path file, String... args) throws IOException {
         ArrayList<String> argsList = new ArrayList<>();
         argsList.add(file.toAbsolutePath().normalize().toString());
         Collections.addAll(argsList, args);
-        runJApp("run", argsList);
+        return runJApp("run", argsList);
     }
 }

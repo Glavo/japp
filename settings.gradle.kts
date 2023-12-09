@@ -3,6 +3,6 @@ rootProject.name = "japp"
 include(
     "base",
     "boot",
-    // "launcher",
-    // "packer",
+
+    "test-case:HelloWorld"
 )
