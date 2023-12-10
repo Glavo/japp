@@ -183,6 +183,9 @@ public final class JAppWriter implements CompressContext, Closeable {
     }
 
     private void writeLauncherMetadata() throws IOException {
+        if (configStack.size() != 1) {
+            throw new IllegalStateException();
+        }
         current.writeTo(output);
     }
 
