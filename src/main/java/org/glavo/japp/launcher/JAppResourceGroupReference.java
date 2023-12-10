@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.japp;
+package org.glavo.japp.launcher;
 
-import org.glavo.japp.util.ByteBufferOutputStream;
+import org.glavo.japp.io.LittleEndianDataOutput;
 import org.glavo.japp.util.ByteBufferUtils;
 
 import java.io.IOException;
@@ -84,7 +84,7 @@ public abstract class JAppResourceGroupReference {
         return name;
     }
 
-    public abstract void writeTo(ByteBufferOutputStream out) throws IOException;
+    public abstract void writeTo(LittleEndianDataOutput out) throws IOException;
 
     public static final class Local extends JAppResourceGroupReference {
         public static final byte ID = 0;
@@ -111,7 +111,7 @@ public abstract class JAppResourceGroupReference {
         }
 
         @Override
-        public void writeTo(ByteBufferOutputStream out) {
+        public void writeTo(LittleEndianDataOutput out) throws IOException {
             out.writeByte(MAGIC_NUMBER);
             out.writeByte(ID);
             out.writeString(name);
@@ -177,7 +177,7 @@ public abstract class JAppResourceGroupReference {
         }
 
         @Override
-        public void writeTo(ByteBufferOutputStream out) {
+        public void writeTo(LittleEndianDataOutput out) throws IOException {
             out.writeByte(MAGIC_NUMBER);
             out.writeByte(ID);
             out.writeString(name);

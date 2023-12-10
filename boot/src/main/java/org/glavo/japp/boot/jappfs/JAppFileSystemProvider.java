@@ -17,7 +17,7 @@ package org.glavo.japp.boot.jappfs;
 
 import org.glavo.japp.boot.JAppReader;
 import org.glavo.japp.boot.JAppResource;
-import org.glavo.japp.util.ByteBufferChannel;
+import org.glavo.japp.io.ByteBufferChannel;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

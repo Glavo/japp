@@ -1,11 +1,11 @@
 /*
- * Copyright 2023 Glavo
+ * Copyright (C) 2023 Glavo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.japp.util;
+package org.glavo.japp.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public final class ByteBufferOutputStream extends OutputStream {
+public final class ByteBufferOutputStream extends OutputStream implements LittleEndianDataOutput {
     private ByteBuffer buffer;
 
     public ByteBufferOutputStream() {
@@ -56,7 +56,7 @@ public final class ByteBufferOutputStream extends OutputStream {
         return buffer;
     }
 
-    public int getTotalBytes() {
+    public long getTotalBytes() {
         return buffer.position();
     }
 
@@ -80,25 +80,9 @@ public final class ByteBufferOutputStream extends OutputStream {
         buffer.putShort(v);
     }
 
-    public void writeUnsignedShort(int v) {
-        if (v > 0xffff) {
-            throw new IllegalArgumentException();
-        }
-
-        writeShort((short) v);
-    }
-
     public void writeInt(int v) {
         prepare(Integer.BYTES);
         buffer.putInt(v);
-    }
-
-    public void writeUnsignedInt(long v) {
-        if (v > 0xffff_ffffL) {
-            throw new IllegalArgumentException();
-        }
-
-        writeInt((int) v);
     }
 
     public void writeLong(long v) {
@@ -106,23 +90,9 @@ public final class ByteBufferOutputStream extends OutputStream {
         buffer.putLong(v);
     }
 
-    public void writeBytes(byte[] array) {
-        writeBytes(array, 0, array.length);
-    }
-
     public void writeBytes(byte[] array, int offset, int len) {
         prepare(len);
         buffer.put(array, offset, len);
-    }
-
-    public void writeString(String str) {
-        if (str != null) {
-            byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
-            writeInt(bytes.length);
-            writeBytes(bytes);
-        } else {
-            writeInt(0);
-        }
     }
 
     public void writeTo(OutputStream out) throws IOException {

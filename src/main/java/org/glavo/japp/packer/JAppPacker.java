@@ -15,212 +15,54 @@
  */
 package org.glavo.japp.packer;
 
-import com.github.luben.zstd.Zstd;
-import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.JAppProperties;
-import org.glavo.japp.boot.JAppBootMetadata;
-import org.glavo.japp.boot.JAppResource;
-import org.glavo.japp.boot.JAppResourceField;
-import org.glavo.japp.boot.JAppResourceGroup;
-import org.glavo.japp.util.ZstdUtils;
-import org.glavo.japp.JAppConfigGroup;
-import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.condition.ConditionParser;
-import org.glavo.japp.launcher.JAppLauncherMetadata;
-import org.glavo.japp.packer.compressor.CompressContext;
-import org.glavo.japp.packer.compressor.Compressor;
-import org.glavo.japp.packer.compressor.Compressors;
-import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
+import org.glavo.japp.io.ByteBufferOutputStream;
+import org.glavo.japp.io.IOUtils;
+import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.packer.processor.ClassPathProcessor;
-import org.glavo.japp.util.ByteBufferOutputStream;
-import org.glavo.japp.util.XxHash64;
 
-import java.io.*;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileTime;
-import java.util.*;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 
-public final class JAppPacker implements CompressContext {
+public final class JAppPacker {
+    private static final class JAppConfigGroupBuilder {
+        final JAppConfigGroup group = new JAppConfigGroup();
+        final JAppConfigGroupBuilder parent;
+        final List<JAppConfigGroupBuilder> children = new ArrayList<>();
 
-    private static final int MAGIC_NUMBER = 0x5050414a;
-    private static final short MAJOR_VERSION = -1;
-    private static final short MINOR_VERSION = 0;
+        String classPath;
+        String modulePath;
 
-    private final ByteBufferOutputStream output = new ByteBufferOutputStream(32 * 1024 * 1024);
-    {
-        output.writeInt(MAGIC_NUMBER);
-    }
-
-    private final JAppConfigGroup root = new JAppConfigGroup();
-
-    private final ArrayDeque<JAppConfigGroup> stack = new ArrayDeque<>();
-    private JAppConfigGroup current = root;
-
-    final List<Map<String, JAppResourceInfo>> groups = new ArrayList<>();
-
-    final Compressor compressor = Compressors.DEFAULT;
-    private final ByteArrayPoolBuilder pool = new ByteArrayPoolBuilder();
-
-    private boolean finished = false;
-
-    private JAppPacker() {
-    }
-
-    public ByteBufferOutputStream getOutput() {
-        return output;
-    }
-
-    public long getCurrentOffset() {
-        return output.getTotalBytes();
-    }
-
-    @Override
-    public ByteArrayPoolBuilder getPool() {
-        return pool;
-    }
-
-    public JAppResourcesWriter createResourcesWriter(String name, boolean isModulePath) {
-        return new JAppResourcesWriter(this, name, isModulePath);
-    }
-
-    public void addReference(JAppResourceGroupReference reference, boolean isModulePath) {
-        Objects.requireNonNull(reference);
-
-        if (isModulePath) {
-            current.modulePath.add(reference);
-        } else {
-            current.classPath.add(reference);
-        }
-    }
-
-    private static void writeResourceFileTimeField(ByteBufferOutputStream output, JAppResourceField field, FileTime time) {
-        if (time != null) {
-            output.writeByte(field.id());
-            output.writeLong(time.toMillis());
-        }
-    }
-    private static void writeResource(JAppResourceInfo resource, ByteBufferOutputStream groupBodyBuilder) {
-        byte[] nameBytes = resource.name.getBytes(StandardCharsets.UTF_8);
-
-        groupBodyBuilder.writeByte(JAppResource.MAGIC_NUMBER);
-        groupBodyBuilder.writeByte(resource.method.id());
-        groupBodyBuilder.writeUnsignedShort(nameBytes.length);
-        groupBodyBuilder.writeInt(0);
-        groupBodyBuilder.writeLong(resource.size);
-        groupBodyBuilder.writeLong(resource.compressedSize);
-        groupBodyBuilder.writeLong(resource.offset);
-        groupBodyBuilder.writeBytes(nameBytes);
-
-        if (resource.checksum != null) {
-            groupBodyBuilder.writeByte(JAppResourceField.CHECKSUM.id());
-            groupBodyBuilder.writeLong(resource.checksum);
+        public JAppConfigGroupBuilder(JAppConfigGroupBuilder parent) {
+            this.parent = parent;
         }
 
-        writeResourceFileTimeField(groupBodyBuilder, JAppResourceField.FILE_CREATE_TIME, resource.creationTime);
-        writeResourceFileTimeField(groupBodyBuilder, JAppResourceField.FILE_LAST_MODIFIED_TIME, resource.lastModifiedTime);
-        writeResourceFileTimeField(groupBodyBuilder, JAppResourceField.FILE_LAST_ACCESS_TIME, resource.lastAccessTime);
-
-        groupBodyBuilder.writeByte(JAppResourceField.END.id());
-    }
-
-    private void writeBootMetadata() throws IOException {
-        output.writeInt(JAppBootMetadata.MAGIC_NUMBER);
-        output.writeInt(groups.size());
-        pool.writeTo(output);
-        for (Map<String, JAppResourceInfo> group : groups) {
-            ByteBufferOutputStream groupBodyBuilder = new ByteBufferOutputStream();
-            for (JAppResourceInfo resource : group.values()) {
-                writeResource(resource, groupBodyBuilder);
+        public void writeTo(JAppWriter writer) throws Throwable {
+            if (classPath != null) {
+                ClassPathProcessor.process(writer, classPath, false);
             }
-            byte[] groupBody = groupBodyBuilder.toByteArray();
-
-            CompressionMethod method = null;
-            byte[] compressed = null;
-            int compressedLength = -1;
-
-            if (groupBody.length >= 16) {
-                byte[] res = new byte[ZstdUtils.maxCompressedLength(groupBody.length)];
-                long n = Zstd.compressByteArray(res, 0, res.length, groupBody, 0, groupBody.length, 8);
-                if (n < groupBody.length - 4) {
-                    method = CompressionMethod.ZSTD;
-                    compressed = res;
-                    compressedLength = (int) n;
-                }
+            if (modulePath != null) {
+                ClassPathProcessor.process(writer, modulePath, true);
             }
 
-            if (method == null) {
-                method = CompressionMethod.NONE;
-                compressed = groupBody;
-                compressedLength = groupBody.length;
+            for (JAppConfigGroupBuilder child : children) {
+                writer.beginConfigGroup(child.group);
+                child.writeTo(writer);
+                writer.endConfigGroup();
             }
-
-            long checksum = XxHash64.hash(groupBody);
-
-            output.writeByte(JAppResourceGroup.MAGIC_NUMBER);
-            output.writeByte(method.id());
-            output.writeShort((short) 0); // reserved
-            output.writeInt(groupBody.length);
-            output.writeInt(compressedLength);
-            output.writeInt(group.size());
-            output.writeLong(checksum);
-            output.writeBytes(compressed, 0, compressedLength);
         }
     }
 
-    private void writeLauncherMetadata() throws IOException {
-        current.writeTo(output);
-    }
-
-    private void writeFileEnd(long bootMetadataOffset, long launcherMetadataOffset) throws IOException {
-        long fileSize = output.getTotalBytes() + JAppLauncherMetadata.FILE_END_SIZE;
-
-        // magic number
-        output.writeInt(MAGIC_NUMBER);
-
-        // version number
-        output.writeShort(MAJOR_VERSION);
-        output.writeShort(MINOR_VERSION);
-
-        // flags
-        output.writeLong(0L);
-
-        // file size
-        output.writeLong(fileSize);
-
-        // boot metadata offset
-        output.writeLong(bootMetadataOffset);
-
-        // launcher metadata offset
-        output.writeLong(launcherMetadataOffset);
-
-        // reserved
-        output.writeLong(0L);
-        output.writeLong(0L);
-        output.writeLong(0L);
-
-        if (output.getTotalBytes() != fileSize) {
-            throw new AssertionError();
-        }
-    }
-
-    public void writeTo(OutputStream outputStream) throws IOException {
-        if (!finished) {
-            finished = true;
-
-            long bootMetadataOffset = getCurrentOffset();
-            writeBootMetadata();
-
-            long launcherMetadataOffset = getCurrentOffset();
-            writeLauncherMetadata();
-
-            writeFileEnd(bootMetadataOffset, launcherMetadataOffset);
-        }
-
-        this.output.writeTo(outputStream);
-    }
+    private JAppConfigGroupBuilder current = new JAppConfigGroupBuilder(null);
 
     private static String nextArg(String[] args, int index) {
         if (index < args.length - 1) {
@@ -233,9 +75,8 @@ public final class JAppPacker implements CompressContext {
     }
 
     public static void main(String[] args) throws Throwable {
-        Path outputFile = null;
-
         JAppPacker packer = new JAppPacker();
+        Path outputFile = null;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -247,7 +88,7 @@ public final class JAppPacker implements CompressContext {
                 }
                 case "-module-path":
                 case "--module-path": {
-                    ClassPathProcessor.process(packer, nextArg(args, i++), true);
+                    packer.current.modulePath = nextArg(args, i++);
                     break;
                 }
                 case "-cp":
@@ -255,56 +96,52 @@ public final class JAppPacker implements CompressContext {
                 case "--classpath":
                 case "-class-path":
                 case "--class-path": {
-                    ClassPathProcessor.process(packer, nextArg(args, i++), false);
+                    packer.current.classPath = nextArg(args, i++);
                     break;
                 }
                 case "-m": {
-                    packer.current.mainModule = nextArg(args, i++);
+                    packer.current.group.mainModule = nextArg(args, i++);
                     break;
                 }
                 case "--add-reads": {
-                    packer.current.addReads.add(nextArg(args, i++));
+                    String item = nextArg(args, i++);
+                    packer.current.group.addReads.add(item);
                     break;
                 }
                 case "--add-exports": {
-                    packer.current.addExports.add(nextArg(args, i++));
+                    String item = nextArg(args, i++);
+                    packer.current.group.addExports.add(item);
                     break;
                 }
                 case "--add-opens": {
-                    packer.current.addOpens.add(nextArg(args, i++));
+                    String item = nextArg(args, i++);
+                    packer.current.group.addOpens.add(item);
                     break;
                 }
                 case "--enable-native-access": {
-                    packer.current.enableNativeAccess.add(nextArg(args, i++));
+                    String item = nextArg(args, i++);
+                    packer.current.group.enableNativeAccess.add(item);
                     break;
                 }
                 case "--condition": {
-                    packer.current.condition = nextArg(args, i++);
-
-                    try {
-                        ConditionParser.parse(packer.current.condition);
-                    } catch (IllegalArgumentException e) {
-                        System.err.println("Illegal condition: " + packer.current.condition);
-                        System.exit(1);
-                    }
-
+                    String condition = nextArg(args, i++);
+                    ConditionParser.parse(condition);
+                    packer.current.group.condition = condition;
                     break;
                 }
                 case "--group": {
-                    JAppConfigGroup group = new JAppConfigGroup();
-                    packer.stack.push(group);
-                    packer.current.subGroups.add(group);
-                    packer.current = group;
+                    JAppConfigGroupBuilder subConfig = new JAppConfigGroupBuilder(packer.current);
+                    packer.current.children.add(subConfig);
+                    packer.current = subConfig;
                     break;
                 }
                 case "--end-group": {
-                    if (packer.stack.isEmpty()) {
+                    if (packer.current.parent == null) {
                         System.err.println("Error: no open group");
                         System.exit(1);
                     }
 
-                    packer.stack.pop();
-                    packer.current = packer.stack.isEmpty() ? packer.root : packer.stack.peek();
+                    packer.current = packer.current.parent;
                     break;
                 }
                 default: {
@@ -316,31 +153,26 @@ public final class JAppPacker implements CompressContext {
                             System.exit(1);
                         }
 
-                        packer.current.jvmProperties.add(property);
+                        packer.current.group.jvmProperties.add(property);
                     } else if (arg.startsWith("--add-reads=")) {
-                        packer.current.addReads.add(arg.substring("--add-reads=".length()));
+                        packer.current.group.addReads.add(arg.substring("--add-reads=".length()));
                     } else if (arg.startsWith("--add-exports=")) {
-                        packer.current.addExports.add(arg.substring("--add-exports=".length()));
+                        packer.current.group.addExports.add(arg.substring("--add-exports=".length()));
                     } else if (arg.startsWith("--add-opens=")) {
-                        packer.current.addOpens.add(arg.substring("--add-opens=".length()));
+                        packer.current.group.addOpens.add(arg.substring("--add-opens=".length()));
                     } else if (arg.startsWith("--enable-native-access=")) {
-                        packer.current.enableNativeAccess.add(arg.substring("--enable-native-access=".length()));
+                        packer.current.group.enableNativeAccess.add(arg.substring("--enable-native-access=".length()));
                     } else if (arg.startsWith("-")) {
                         System.err.println("Error: Unrecognized option: " + arg);
                         System.exit(1);
                     } else {
-                        if (packer.current.mainClass != null) {
-                            System.err.println("Error: Duplicate main class");
-                            System.exit(1);
-                        }
-
-                        packer.current.mainClass = arg;
+                        packer.current.group.mainClass = arg;
                     }
                 }
             }
         }
 
-        if (!packer.stack.isEmpty()) {
+        if (packer.current.parent != null) {
             System.err.println("Error: group not ended");
             System.exit(1);
         }
@@ -351,16 +183,23 @@ public final class JAppPacker implements CompressContext {
         }
 
         String header;
-        try (InputStream input = JAppPacker.class.getResourceAsStream("header.sh")) {
+        try (InputStream input = JAppWriter.class.getResourceAsStream("header.sh")) {
             header = new String(input.readAllBytes(), StandardCharsets.UTF_8)
                     .replace("%japp.project.directory%", JAppProperties.getProjectDirectory().toString());
         }
 
-        try (OutputStream out = Files.newOutputStream(outputFile)) {
-            out.write(header.getBytes(StandardCharsets.UTF_8));
-            packer.writeTo(out);
+        try (FileChannel channel = FileChannel.open(outputFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
+            IOUtils.writeFully(channel, ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8)));
+
+            ByteBufferOutputStream out = new ByteBufferOutputStream();
+            try (JAppWriter writer = new JAppWriter(out, packer.current.group)) {
+                packer.current.writeTo(writer);
+            }
+            IOUtils.writeFully(channel, ByteBuffer.wrap(out.toByteArray()));
         }
 
+        //noinspection ResultOfMethodCallIgnored
         outputFile.toFile().setExecutable(true);
     }
+
 }

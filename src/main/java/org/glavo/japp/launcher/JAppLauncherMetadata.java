@@ -15,8 +15,7 @@
  */
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.JAppConfigGroup;
-import org.glavo.japp.util.IOUtils;
+import org.glavo.japp.io.IOUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

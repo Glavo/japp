@@ -15,7 +15,7 @@
  */
 package org.glavo.japp.platform;
 
-import org.glavo.japp.JAppConfigGroup;
+import org.glavo.japp.launcher.JAppConfigGroup;
 
 public final class JAppRuntimeContext {
 

@@ -15,7 +15,7 @@
  */
 package org.glavo.japp.packer.processor;
 
-import org.glavo.japp.packer.JAppPacker;
+import org.glavo.japp.packer.JAppWriter;
 
 import java.io.File;
 import java.util.LinkedHashMap;
@@ -34,7 +34,7 @@ public abstract class ClassPathProcessor {
         }
     }
 
-    public static void process(JAppPacker packer, String pathList, boolean isModulePath) throws Throwable {
+    public static void process(JAppWriter writer, String pathList, boolean isModulePath) throws Throwable {
         if (pathList.isEmpty()) {
             return;
         }
@@ -47,7 +47,7 @@ public abstract class ClassPathProcessor {
             Map<String, String> options = new LinkedHashMap<>();
 
             if (fullPath.charAt(0) != '[') {
-                LocalClassPathProcessor.INSTANCE.process(packer, fullPath, isModulePath, options);
+                LocalClassPathProcessor.INSTANCE.process(writer, fullPath, isModulePath, options);
                 continue;
             }
 
@@ -68,9 +68,9 @@ public abstract class ClassPathProcessor {
             }
 
             ClassPathProcessor processor = getProcessor(options.remove("type"));
-            processor.process(packer, path, isModulePath, options);
+            processor.process(writer, path, isModulePath, options);
         }
     }
 
-    public abstract void process(JAppPacker packer, String path, boolean isModulePath, Map<String, String> options) throws Throwable;
+    public abstract void process(JAppWriter packer, String path, boolean isModulePath, Map<String, String> options) throws Throwable;
 }

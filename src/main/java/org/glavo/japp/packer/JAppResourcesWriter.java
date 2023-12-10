@@ -15,27 +15,28 @@
  */
 package org.glavo.japp.packer;
 
-import org.glavo.japp.JAppResourceGroupReference;
+import org.glavo.japp.launcher.JAppResourceGroupReference;
 import org.glavo.japp.packer.compressor.CompressResult;
 import org.glavo.japp.util.XxHash64;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public final class JAppResourcesWriter implements AutoCloseable {
-    private final JAppPacker packer;
+    private final JAppWriter writer;
     private final String name;
-    private final boolean isModulePath;
+    private final List<JAppResourceGroupReference> referenceList;
 
     private final Map<String, JAppResourceInfo> resources = new LinkedHashMap<>();
     private final Map<Integer, Map<String, JAppResourceInfo>> multiReleaseResources = new TreeMap<>();
 
-    JAppResourcesWriter(JAppPacker packer, String name, boolean isModulePath) {
-        this.packer = packer;
+    JAppResourcesWriter(JAppWriter writer, String name, List<JAppResourceGroupReference> referenceList) {
+        this.writer = writer;
         this.name = name;
-        this.isModulePath = isModulePath;
+        this.referenceList = referenceList;
     }
 
     public void writeResource(JAppResourceInfo resource, byte[] body) throws IOException {
@@ -57,20 +58,20 @@ public final class JAppResourcesWriter implements AutoCloseable {
         }
 
         resources.put(resource.name, resource);
-        resource.offset = packer.getCurrentOffset();
+        resource.offset = writer.getCurrentOffset();
         resource.size = body.length;
         resource.checksum = XxHash64.hash(body);
 
-        CompressResult result = packer.compressor.compress(packer, body, resource.name);
+        CompressResult result = writer.compressor.compress(writer, body, resource.name);
         resource.method = result.getMethod();
         resource.compressedSize = result.getLength();
 
-        packer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
+        writer.getOutput().writeBytes(result.getCompressedData(), result.getOffset(), result.getLength());
     }
 
     private int addGroup(Map<String, JAppResourceInfo> group) {
-        int index = packer.groups.size();
-        packer.groups.add(group);
+        int index = writer.groups.size();
+        writer.groups.add(group);
         return index;
     }
 
@@ -83,7 +84,6 @@ public final class JAppResourcesWriter implements AutoCloseable {
         } else {
             multiIndexes = null;
         }
-
-        packer.addReference(new JAppResourceGroupReference.Local(name, baseIndex, multiIndexes), isModulePath);
+        referenceList.add(new JAppResourceGroupReference.Local(name, baseIndex, multiIndexes));
     }
 }

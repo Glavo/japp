@@ -15,15 +15,13 @@
  */
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.JAppConfigGroup;
-import org.glavo.japp.JAppResourceGroupReference;
 import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppBootArgs;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.platform.JAppRuntimeContext;
 import org.glavo.japp.platform.JavaRuntime;
 import org.glavo.japp.maven.MavenResolver;
-import org.glavo.japp.util.ByteBufferOutputStream;
+import org.glavo.japp.io.ByteBufferOutputStream;
 
 import java.io.IOException;
 import java.nio.file.Path;

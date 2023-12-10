@@ -15,9 +15,9 @@
  */
 package org.glavo.japp.packer.processor;
 
-import org.glavo.japp.JAppResourceGroupReference;
+import org.glavo.japp.launcher.JAppResourceGroupReference;
 import org.glavo.japp.maven.MavenResolver;
-import org.glavo.japp.packer.JAppPacker;
+import org.glavo.japp.packer.JAppWriter;
 
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
@@ -32,7 +32,7 @@ public final class MavenClassPathProcessor extends ClassPathProcessor {
     private final Pattern pattern = Pattern.compile("(?<group>[^/]+)/(?<artifact>[^/]+)/(?<version>[^/]+)(/(?<classifier>[^/]+))?");
 
     @Override
-    public void process(JAppPacker packer, String path, boolean isModulePath, Map<String, String> options) throws Throwable {
+    public void process(JAppWriter packer, String path, boolean isModulePath, Map<String, String> options) throws Throwable {
         boolean bundle = !"false".equals(options.remove("bundle"));
         String repo = options.remove("repository");
         boolean verify = !"false".equals(options.remove("verify")); // TODO

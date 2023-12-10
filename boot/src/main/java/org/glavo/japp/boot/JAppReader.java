@@ -22,9 +22,9 @@ import org.glavo.japp.boot.decompressor.DecompressContext;
 import org.glavo.japp.boot.decompressor.classfile.ClassFileDecompressor;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
-import org.glavo.japp.util.ByteBufferInputStream;
+import org.glavo.japp.io.ByteBufferInputStream;
 import org.glavo.japp.util.ByteBufferUtils;
-import org.glavo.japp.util.IOUtils;
+import org.glavo.japp.io.IOUtils;
 import org.glavo.japp.util.XxHash64;
 
 import java.io.Closeable;

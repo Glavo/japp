@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.glavo.japp;
+package org.glavo.japp.launcher;
 
 import org.glavo.japp.annotation.Visibility;
 import org.glavo.japp.condition.ConditionParser;
+import org.glavo.japp.io.LittleEndianDataOutput;
 import org.glavo.japp.platform.JAppRuntimeContext;
-import org.glavo.japp.util.ByteBufferOutputStream;
 import org.glavo.japp.util.ByteBufferUtils;
 
 import java.io.IOException;
@@ -126,7 +126,7 @@ public final class JAppConfigGroup {
                 case SUB_GROUPS: {
                     int count = buffer.getInt();
                     for (int i = 0; i < count; i++) {
-                        group.subGroups.add(readFrom(buffer));
+                        group.children.add(readFrom(buffer));
                     }
                     break;
                 }
@@ -149,7 +149,7 @@ public final class JAppConfigGroup {
 
     public String condition;
 
-    public final List<JAppConfigGroup> subGroups = new ArrayList<>();
+    public final List<JAppConfigGroup> children = new ArrayList<>();
 
     public String mainClass;
     public String mainModule;
@@ -190,7 +190,7 @@ public final class JAppConfigGroup {
         return classPath;
     }
 
-    private static void writeReferencesField(ByteBufferOutputStream out, Field field, List<JAppResourceGroupReference> list) throws IOException {
+    private static void writeReferencesField(LittleEndianDataOutput out, Field field, List<JAppResourceGroupReference> list) throws IOException {
         if (list.isEmpty()) {
             return;
         }
@@ -202,7 +202,7 @@ public final class JAppConfigGroup {
         }
     }
 
-    private static void writeStringField(ByteBufferOutputStream out, Field field, String string) throws IOException {
+    private static void writeStringField(LittleEndianDataOutput out, Field field, String string) throws IOException {
         if (string == null) {
             return;
         }
@@ -211,7 +211,7 @@ public final class JAppConfigGroup {
         out.writeString(string);
     }
 
-    private static void writeStringListField(ByteBufferOutputStream out, Field field, List<String> list) throws IOException {
+    private static void writeStringListField(LittleEndianDataOutput out, Field field, List<String> list) throws IOException {
         if (list.isEmpty()) {
             return;
         }
@@ -223,7 +223,7 @@ public final class JAppConfigGroup {
         }
     }
 
-    public void writeTo(ByteBufferOutputStream out) throws IOException {
+    public void writeTo(LittleEndianDataOutput out) throws IOException {
         out.writeInt(MAGIC_NUMBER);
 
         writeReferencesField(out, Field.MODULE_PATH, modulePath);
@@ -239,10 +239,10 @@ public final class JAppConfigGroup {
         writeStringListField(out, Field.ADD_OPENS, addOpens);
         writeStringListField(out, Field.ENABLE_NATIVE_ACCESS, enableNativeAccess);
 
-        if (!subGroups.isEmpty()) {
+        if (!children.isEmpty()) {
             out.writeByte(Field.SUB_GROUPS.id());
-            out.writeInt(subGroups.size());
-            for (JAppConfigGroup subGroup : subGroups) {
+            out.writeInt(children.size());
+            for (JAppConfigGroup subGroup : children) {
                 subGroup.writeTo(out);
             }
         }
@@ -289,7 +289,7 @@ public final class JAppConfigGroup {
                 mainClass = source.mainClass;
             }
 
-            for (JAppConfigGroup subConfig : source.subGroups) {
+            for (JAppConfigGroup subConfig : source.children) {
                 resolve(context, subConfig);
             }
         }
@@ -297,7 +297,7 @@ public final class JAppConfigGroup {
 
     @Visibility(Visibility.Context.LAUNCHER)
     public void resolve(JAppRuntimeContext context) {
-        for (JAppConfigGroup group : subGroups) {
+        for (JAppConfigGroup group : children) {
             resolve(context, group);
         }
     }

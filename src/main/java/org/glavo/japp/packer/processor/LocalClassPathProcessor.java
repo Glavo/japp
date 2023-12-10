@@ -15,7 +15,7 @@
  */
 package org.glavo.japp.packer.processor;
 
-import org.glavo.japp.packer.JAppPacker;
+import org.glavo.japp.packer.JAppWriter;
 import org.glavo.japp.packer.JAppResourceInfo;
 import org.glavo.japp.packer.JAppResourcesWriter;
 import org.glavo.japp.packer.ModuleInfoReader;
@@ -37,7 +37,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
 
     private static final String MULTI_RELEASE_PREFIX = "META-INF/versions/";
 
-    public static void addJar(JAppPacker packer, Path jar, boolean isModulePath) throws IOException {
+    public static void addJar(JAppWriter writer, Path jar, boolean isModulePath) throws IOException {
         try (ZipFile zipFile = new ZipFile(jar.toFile())) {
             Attributes attributes = null;
 
@@ -99,7 +99,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                 moduleName = ModuleInfoReader.deriveAutomaticModuleName(jar.getFileName().toString());
             }
 
-            try (JAppResourcesWriter writer = packer.createResourcesWriter(
+            try (JAppResourcesWriter resourcesWriter = writer.createResourcesWriter(
                     isModulePath ? moduleName : jar.getFileName().toString(),
                     isModulePath
             )) {
@@ -145,14 +145,14 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     JAppResourceInfo resource = new JAppResourceInfo(name);
                     resource.setCreationTime(entry.getCreationTime());
                     resource.setLastModifiedTime(entry.getLastModifiedTime());
-                    writer.writeResource(release, resource, buffer);
+                    resourcesWriter.writeResource(release, resource, buffer);
                 }
             }
 
         }
     }
 
-    public static void addDir(JAppPacker packer, Path dir, boolean isModulePath) throws IOException {
+    public static void addDir(JAppWriter packer, Path dir, boolean isModulePath) throws IOException {
         String name;
         if (isModulePath) {
             try (InputStream input = Files.newInputStream(dir.resolve("module-info.class"))) {
@@ -162,7 +162,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
             name = null;
         }
 
-        try (JAppResourcesWriter writer = packer.createResourcesWriter(name, isModulePath)) {
+        try (JAppResourcesWriter resourcesWriter = packer.createResourcesWriter(name, isModulePath)) {
             Path absoluteDir = dir.toAbsolutePath().normalize();
             Files.walkFileTree(absoluteDir, new SimpleFileVisitor<>() {
                 @Override
@@ -173,7 +173,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                     resource.setCreationTime(attrs.creationTime());
                     resource.setLastModifiedTime(attrs.lastModifiedTime());
                     resource.setLastAccessTime(attrs.lastAccessTime());
-                    writer.writeResource(resource, data);
+                    resourcesWriter.writeResource(resource, data);
                     return FileVisitResult.CONTINUE;
                 }
             });
@@ -181,7 +181,7 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
     }
 
     @Override
-    public void process(JAppPacker packer, String path, boolean isModulePath, Map<String, String> options) throws IOException {
+    public void process(JAppWriter writer, String path, boolean isModulePath, Map<String, String> options) throws IOException {
         String name = options.remove("name");
 
         if (!options.isEmpty()) {
@@ -219,15 +219,15 @@ public final class LocalClassPathProcessor extends ClassPathProcessor {
                         String fileName = file.getFileName().toString();
 
                         if (Files.isRegularFile(file) && fileName.endsWith(".jar")) {
-                            addJar(packer, file, isModulePath);
+                            addJar(writer, file, isModulePath);
                         }
                     }
                 }
             } else {
-                addDir(packer, p, isModulePath);
+                addDir(writer, p, isModulePath);
             }
         } else if (p.getFileName().toString().endsWith(".jar")) {
-            addJar(packer, p, isModulePath);
+            addJar(writer, p, isModulePath);
         } else {
             throw new IllegalArgumentException("Unsupported file format: " + p);
         }

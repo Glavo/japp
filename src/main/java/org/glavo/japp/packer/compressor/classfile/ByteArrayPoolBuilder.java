@@ -19,8 +19,9 @@ import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.decompressor.classfile.ByteArrayPool;
 import org.glavo.japp.boot.decompressor.zstd.ZstdFrameDecompressor;
+import org.glavo.japp.io.LittleEndianDataOutput;
 import org.glavo.japp.util.ZstdUtils;
-import org.glavo.japp.util.ByteBufferOutputStream;
+import org.glavo.japp.io.ByteBufferOutputStream;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -93,7 +94,7 @@ public final class ByteArrayPoolBuilder {
         return index;
     }
 
-    public void writeTo(ByteBufferOutputStream output) {
+    public void writeTo(LittleEndianDataOutput output) throws IOException {
         int count = map.size();
         int uncompressedBytesSize = bytes.position();
 
