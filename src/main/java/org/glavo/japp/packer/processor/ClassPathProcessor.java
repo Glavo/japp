@@ -35,7 +35,7 @@ public abstract class ClassPathProcessor {
     }
 
     public static void process(JAppWriter writer, String pathList, boolean isModulePath) throws Throwable {
-        if (pathList.isEmpty()) {
+        if (pathList == null || pathList.isEmpty()) {
             return;
         }
 

@@ -45,12 +45,8 @@ public final class JAppPacker {
         }
 
         public void writeTo(JAppWriter writer) throws Throwable {
-            if (classPath != null) {
-                ClassPathProcessor.process(writer, classPath, false);
-            }
-            if (modulePath != null) {
-                ClassPathProcessor.process(writer, modulePath, true);
-            }
+            ClassPathProcessor.process(writer, classPath, false);
+            ClassPathProcessor.process(writer, modulePath, true);
 
             for (JAppConfigGroupBuilder child : children) {
                 writer.beginConfigGroup(child.group);
