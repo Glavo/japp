@@ -50,8 +50,9 @@ public class PathListParserTest {
         Assertions.assertEquals(
                 List.of(new Pair(Map.of(), "A"),
                         new Pair(Map.of("type", "maven", "repo", "local"), "B"),
-                        new Pair(Map.of("type", "local"), "C")),
-                parse(String.join(PS, "[]A", "[type=maven,repo=local]B", "[type='local']C", ""))
+                        new Pair(Map.of("type", "local"), "C"),
+                        new Pair(Map.of("type", "local"), "")),
+                parse(String.join(PS, "[]A", "[type=maven,repo=local]B", "[type='local']C", "[type=local]", ""))
         );
 
     }
