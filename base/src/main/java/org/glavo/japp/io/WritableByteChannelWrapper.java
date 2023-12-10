@@ -38,6 +38,7 @@ final class WritableByteChannelWrapper implements LittleEndianDataOutput {
 
     private void flushBuffer() throws IOException {
         if (buffer.position() > 0) {
+            buffer.flip();
             IOUtils.writeFully(channel, buffer);
             buffer.clear();
         }

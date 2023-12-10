@@ -227,5 +227,7 @@ public final class JAppWriter implements CompressContext, Closeable {
         writeLauncherMetadata();
 
         writeFileEnd(bootMetadataOffset, launcherMetadataOffset);
+
+        this.output.close();
     }
 }

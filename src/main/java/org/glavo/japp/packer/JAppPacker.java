@@ -17,13 +17,11 @@ package org.glavo.japp.packer;
 
 import org.glavo.japp.JAppProperties;
 import org.glavo.japp.condition.ConditionParser;
-import org.glavo.japp.io.ByteBufferOutputStream;
-import org.glavo.japp.io.IOUtils;
+import org.glavo.japp.io.LittleEndianDataOutput;
 import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.packer.processor.ClassPathProcessor;
 
 import java.io.InputStream;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -188,14 +186,13 @@ public final class JAppPacker {
                     .replace("%japp.project.directory%", JAppProperties.getProjectDirectory().toString());
         }
 
-        try (FileChannel channel = FileChannel.open(outputFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE))) {
-            IOUtils.writeFully(channel, ByteBuffer.wrap(header.getBytes(StandardCharsets.UTF_8)));
+        try (LittleEndianDataOutput output = LittleEndianDataOutput.of(
+                FileChannel.open(outputFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)))) {
+            output.writeBytes(header.getBytes(StandardCharsets.UTF_8));
 
-            ByteBufferOutputStream out = new ByteBufferOutputStream();
-            try (JAppWriter writer = new JAppWriter(out, packer.current.group)) {
+            try (JAppWriter writer = new JAppWriter(output, packer.current.group)) {
                 packer.current.writeTo(writer);
             }
-            IOUtils.writeFully(channel, ByteBuffer.wrap(out.toByteArray()));
         }
 
         //noinspection ResultOfMethodCallIgnored
