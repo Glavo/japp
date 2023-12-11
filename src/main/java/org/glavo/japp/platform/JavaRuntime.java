@@ -37,7 +37,7 @@ public final class JavaRuntime {
 
             JavaRuntime java = fromDir(realJavaHome);
             runtimes.put(realJavaHome, java);
-        } catch (IOException ignored) {
+        } catch (Throwable ignored) {
         }
     }
 
@@ -53,7 +53,7 @@ public final class JavaRuntime {
                 }
                 tryAddJava(path);
             }
-        } catch (IOException ignored) {
+        } catch (Throwable ignored) {
         }
     }
 
@@ -80,7 +80,7 @@ public final class JavaRuntime {
                     }
                 }
             }
-        } catch (IOException ignored) {
+        } catch (Throwable ignored) {
         }
     }
 
