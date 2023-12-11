@@ -182,7 +182,7 @@ public final class JAppFileSystemProvider extends FileSystemProvider {
             }
         }
 
-        if (!exists(jappPath)) {
+        if (!Files.exists(jappPath)) {
             throw new NoSuchFileException(path.toString());
         }
     }
