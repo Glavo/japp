@@ -16,9 +16,12 @@
 package org.glavo.japp.testcase.modulepath;
 
 import com.google.gson.Gson;
+import org.apache.commons.lang3.ObjectUtils;
 
 public final class ModulePath {
     public static void main(String[] args) {
+        System.out.println(ModulePath.class.getResource("ModulePath.class"));
         System.out.println(Gson.class.getResource("Gson.class"));
+        System.out.println(ObjectUtils.class.getResource("ObjectUtils.class"));
     }
 }

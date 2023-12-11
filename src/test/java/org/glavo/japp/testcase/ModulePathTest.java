@@ -15,10 +15,11 @@
  */
 package org.glavo.japp.testcase;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+
+import static org.glavo.japp.testcase.JAppTestHelper.assertLines;
 
 public final class ModulePathTest {
     @Test
@@ -27,8 +28,12 @@ public final class ModulePathTest {
                 "--module-path", System.getProperty("japp.testcase.modulepath"),
                 "org.glavo.japp.testcase.modulepath.ModulePath"
         )) {
-            Assertions.assertEquals("japp:/modules/com.google.gson/com/google/gson/Gson.class" + System.lineSeparator(),
-                    JAppTestHelper.launch(holder.file));
+
+            assertLines(JAppTestHelper.launch(holder.file),
+                    "japp:/modules/org.glavo.japp.testcase.modulepath/org/glavo/japp/testcase/modulepath/ModulePath.class",
+                    "japp:/modules/com.google.gson/com/google/gson/Gson.class",
+                    "japp:/modules/org.apache.commons.lang3/org/apache/commons/lang3/ObjectUtils.class"
+            );
         }
     }
 }

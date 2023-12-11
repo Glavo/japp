@@ -15,6 +15,8 @@
  */
 package org.glavo.japp.testcase;
 
+import org.junit.jupiter.api.Assertions;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -84,5 +86,14 @@ public final class JAppTestHelper {
         argsList.add(file.toAbsolutePath().normalize().toString());
         Collections.addAll(argsList, args);
         return runJApp("run", argsList);
+    }
+
+    public static void assertLines(String value, String... lines) throws IOException {
+        StringBuilder builder = new StringBuilder();
+        for (String line : lines) {
+            builder.append(line).append(System.lineSeparator());
+        }
+
+        Assertions.assertEquals(builder.toString(), value);
     }
 }

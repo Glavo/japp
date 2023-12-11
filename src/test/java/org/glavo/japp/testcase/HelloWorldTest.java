@@ -15,10 +15,11 @@
  */
 package org.glavo.japp.testcase;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+
+import static org.glavo.japp.testcase.JAppTestHelper.assertLines;
 
 public final class HelloWorldTest {
     private void test(boolean useModulePath) throws IOException {
@@ -26,7 +27,7 @@ public final class HelloWorldTest {
                 useModulePath ? "--module-path" : "--classpath", System.getProperty("japp.testcase.helloworld"),
                 "org.glavo.japp.testcase.helloworld.HelloWorld"
         )) {
-            Assertions.assertEquals("Hello World!" + System.lineSeparator(), JAppTestHelper.launch(holder.file));
+            assertLines(JAppTestHelper.launch(holder.file), "Hello World!");
         }
     }
 
