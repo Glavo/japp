@@ -97,19 +97,15 @@ public final class JAppBootLauncher {
         }
     }
 
-    private static void enableNativeAccess(ModuleLayer layer, List<String> list) {
+    private static void enableNativeAccess(ModuleLayer layer, List<String> list) throws Throwable {
         if (list.isEmpty()) {
             return;
         }
 
         MethodHandle implAddEnableNativeAccess;
-        try {
-            implAddEnableNativeAccess = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup())
-                    .findVirtual(Module.class, "implAddEnableNativeAccess",
-                            MethodType.methodType(Module.class));
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+        implAddEnableNativeAccess = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup())
+                .findVirtual(Module.class, "implAddEnableNativeAccess",
+                        MethodType.methodType(Module.class));
 
         for (String m : list) {
             Optional<Module> module = layer.findModule(m);
@@ -117,11 +113,7 @@ public final class JAppBootLauncher {
                 throw new IllegalArgumentException("Module " + m + " not found");
             }
 
-            try {
-                Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module.get());
-            } catch (Throwable e) {
-                throw new IllegalArgumentException(e);
-            }
+            Module ignored = (Module) implAddEnableNativeAccess.invokeExact(module.get());
         }
     }
 
