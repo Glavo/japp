@@ -98,6 +98,10 @@ public final class JAppBootLauncher {
     }
 
     private static void enableNativeAccess(ModuleLayer layer, List<String> list) {
+        if (list.isEmpty()) {
+            return;
+        }
+
         MethodHandle implAddEnableNativeAccess;
         try {
             implAddEnableNativeAccess = MethodHandles.privateLookupIn(Module.class, MethodHandles.lookup())
