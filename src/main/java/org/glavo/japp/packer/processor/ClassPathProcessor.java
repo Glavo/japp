@@ -17,8 +17,6 @@ package org.glavo.japp.packer.processor;
 
 import org.glavo.japp.packer.JAppWriter;
 
-import java.io.File;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class ClassPathProcessor {
@@ -27,6 +25,8 @@ public abstract class ClassPathProcessor {
             return LocalClassPathProcessor.INSTANCE;
         }
         switch (type) {
+            case "local":
+                return LocalClassPathProcessor.INSTANCE;
             case "maven":
                 return new MavenClassPathProcessor();
             default:
@@ -39,33 +39,10 @@ public abstract class ClassPathProcessor {
             return;
         }
 
-        for (String fullPath : pathList.split(File.pathSeparator)) {
-            if (fullPath.isEmpty()) {
-                continue;
-            }
-
-            Map<String, String> options = new LinkedHashMap<>();
-
-            if (fullPath.charAt(0) != '[') {
-                LocalClassPathProcessor.INSTANCE.process(writer, fullPath, isModulePath, options);
-                continue;
-            }
-
-            int endIndex = fullPath.indexOf(']', 1);
-            if (endIndex < 0) {
-                throw new IllegalArgumentException("Unterminated option group: " + fullPath);
-            }
-
-            String path = fullPath.substring(endIndex + 1);
-            String[] optionArray = fullPath.substring(1, endIndex).split(",");
-            for (String option : optionArray) {
-                int idx = option.indexOf('=');
-                if (idx >= 0) {
-                    options.put(option.substring(0, idx), option.substring(idx + 1));
-                } else {
-                    options.put(option, "");
-                }
-            }
+        PathListParser parser = new PathListParser(pathList);
+        while (parser.scanNext()) {
+            Map<String, String> options = parser.options;
+            String path = parser.path;
 
             ClassPathProcessor processor = getProcessor(options.remove("type"));
             processor.process(writer, path, isModulePath, options);
