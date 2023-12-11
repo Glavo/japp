@@ -45,8 +45,11 @@ tasks.compileTestJava {
 }
 
 tasks.test {
-    dependsOn("buildAll",
-        ":test-case:HelloWorld:jar")
+    dependsOn(
+        "buildAll",
+        ":test-case:HelloWorld:jar",
+        ":test-case:ModulePath:jar",
+    )
 
     useJUnitPlatform()
     jvmArgs(
@@ -56,9 +59,18 @@ tasks.test {
     fun jarPath(projectName: String) =
         project(projectName).tasks.getByName<Jar>("jar").archiveFile.get().asFile.absolutePath
 
+    fun testCase(projectName: String): String {
+        val p = project(projectName)
+
+        return p.configurations.runtimeClasspath.get().map { it.absolutePath }
+            .plus(p.tasks.getByName<Jar>("jar").archiveFile.get().asFile.absolutePath)
+            .joinToString(File.pathSeparator)
+    }
+
     systemProperties(
         "japp.jar" to tasks.getByName<Jar>("shadowJar").archiveFile.get().asFile.absolutePath,
-        "japp.testcase.helloworld" to jarPath(":test-case:HelloWorld")
+        "japp.testcase.helloworld" to testCase(":test-case:HelloWorld"),
+        "japp.testcase.modulepath" to testCase(":test-case:ModulePath"),
     )
 
     testLogging {

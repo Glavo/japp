@@ -4,5 +4,6 @@ include(
     "base",
     "boot",
 
-    "test-case:HelloWorld"
+    "test-case:HelloWorld",
+    "test-case:ModulePath",
 )
