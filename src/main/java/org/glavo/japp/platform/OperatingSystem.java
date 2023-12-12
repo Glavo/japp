@@ -34,11 +34,10 @@ public enum OperatingSystem {
 
     public static OperatingSystem parseOperatingSystem(String name) {
         name = name.trim().toLowerCase(Locale.ROOT);
-
-        if (name.contains("win"))
-            return WINDOWS;
-        else if (name.contains("mac") || name.contains("darwin"))
+        if (name.contains("mac") || name.contains("darwin"))
             return MACOS;
+        else if (name.contains("win"))
+            return WINDOWS;
         else if (name.contains("linux"))
             return LINUX;
         else
