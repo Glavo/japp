@@ -191,7 +191,6 @@ public final class JAppReader implements DecompressContext, Closeable {
         return args;
     }
 
-    private final ReentrantLock fileLock = new ReentrantLock();
     private final ReentrantLock zstdLock = new ReentrantLock();
 
     private final FileChannel channel;
@@ -327,13 +326,14 @@ public final class JAppReader implements DecompressContext, Closeable {
         } else {
             compressed = ByteBuffer.allocate(compressedSize);
 
-            fileLock.lock();
-            try {
-                IOUtils.readFully(channel.position(offset + baseOffset), compressed);
-                compressed.flip();
-            } finally {
-                fileLock.unlock();
+            while (compressed.hasRemaining()) {
+                int n = channel.read(compressed, offset + baseOffset + compressed.position());
+                if (n <= 0) {
+                    throw new IOException("Unexpected end of file");
+                }
             }
+
+            compressed.flip();
         }
 
         ByteBuffer uncompressed = method == CompressionMethod.NONE ? compressed : decompressResource(method, compressed, size);
