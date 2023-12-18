@@ -141,6 +141,8 @@ public final class Launcher {
             command.add("-D" + property);
         }
 
+        command.addAll(group.getExtraJvmOptions());
+
         try (ByteBufferOutputStream argsBuilder = new ByteBufferOutputStream()) {
             argsBuilder.writeString(file.toString());
             argsBuilder.writeLong(config.getBaseOffset());

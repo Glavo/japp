@@ -156,6 +156,8 @@ public final class JAppPacker {
                         packer.current.group.addOpens.add(arg.substring("--add-opens=".length()));
                     } else if (arg.startsWith("--enable-native-access=")) {
                         packer.current.group.enableNativeAccess.add(arg.substring("--enable-native-access=".length()));
+                    } else if (arg.startsWith("-X")) {
+                        packer.current.group.extraJvmOptions.add(arg);
                     } else if (arg.startsWith("-")) {
                         System.err.println("Error: Unrecognized option: " + arg);
                         System.exit(1);

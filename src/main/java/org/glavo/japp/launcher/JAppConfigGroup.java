@@ -40,6 +40,7 @@ public final class JAppConfigGroup {
         ADD_EXPORTS,
         ADD_OPENS,
         ENABLE_NATIVE_ACCESS,
+        EXTRA_JVM_OPTIONS,
         SUB_GROUPS;
 
         private static final Field[] VALUES = values();
@@ -95,7 +96,8 @@ public final class JAppConfigGroup {
                 case ADD_READS:
                 case ADD_EXPORTS:
                 case ADD_OPENS:
-                case ENABLE_NATIVE_ACCESS: {
+                case ENABLE_NATIVE_ACCESS:
+                case EXTRA_JVM_OPTIONS: {
                     List<String> list;
                     if (field == Field.JVM_PROPERTIES) {
                         list = group.jvmProperties;
@@ -107,6 +109,8 @@ public final class JAppConfigGroup {
                         list = group.addOpens;
                     } else if (field == Field.ENABLE_NATIVE_ACCESS) {
                         list = group.enableNativeAccess;
+                    } else if (field == Field.EXTRA_JVM_OPTIONS) {
+                        list = group.extraJvmOptions;
                     } else {
                         throw new AssertionError("Field: " + field);
                     }
@@ -146,6 +150,7 @@ public final class JAppConfigGroup {
     public final List<String> addExports = new ArrayList<>();
     public final List<String> addOpens = new ArrayList<>();
     public final List<String> enableNativeAccess = new ArrayList<>();
+    public final List<String> extraJvmOptions = new ArrayList<>();
 
     public String condition;
 
@@ -172,6 +177,10 @@ public final class JAppConfigGroup {
 
     public List<String> getEnableNativeAccess() {
         return enableNativeAccess;
+    }
+
+    public List<String> getExtraJvmOptions() {
+        return extraJvmOptions;
     }
 
     public String getMainClass() {
@@ -238,6 +247,7 @@ public final class JAppConfigGroup {
         writeStringListField(out, Field.ADD_EXPORTS, addExports);
         writeStringListField(out, Field.ADD_OPENS, addOpens);
         writeStringListField(out, Field.ENABLE_NATIVE_ACCESS, enableNativeAccess);
+        writeStringListField(out, Field.EXTRA_JVM_OPTIONS, extraJvmOptions);
 
         if (!children.isEmpty()) {
             out.writeByte(Field.SUB_GROUPS.id());
@@ -280,6 +290,7 @@ public final class JAppConfigGroup {
             addExports.addAll(source.addExports);
             addOpens.addAll(source.addOpens);
             enableNativeAccess.addAll(source.enableNativeAccess);
+            extraJvmOptions.addAll(source.extraJvmOptions);
 
             if (source.mainModule != null) {
                 mainModule = source.mainModule;
