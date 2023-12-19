@@ -80,8 +80,4 @@ public final class UnsafeUtil {
     public static void copyMemory(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes) {
         UNSAFE.copyMemory(srcBase, srcOffset, destBase, destOffset, bytes);
     }
-
-    public static void invokeCleaner(ByteBuffer buffer) {
-        UNSAFE.invokeCleaner(buffer);
-    }
 }
