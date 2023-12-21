@@ -104,12 +104,12 @@ public final class Launcher {
         out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_END);
     }
 
-    public static void main(String[] args) throws Throwable {
-        if (args.length < 1) {
+    public static void launch(List<String> args, List<String> jvmArgs) throws Throwable {
+        if (args.isEmpty()) {
             throw new TODO("Help Message");
         }
 
-        Path file = Paths.get(args[0]).toAbsolutePath().normalize();
+        Path file = Paths.get(args.get(0)).toAbsolutePath().normalize();
 
         JAppLauncherMetadata config = JAppLauncherMetadata.readFile(file);
         JAppConfigGroup group = config.getGroup();
@@ -202,6 +202,8 @@ public final class Launcher {
             command.add("--enable-preview");
         }
 
+        command.addAll(jvmArgs);
+
         Collections.addAll(command,
                 "--module-path",
                 getBootLauncher(),
@@ -214,9 +216,7 @@ public final class Launcher {
                 BOOT_LAUNCHER_MODULE
         );
 
-        for (int i = 1; i < args.length; i++) {
-            command.add(args[i]);
-        }
+        command.addAll(args.subList(1, args.size()));
 
         System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
     }

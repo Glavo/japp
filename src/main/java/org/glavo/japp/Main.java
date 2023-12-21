@@ -19,6 +19,7 @@ import org.glavo.japp.launcher.Launcher;
 import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.platform.JavaRuntime;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public final class Main {
@@ -31,20 +32,31 @@ public final class Main {
             return;
         }
 
-        String command = args[0];
-        args = Arrays.copyOfRange(args, 1, args.length);
-        switch (command) {
-            case "create":
-                JAppPacker.main(args);
-                break;
-            case "run":
-                Launcher.main(args);
-                break;
-            case "list-java":
-                JavaRuntime.main(args);
-                break;
-            default:
-                throw new TODO("Command: " + command);
+        ArrayList<String> jvmArgs = new ArrayList<>();
+
+        for (int idx = 0; idx < args.length; idx++) {
+            String arg = args[idx];
+            if (arg.startsWith("-")) {
+                jvmArgs.add(arg);
+            } else {
+                String[] commandArgs = Arrays.copyOfRange(args, idx + 1, args.length);
+
+                switch (arg) {
+                    case "create":
+                        JAppPacker.main(commandArgs);
+                        break;
+                    case "run":
+                        Launcher.launch(Arrays.asList(commandArgs), jvmArgs);
+                        break;
+                    case "list-java":
+                        JavaRuntime.main(commandArgs);
+                        break;
+                    default:
+                        throw new TODO("Command: " + arg);
+                }
+
+                return;
+            }
         }
     }
 }
