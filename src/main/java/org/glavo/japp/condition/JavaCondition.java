@@ -16,9 +16,9 @@
 package org.glavo.japp.condition;
 
 import org.glavo.japp.platform.JAppRuntimeContext;
-import org.glavo.japp.util.ToStringBuilder;
 
 import java.util.Map;
+import java.util.StringJoiner;
 
 public final class JavaCondition implements Condition {
 
@@ -74,11 +74,19 @@ public final class JavaCondition implements Condition {
 
     @Override
     public String toString() {
-        return new ToStringBuilder("java", "(", ")")
-                .appendIfNotNull("version", version)
-                .appendIfNotNull("os", os)
-                .appendIfNotNull("arch", arch)
-                .appendIfNotNull("libc", libc)
-                .build();
+        StringJoiner joiner = new StringJoiner(", ", "java(", ")");
+        if (version != null) {
+            joiner.add("version=" + version);
+        }
+        if (os != null) {
+            joiner.add("os=" + os);
+        }
+        if (arch != null) {
+            joiner.add("arch=" + arch);
+        }
+        if (libc != null) {
+            joiner.add("libc=" + libc);
+        }
+        return joiner.toString();
     }
 }
