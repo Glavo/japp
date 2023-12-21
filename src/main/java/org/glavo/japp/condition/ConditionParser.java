@@ -20,8 +20,11 @@ import java.util.function.Function;
 
 public class ConditionParser {
 
-    private static final Map<String, Function<Map<String, String>, ? extends Condition>> factories =
-            Collections.singletonMap("java", JavaCondition::fromMap);
+    private static final Map<String, Function<Map<String, String>, ? extends Condition>> factories = new HashMap<>();
+
+    static {
+        factories.put("java", JavaCondition::fromMap);
+    }
 
     public static Condition parse(String str) {
         ConditionParser parser = new ConditionParser(str);
