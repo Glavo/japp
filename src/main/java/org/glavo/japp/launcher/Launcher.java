@@ -104,12 +104,30 @@ public final class Launcher {
         out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_END);
     }
 
-    public static void launch(List<String> args, List<String> jvmArgs) throws Throwable {
-        if (args.isEmpty()) {
+    public static void main(String[] args) throws Throwable {
+        ArrayList<String> jvmOptions = new ArrayList<>();
+
+        String jappFile = null;
+
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i++];
+
+            if (arg.startsWith("-J")) {
+                jvmOptions.add(arg.substring("-J".length()));
+            } else if (arg.startsWith("-")) {
+                throw new IllegalArgumentException("Unknown option: " + arg);
+            } else {
+                jappFile = arg;
+                break;
+            }
+        }
+
+        if (jappFile == null) {
             throw new TODO("Help Message");
         }
 
-        Path file = Paths.get(args.get(0)).toAbsolutePath().normalize();
+        Path file = Paths.get(jappFile).toAbsolutePath().normalize();
 
         JAppLauncherMetadata config = JAppLauncherMetadata.readFile(file);
         JAppConfigGroup group = config.getGroup();
@@ -202,7 +220,7 @@ public final class Launcher {
             command.add("--enable-preview");
         }
 
-        command.addAll(jvmArgs);
+        command.addAll(jvmOptions);
 
         Collections.addAll(command,
                 "--module-path",
@@ -216,7 +234,9 @@ public final class Launcher {
                 BOOT_LAUNCHER_MODULE
         );
 
-        command.addAll(args.subList(1, args.size()));
+        while (i < args.length) {
+            command.add(args[i++]);
+        }
 
         System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
     }
