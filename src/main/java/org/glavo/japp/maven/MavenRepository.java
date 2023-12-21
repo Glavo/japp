@@ -16,6 +16,7 @@
 package org.glavo.japp.maven;
 
 import org.glavo.japp.JAppProperties;
+import org.glavo.japp.util.XxHash64;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -78,12 +79,22 @@ public abstract class MavenRepository {
         }
 
         @SuppressWarnings("deprecation")
-        private static byte[] downloadAndVerity(String url, byte[] checksum) throws IOException {
+        private static byte[] downloadAndVerity(String url, Long checksum) throws IOException {
             byte[] data;
 
             URLConnection connection = new URL(url).openConnection();
             try (InputStream input = connection.getInputStream()) {
                 data = input.readAllBytes();
+            }
+
+            if (checksum != null) {
+                long actual = XxHash64.hash(data);
+                if (actual != checksum) {
+                    throw new IOException(String.format(
+                            "Failed while verifying %s (expected=%x, actual=%x)",
+                            url,
+                            checksum, actual));
+                }
             }
 
             return data;
