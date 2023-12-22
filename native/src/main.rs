@@ -1,6 +1,8 @@
-use std::process::exit;
+mod launcher;
 
-fn main() {
+use std::process::{exit, ExitCode};
+
+fn main() -> ExitCode {
     let mut iter = std::env::args();
 
     iter.next().expect("Missing executable file name");
@@ -9,26 +11,26 @@ fn main() {
         Some(command) => command,
         None => {
             print_help_message();
-            return;
+            return ExitCode::SUCCESS;
         }
     };
 
-    match command.as_str() {
+    return match command.as_str() {
         "help" | "-help" | "--help" | "-?" => {
             print_help_message();
-            return;
+            ExitCode::SUCCESS
         }
         "version" | "-version" | "--version" => {
             panic!("TODO: version");
         }
         "run" => {
-            panic!("TODO: run");
+            launcher::run_japp(iter.collect())
         }
         _ => {
             eprintln!("Unsupported command: {command}");
-            exit(1)
+            ExitCode::FAILURE
         }
-    }
+    };
 }
 
 fn print_help_message() {
