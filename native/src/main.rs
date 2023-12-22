@@ -1,6 +1,6 @@
 mod launcher;
 
-use std::process::{exit, ExitCode};
+use std::process::ExitCode;
 
 fn main() -> ExitCode {
     let mut iter = std::env::args();
