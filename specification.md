@@ -22,12 +22,12 @@ File format:
 
 ```
 JAppFile {
-    u4 magic_number; // "JAPP"
+    u4 magic_number; // 0x5050414a ("JAPP")
     u1[...] data_pool;
     BootMetadata boot_metadata;
     LauncherMetadata launcher_metadata;
     FileEnd {
-         u4 magic_number; // "JAPP"
+         u4 magic_number; // 0x5050414a ("JAPP")
          u2 major_version;
          u2 minor_version;
          u8 flags;
@@ -45,7 +45,7 @@ JAppFile {
 
 ```
 BootMetadata {
-    u4 magic_number; // "BOOT"
+    u4 magic_number; // 0x544f4f42 ("BOOT")
     u4 group_count;
     ByteArrayPool stringsPool;
     ResourceGroup[group_count] groups;
@@ -111,11 +111,11 @@ LauncherMetadata {
 }
 ```
 
-[ConfigGroup](src/main/java/org/glavo/japp/JAppConfigGroup.java):
+[ConfigGroup](src/main/java/org/glavo/japp/launcher/JAppConfigGroup.java):
 
 ```
 ConfigGroup {
-    u4 magic_number; // "GRP\0"
+    u4 magic_number; // 0x00505247 ("GRP\0")
     ConfigGroupFields fields;
 }
 ```
