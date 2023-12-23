@@ -13,7 +13,7 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
-import org.glavo.japp.util.UnsafeUtil;
+import org.glavo.japp.util.MemoryAccess;
 
 import static org.glavo.japp.boot.decompressor.zstd.Constants.SIZE_OF_SHORT;
 
@@ -84,8 +84,8 @@ final class Util {
     }
 
     public static int get24BitLittleEndian(Object inputBase, long inputAddress) {
-        return (UnsafeUtil.getShort(inputBase, inputAddress) & 0xFFFF)
-               | ((UnsafeUtil.getByte(inputBase, inputAddress + SIZE_OF_SHORT) & 0xFF) << Short.SIZE);
+        return (MemoryAccess.getShort(inputBase, inputAddress) & 0xFFFF)
+               | ((MemoryAccess.getByte(inputBase, inputAddress + SIZE_OF_SHORT) & 0xFF) << Short.SIZE);
     }
 }
 

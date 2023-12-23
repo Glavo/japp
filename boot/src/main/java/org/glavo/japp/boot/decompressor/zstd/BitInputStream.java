@@ -13,7 +13,7 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
-import org.glavo.japp.util.UnsafeUtil;
+import org.glavo.japp.util.MemoryAccess;
 
 import static org.glavo.japp.boot.decompressor.zstd.Constants.SIZE_OF_LONG;
 import static org.glavo.japp.boot.decompressor.zstd.Util.highestBit;
@@ -28,21 +28,21 @@ final class BitInputStream {
     }
 
     static long readTail(Object inputBase, long inputAddress, int inputSize) {
-        long bits = UnsafeUtil.getByte(inputBase, inputAddress) & 0xFF;
+        long bits = MemoryAccess.getByte(inputBase, inputAddress) & 0xFF;
 
         switch (inputSize) {
             case 7:
-                bits |= (UnsafeUtil.getByte(inputBase, inputAddress + 6) & 0xFFL) << 48;
+                bits |= (MemoryAccess.getByte(inputBase, inputAddress + 6) & 0xFFL) << 48;
             case 6:
-                bits |= (UnsafeUtil.getByte(inputBase, inputAddress + 5) & 0xFFL) << 40;
+                bits |= (MemoryAccess.getByte(inputBase, inputAddress + 5) & 0xFFL) << 40;
             case 5:
-                bits |= (UnsafeUtil.getByte(inputBase, inputAddress + 4) & 0xFFL) << 32;
+                bits |= (MemoryAccess.getByte(inputBase, inputAddress + 4) & 0xFFL) << 32;
             case 4:
-                bits |= (UnsafeUtil.getByte(inputBase, inputAddress + 3) & 0xFFL) << 24;
+                bits |= (MemoryAccess.getByte(inputBase, inputAddress + 3) & 0xFFL) << 24;
             case 3:
-                bits |= (UnsafeUtil.getByte(inputBase, inputAddress + 2) & 0xFFL) << 16;
+                bits |= (MemoryAccess.getByte(inputBase, inputAddress + 2) & 0xFFL) << 16;
             case 2:
-                bits |= (UnsafeUtil.getByte(inputBase, inputAddress + 1) & 0xFFL) << 8;
+                bits |= (MemoryAccess.getByte(inputBase, inputAddress + 1) & 0xFFL) << 8;
         }
 
         return bits;
@@ -93,7 +93,7 @@ final class BitInputStream {
         public void initialize() {
             verify(endAddress - startAddress >= 1, startAddress, "Bitstream is empty");
 
-            int lastByte = UnsafeUtil.getByte(inputBase, endAddress - 1) & 0xFF;
+            int lastByte = MemoryAccess.getByte(inputBase, endAddress - 1) & 0xFF;
             verify(lastByte != 0, endAddress, "Bitstream end mark not present");
 
             bitsConsumed = SIZE_OF_LONG - highestBit(lastByte);
@@ -101,7 +101,7 @@ final class BitInputStream {
             int inputSize = (int) (endAddress - startAddress);
             if (inputSize >= SIZE_OF_LONG) {  /* normal case */
                 currentAddress = endAddress - SIZE_OF_LONG;
-                bits = UnsafeUtil.getLong(inputBase, currentAddress);
+                bits = MemoryAccess.getLong(inputBase, currentAddress);
             } else {
                 currentAddress = startAddress;
                 bits = readTail(inputBase, startAddress, inputSize);
@@ -155,19 +155,19 @@ final class BitInputStream {
             if (currentAddress >= startAddress + SIZE_OF_LONG) {
                 if (bytes > 0) {
                     currentAddress -= bytes;
-                    bits = UnsafeUtil.getLong(inputBase, currentAddress);
+                    bits = MemoryAccess.getLong(inputBase, currentAddress);
                 }
                 bitsConsumed &= 0b111;
             } else if (currentAddress - bytes < startAddress) {
                 bytes = (int) (currentAddress - startAddress);
                 currentAddress = startAddress;
                 bitsConsumed -= bytes * SIZE_OF_LONG;
-                bits = UnsafeUtil.getLong(inputBase, startAddress);
+                bits = MemoryAccess.getLong(inputBase, startAddress);
                 return true;
             } else {
                 currentAddress -= bytes;
                 bitsConsumed -= bytes * SIZE_OF_LONG;
-                bits = UnsafeUtil.getLong(inputBase, currentAddress);
+                bits = MemoryAccess.getLong(inputBase, currentAddress);
             }
 
             return false;

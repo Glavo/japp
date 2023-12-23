@@ -13,12 +13,12 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
-import org.glavo.japp.util.UnsafeUtil;
+import org.glavo.japp.util.MemoryAccess;
 
 import static org.glavo.japp.boot.decompressor.zstd.BitInputStream.peekBits;
 import static org.glavo.japp.boot.decompressor.zstd.Constants.*;
 import static org.glavo.japp.boot.decompressor.zstd.Util.verify;
-import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
+import static org.glavo.japp.util.MemoryAccess.ARRAY_BYTE_BASE_OFFSET;
 
 final class FiniteStateEntropy {
     public static final int MAX_SYMBOL = 255;
@@ -71,22 +71,22 @@ final class FiniteStateEntropy {
         while (output <= outputLimit - 4) {
             int numberOfBits;
 
-            UnsafeUtil.putByte(outputBase, output, symbols[state1]);
+            MemoryAccess.putByte(outputBase, output, symbols[state1]);
             numberOfBits = numbersOfBits[state1];
             state1 = (int) (newStates[state1] + peekBits(bitsConsumed, bits, numberOfBits));
             bitsConsumed += numberOfBits;
 
-            UnsafeUtil.putByte(outputBase, output + 1, symbols[state2]);
+            MemoryAccess.putByte(outputBase, output + 1, symbols[state2]);
             numberOfBits = numbersOfBits[state2];
             state2 = (int) (newStates[state2] + peekBits(bitsConsumed, bits, numberOfBits));
             bitsConsumed += numberOfBits;
 
-            UnsafeUtil.putByte(outputBase, output + 2, symbols[state1]);
+            MemoryAccess.putByte(outputBase, output + 2, symbols[state1]);
             numberOfBits = numbersOfBits[state1];
             state1 = (int) (newStates[state1] + peekBits(bitsConsumed, bits, numberOfBits));
             bitsConsumed += numberOfBits;
 
-            UnsafeUtil.putByte(outputBase, output + 3, symbols[state2]);
+            MemoryAccess.putByte(outputBase, output + 3, symbols[state2]);
             numberOfBits = numbersOfBits[state2];
             state2 = (int) (newStates[state2] + peekBits(bitsConsumed, bits, numberOfBits));
             bitsConsumed += numberOfBits;
@@ -105,7 +105,7 @@ final class FiniteStateEntropy {
 
         while (true) {
             verify(output <= outputLimit - 2, input, "Output buffer is too small");
-            UnsafeUtil.putByte(outputBase, output++, symbols[state1]);
+            MemoryAccess.putByte(outputBase, output++, symbols[state1]);
             int numberOfBits = numbersOfBits[state1];
             state1 = (int) (newStates[state1] + peekBits(bitsConsumed, bits, numberOfBits));
             bitsConsumed += numberOfBits;
@@ -117,12 +117,12 @@ final class FiniteStateEntropy {
             currentAddress = loader.getCurrentAddress();
 
             if (loader.isOverflow()) {
-                UnsafeUtil.putByte(outputBase, output++, symbols[state2]);
+                MemoryAccess.putByte(outputBase, output++, symbols[state2]);
                 break;
             }
 
             verify(output <= outputLimit - 2, input, "Output buffer is too small");
-            UnsafeUtil.putByte(outputBase, output++, symbols[state2]);
+            MemoryAccess.putByte(outputBase, output++, symbols[state2]);
             int numberOfBits1 = numbersOfBits[state2];
             state2 = (int) (newStates[state2] + peekBits(bitsConsumed, bits, numberOfBits1));
             bitsConsumed += numberOfBits1;
@@ -134,7 +134,7 @@ final class FiniteStateEntropy {
             currentAddress = loader.getCurrentAddress();
 
             if (loader.isOverflow()) {
-                UnsafeUtil.putByte(outputBase, output++, symbols[state1]);
+                MemoryAccess.putByte(outputBase, output++, symbols[state1]);
                 break;
             }
         }

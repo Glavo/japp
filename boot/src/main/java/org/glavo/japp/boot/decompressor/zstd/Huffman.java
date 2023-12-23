@@ -13,7 +13,7 @@
  */
 package org.glavo.japp.boot.decompressor.zstd;
 
-import org.glavo.japp.util.UnsafeUtil;
+import org.glavo.japp.util.MemoryAccess;
 
 import java.util.Arrays;
 
@@ -54,7 +54,7 @@ class Huffman {
 
         // read table header
         verify(size > 0, input, "Not enough input bytes");
-        int inputSize = UnsafeUtil.getByte(inputBase, input++) & 0xFF;
+        int inputSize = MemoryAccess.getByte(inputBase, input++) & 0xFF;
 
         int outputSize;
         if (inputSize >= 128) {
@@ -65,7 +65,7 @@ class Huffman {
             verify(outputSize <= MAX_SYMBOL + 1, input, "Input is corrupted");
 
             for (int i = 0; i < outputSize; i += 2) {
-                int value = UnsafeUtil.getByte(inputBase, input + i / 2) & 0xFF;
+                int value = MemoryAccess.getByte(inputBase, input + i / 2) & 0xFF;
                 weights[i] = (byte) (value >>> 4);
                 weights[i + 1] = (byte) (value & 0b1111);
             }
@@ -163,9 +163,9 @@ class Huffman {
         verify(inputLimit - inputAddress >= 10, inputAddress, "Input is corrupted"); // jump table + 1 byte per stream
 
         long start1 = inputAddress + 3 * SIZE_OF_SHORT; // for the shorts we read below
-        long start2 = start1 + (UnsafeUtil.getShort(inputBase, inputAddress) & 0xFFFF);
-        long start3 = start2 + (UnsafeUtil.getShort(inputBase, inputAddress + 2) & 0xFFFF);
-        long start4 = start3 + (UnsafeUtil.getShort(inputBase, inputAddress + 4) & 0xFFFF);
+        long start2 = start1 + (MemoryAccess.getShort(inputBase, inputAddress) & 0xFFFF);
+        long start3 = start2 + (MemoryAccess.getShort(inputBase, inputAddress + 2) & 0xFFFF);
+        long start4 = start3 + (MemoryAccess.getShort(inputBase, inputAddress + 4) & 0xFFFF);
 
         BitInputStream.Initializer initializer = new BitInputStream.Initializer(inputBase, start1, start2);
         initializer.initialize();
@@ -310,7 +310,7 @@ class Huffman {
 
     private static int decodeSymbol(Object outputBase, long outputAddress, long bitContainer, int bitsConsumed, int tableLog, byte[] numbersOfBits, byte[] symbols) {
         int value = (int) peekBitsFast(bitsConsumed, bitContainer, tableLog);
-        UnsafeUtil.putByte(outputBase, outputAddress, symbols[value]);
+        MemoryAccess.putByte(outputBase, outputAddress, symbols[value]);
         return bitsConsumed + numbersOfBits[value];
     }
 }

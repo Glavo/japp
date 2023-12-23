@@ -18,7 +18,7 @@ package org.glavo.japp.util;
 import java.lang.ref.Reference;
 import java.nio.ByteBuffer;
 
-import static org.glavo.japp.util.UnsafeUtil.ARRAY_BYTE_BASE_OFFSET;
+import static org.glavo.japp.util.MemoryAccess.ARRAY_BYTE_BASE_OFFSET;
 
 public final class XxHash64 {
     private static final long P1 = 0x9E3779B185EBCA87L;
@@ -41,7 +41,7 @@ public final class XxHash64 {
             inputAddress = ARRAY_BYTE_BASE_OFFSET + buffer.arrayOffset() + buffer.position();
         } else {
             inputBase = null;
-            inputAddress = UnsafeUtil.getDirectBufferAddress(buffer);
+            inputAddress = MemoryAccess.getDirectBufferAddress(buffer);
         }
         inputLimit = inputAddress + buffer.remaining();
 
@@ -75,10 +75,10 @@ public final class XxHash64 {
             long v4 = seed - P1;
 
             do {
-                v1 = mix(v1, UnsafeUtil.getLong(inputBase, address));
-                v2 = mix(v2, UnsafeUtil.getLong(inputBase, address + 8));
-                v3 = mix(v3, UnsafeUtil.getLong(inputBase, address + 16));
-                v4 = mix(v4, UnsafeUtil.getLong(inputBase, address + 24));
+                v1 = mix(v1, MemoryAccess.getLong(inputBase, address));
+                v2 = mix(v2, MemoryAccess.getLong(inputBase, address + 8));
+                v3 = mix(v3, MemoryAccess.getLong(inputBase, address + 16));
+                v4 = mix(v4, MemoryAccess.getLong(inputBase, address + 24));
 
                 address += 32;
             } while (inputLimit - address >= 32);
@@ -99,7 +99,7 @@ public final class XxHash64 {
         hash += inputLimit - inputAddress;
 
         while (address <= inputLimit - 8) {
-            long k1 = UnsafeUtil.getLong(inputBase, address);
+            long k1 = MemoryAccess.getLong(inputBase, address);
             k1 *= P2;
             k1 = Long.rotateLeft(k1, 31);
             k1 *= P1;
@@ -109,13 +109,13 @@ public final class XxHash64 {
         }
 
         if (address <= inputLimit - 4) {
-            hash ^= UnsafeUtil.getUnsignedInt(inputBase, address) * P1;
+            hash ^= MemoryAccess.getUnsignedInt(inputBase, address) * P1;
             hash = Long.rotateLeft(hash, 23) * P2 + P3;
             address += 4;
         }
 
         while (address < inputLimit) {
-            hash ^= UnsafeUtil.getUnsignedByte(inputBase, address) * P5;
+            hash ^= MemoryAccess.getUnsignedByte(inputBase, address) * P5;
             hash = Long.rotateLeft(hash, 11) * P1;
             address++;
         }

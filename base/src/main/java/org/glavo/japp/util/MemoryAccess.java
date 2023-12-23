@@ -21,7 +21,7 @@ import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public final class UnsafeUtil {
+public final class MemoryAccess {
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
     private static final boolean IS_BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
 
@@ -29,7 +29,7 @@ public final class UnsafeUtil {
 
     private static final long BUFFER_ADDRESS_OFFSET = UNSAFE.objectFieldOffset(Buffer.class, "address");
 
-    private UnsafeUtil() {
+    private MemoryAccess() {
     }
 
     public static long getDirectBufferAddress(ByteBuffer buffer) {
