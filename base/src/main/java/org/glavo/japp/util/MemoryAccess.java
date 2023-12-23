@@ -19,15 +19,12 @@ import jdk.internal.misc.Unsafe;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public final class MemoryAccess {
     private static final Unsafe UNSAFE = Unsafe.getUnsafe();
-    private static final boolean IS_BIG_ENDIAN = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
+    private static final long BUFFER_ADDRESS_OFFSET = UNSAFE.objectFieldOffset(Buffer.class, "address");
 
     public static final int ARRAY_BYTE_BASE_OFFSET = Unsafe.ARRAY_BYTE_BASE_OFFSET;
-
-    private static final long BUFFER_ADDRESS_OFFSET = UNSAFE.objectFieldOffset(Buffer.class, "address");
 
     private MemoryAccess() {
     }
@@ -50,15 +47,15 @@ public final class MemoryAccess {
     }
 
     public static short getShort(Object o, long offset) {
-        return UNSAFE.getShortUnaligned(o, offset, IS_BIG_ENDIAN);
+        return UNSAFE.getShortUnaligned(o, offset, false);
     }
 
     public static void putShort(Object o, long offset, short x) {
-        UNSAFE.putShortUnaligned(o, offset, x, IS_BIG_ENDIAN);
+        UNSAFE.putShortUnaligned(o, offset, x, false);
     }
 
     public static int getInt(Object o, long offset) {
-        return UNSAFE.getIntUnaligned(o, offset, IS_BIG_ENDIAN);
+        return UNSAFE.getIntUnaligned(o, offset, false);
     }
 
     public static long getUnsignedInt(Object o, long offset) {
@@ -66,15 +63,15 @@ public final class MemoryAccess {
     }
 
     public static void putInt(Object o, long offset, int x) {
-        UNSAFE.putIntUnaligned(o, offset, x, IS_BIG_ENDIAN);
+        UNSAFE.putIntUnaligned(o, offset, x, false);
     }
 
     public static long getLong(Object o, long offset) {
-        return UNSAFE.getLongUnaligned(o, offset, IS_BIG_ENDIAN);
+        return UNSAFE.getLongUnaligned(o, offset, false);
     }
 
     public static void putLong(Object o, long offset, long x) {
-        UNSAFE.putLongUnaligned(o, offset, x, IS_BIG_ENDIAN);
+        UNSAFE.putLongUnaligned(o, offset, x, false);
     }
 
     public static void copyMemory(Object srcBase, long srcOffset, Object destBase, long destOffset, long bytes) {
