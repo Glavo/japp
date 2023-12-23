@@ -21,6 +21,19 @@ JAppFile {
 }
 ```
 
+## types
+
+Field:
+
+```
+Field {
+  u1 field_id;
+  u1[...] field_body;
+}
+```
+
+FieldList: A list of fields, ending with the field with field_id `0`.
+
 ## boot
 
 [BootMetadata](boot/src/main/java/org/glavo/japp/boot/JAppBootMetadata.java):
