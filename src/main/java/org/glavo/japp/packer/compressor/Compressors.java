@@ -15,7 +15,6 @@
  */
 package org.glavo.japp.packer.compressor;
 
-import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.util.ZstdUtils;
 import org.glavo.japp.packer.compressor.classfile.ClassFileCompressor;
@@ -28,7 +27,7 @@ public final class Compressors {
 
     public static final Compressor ZSTD = (context, source) -> {
         byte[] res = new byte[ZstdUtils.maxCompressedLength(source.length)];
-        long n = Zstd.compressByteArray(res, 0, res.length, source, 0, source.length, 8);
+        long n = context.getZstdCompressCtx().compressByteArray(res, 0, res.length, source, 0, source.length);
         return new CompressResult(CompressionMethod.ZSTD, res, 0, (int) n);
     };
 

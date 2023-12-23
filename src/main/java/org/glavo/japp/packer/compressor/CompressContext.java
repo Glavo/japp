@@ -15,8 +15,13 @@
  */
 package org.glavo.japp.packer.compressor;
 
+import com.github.luben.zstd.ZstdCompressCtx;
 import org.glavo.japp.packer.compressor.classfile.ByteArrayPoolBuilder;
 
 public interface CompressContext {
     ByteArrayPoolBuilder getPool();
+
+    default ZstdCompressCtx getZstdCompressCtx() {
+        return new ZstdCompressCtx();
+    }
 }

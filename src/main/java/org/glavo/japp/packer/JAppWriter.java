@@ -16,6 +16,7 @@
 package org.glavo.japp.packer;
 
 import com.github.luben.zstd.Zstd;
+import com.github.luben.zstd.ZstdCompressCtx;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.boot.JAppBootMetadata;
 import org.glavo.japp.boot.JAppResource;
@@ -79,6 +80,18 @@ public final class JAppWriter implements CompressContext, Closeable {
     @Override
     public ByteArrayPoolBuilder getPool() {
         return pool;
+    }
+
+    private final ZstdCompressCtx zstdCompressCtx = new ZstdCompressCtx();
+
+    {
+        zstdCompressCtx.setLevel(8);
+        zstdCompressCtx.setChecksum(false);
+    }
+
+    @Override
+    public ZstdCompressCtx getZstdCompressCtx() {
+        return zstdCompressCtx;
     }
 
     public void beginConfigGroup(JAppConfigGroup group) {
