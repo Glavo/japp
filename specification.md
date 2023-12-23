@@ -1,5 +1,22 @@
 # Specification (Draft)
 
+## types
+
+`u1`/`u2`/`u4`/`u8`: Little-endian unsigned 1/2/4/8 byte integer.
+
+
+Field:
+
+```
+Field {
+  u1 field_id;
+  u1[...] field_body;
+}
+```
+
+FieldList: A list of fields, ending with the field with field_id `0`.
+
+
 File format:
 
 ```
@@ -21,18 +38,7 @@ JAppFile {
 }
 ```
 
-## types
 
-Field:
-
-```
-Field {
-  u1 field_id;
-  u1[...] field_body;
-}
-```
-
-FieldList: A list of fields, ending with the field with field_id `0`.
 
 ## boot
 
