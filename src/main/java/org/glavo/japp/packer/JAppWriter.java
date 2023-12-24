@@ -236,14 +236,20 @@ public final class JAppWriter implements CompressContext, Closeable {
 
     @Override
     public void close() throws IOException {
-        long bootMetadataOffset = getCurrentOffset();
-        writeBootMetadata();
+        try {
+            long bootMetadataOffset = getCurrentOffset();
+            writeBootMetadata();
 
-        long launcherMetadataOffset = getCurrentOffset();
-        writeLauncherMetadata();
+            long launcherMetadataOffset = getCurrentOffset();
+            writeLauncherMetadata();
 
-        writeFileEnd(bootMetadataOffset, launcherMetadataOffset);
-
-        this.output.close();
+            writeFileEnd(bootMetadataOffset, launcherMetadataOffset);
+        } finally {
+            try {
+                this.output.close();
+            } finally {
+                this.zstdCompressCtx.close();
+            }
+        }
     }
 }
