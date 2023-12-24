@@ -15,7 +15,6 @@
  */
 package org.glavo.japp.launcher;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.boot.JAppBootArgs;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.platform.JAppRuntimeContext;
@@ -24,6 +23,7 @@ import org.glavo.japp.maven.MavenResolver;
 import org.glavo.japp.io.ByteBufferOutputStream;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -104,6 +104,13 @@ public final class Launcher {
         out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_END);
     }
 
+    private static void printHelpMessage(PrintStream out) {
+        out.println("Usage: japp run [options] <japp file> [args]");
+        out.println("Supported options:");
+        out.println("  --help      Print this message");
+        out.println("  -J<flag>    Pass <flag> directly to java");
+    }
+
     public static void main(String[] args) throws Throwable {
         ArrayList<String> jvmOptions = new ArrayList<>();
 
@@ -113,18 +120,26 @@ public final class Launcher {
         while (i < args.length) {
             String arg = args[i++];
 
-            if (arg.startsWith("-J")) {
-                jvmOptions.add(arg.substring("-J".length()));
-            } else if (arg.startsWith("-")) {
-                throw new IllegalArgumentException("Unknown option: " + arg);
-            } else {
-                jappFile = arg;
-                break;
+            switch (arg) {
+                case "-help":
+                case "--help":
+                    printHelpMessage(System.out);
+                    return;
+                default:
+                    if (arg.startsWith("-J")) {
+                        jvmOptions.add(arg.substring("-J".length()));
+                    } else if (arg.startsWith("-")) {
+                        throw new IllegalArgumentException("Unknown option: " + arg);
+                    } else {
+                        jappFile = arg;
+                        break;
+                    }
             }
         }
 
         if (jappFile == null) {
-            throw new TODO("Help Message");
+            printHelpMessage(System.err);
+            System.exit(1);
         }
 
         Path file = Paths.get(jappFile).toAbsolutePath().normalize();

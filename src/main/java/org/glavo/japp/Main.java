@@ -23,6 +23,14 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 public final class Main {
+    private static void printHelpMessage(PrintStream out) {
+        out.println("Usage: japp <mode> [options]");
+        out.println("Supported mode:");
+        out.println("  japp create");
+        out.println("  japp run");
+        out.println("  japp list-java");
+    }
+
     public static void main(String[] args) throws Throwable {
         if (args.length == 0) {
             printHelpMessage(System.out);
@@ -51,13 +59,5 @@ public final class Main {
                 printHelpMessage(System.err);
                 System.exit(1);
         }
-    }
-
-    private static void printHelpMessage(PrintStream out) {
-        out.println("Usage: japp <mode> [options]");
-        out.println("Supported mode:");
-        out.println("  japp create");
-        out.println("  japp run");
-        out.println("  japp list-java");
     }
 }
