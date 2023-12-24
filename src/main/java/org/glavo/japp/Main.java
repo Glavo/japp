@@ -19,21 +19,24 @@ import org.glavo.japp.launcher.Launcher;
 import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.platform.JavaRuntime;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 
 public final class Main {
     public static void main(String[] args) throws Throwable {
         if (args.length == 0) {
-            System.out.println("Supported mode:");
-            System.out.println("  japp create");
-            System.out.println("  japp run");
-            System.out.println("  japp list-java");
+            printHelpMessage(System.out);
             return;
         }
 
         String[] commandArgs = Arrays.copyOfRange(args, 1, args.length);
 
         switch (args[0]) {
+            case "help":
+            case "-help":
+            case "--help":
+                printHelpMessage(System.out);
+                return;
             case "create":
                 JAppPacker.main(commandArgs);
                 break;
@@ -44,7 +47,17 @@ public final class Main {
                 JavaRuntime.main(commandArgs);
                 break;
             default:
-                throw new TODO("Command: " + args[0]);
+                System.err.println("Unsupported mode: " + args[0]);
+                printHelpMessage(System.err);
+                System.exit(1);
         }
+    }
+
+    private static void printHelpMessage(PrintStream out) {
+        out.println("Usage: japp <mode> [options]");
+        out.println("Supported mode:");
+        out.println("  japp create");
+        out.println("  japp run");
+        out.println("  japp list-java");
     }
 }

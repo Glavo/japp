@@ -98,7 +98,7 @@ public final class Launcher {
                 out.writeString(name);
                 out.writeString(file.toString());
             } else {
-                throw new TODO("Type: " + reference.getClass());
+                throw new AssertionError("Type: " + reference.getClass());
             }
         }
         out.writeByte(JAppBootArgs.ID_RESOLVED_REFERENCE_END);
