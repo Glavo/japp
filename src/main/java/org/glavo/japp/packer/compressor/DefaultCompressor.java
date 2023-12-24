@@ -15,7 +15,6 @@
  */
 package org.glavo.japp.packer.compressor;
 
-import org.glavo.japp.TODO;
 import org.glavo.japp.CompressionMethod;
 
 import java.io.IOException;
@@ -71,9 +70,6 @@ final class DefaultCompressor implements Compressor {
                     result = Compressors.CLASSFILE.compress(context, source);
                 } catch (Throwable e) {
                     // Malformed class file
-
-                    // TODO: Test ClassFileCompressor
-                    e.printStackTrace();
                     result = Compressors.ZSTD.compress(context, source);
                 }
                 break;
@@ -81,7 +77,7 @@ final class DefaultCompressor implements Compressor {
                 result = Compressors.ZSTD.compress(context, source);
                 break;
             default:
-                throw new TODO("Method: " + method);
+                throw new AssertionError("Unimplemented compression method: " + method);
         }
 
         return result.getLength() < source.length ? result : new CompressResult(source);
