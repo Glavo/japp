@@ -15,7 +15,6 @@
  */
 package org.glavo.japp.packer.compressor.classfile;
 
-import com.github.luben.zstd.Zstd;
 import org.glavo.japp.CompressionMethod;
 import org.glavo.japp.packer.compressor.CompressContext;
 import org.glavo.japp.util.CompressedNumber;
@@ -79,10 +78,9 @@ public final class ClassFileCompressor implements Compressor {
 
         outputBuffer.put(CompressionMethod.ZSTD.id());
         int outputPosition = outputBuffer.position();
-        long compressedTailLen = Zstd.compressByteArray(
+        long compressedTailLen = context.getZstdCompressCtx().compressByteArray(
                 output, outputPosition, output.length - outputPosition,
-                source, reader.tailPosition, reader.tailLen,
-                8);
+                source, reader.tailPosition, reader.tailLen);
         if (compressedTailLen < reader.tailLen) {
             outputBuffer.position(outputPosition + (int) compressedTailLen);
         } else {
