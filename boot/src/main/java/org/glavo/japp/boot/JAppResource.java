@@ -16,7 +16,6 @@
 package org.glavo.japp.boot;
 
 import org.glavo.japp.CompressionMethod;
-import org.glavo.japp.TODO;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -158,7 +157,7 @@ public final class JAppResource {
                     break;
                 }
                 default:
-                    throw new TODO("Field: " + field);
+                    throw new AssertionError("Field: " + field);
             }
         }
 
