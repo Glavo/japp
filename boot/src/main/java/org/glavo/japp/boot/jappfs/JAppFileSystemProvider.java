@@ -41,7 +41,6 @@ import static java.nio.file.StandardOpenOption.*;
 public final class JAppFileSystemProvider extends FileSystemProvider {
 
     private final JAppFileSystem fileSystem;
-    private final ReentrantLock lock = new ReentrantLock();
 
     public JAppFileSystemProvider() throws IOException {
         this(JAppReader.getSystemReader());

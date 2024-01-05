@@ -250,7 +250,17 @@ public final class JAppPath implements Path {
     }
 
     @Override
-    public Path relativize(Path other) {
+    public Path relativize(Path o) {
+        JAppPath other = checkPath(o);
+
+        if (this.isAbsolute() != other.isAbsolute()) {
+            throw new IllegalArgumentException();
+        }
+
+        JAppPath path1 = (JAppPath) this.toAbsolutePath().normalize();
+        JAppPath path2 = (JAppPath) other.toAbsolutePath().normalize();
+
+
         throw new TODO();
     }
 
