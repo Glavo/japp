@@ -25,10 +25,54 @@ import java.nio.file.Path;
 
 public final class JAppLauncherMetadata {
 
+    private static final int MAGIC_NUMBER = 0x5050414a;
+
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
 
     public static final int FILE_END_SIZE = 64;
+
+    private static final int ZIP_EOCD_SIZE = 22;
+    private static final int ZIP_EOCD_MAGIC = 0x06054b50;
+
+    static long getEndZipSize(ByteBuffer endBuffer) throws IOException {
+        if (endBuffer.capacity() < ZIP_EOCD_SIZE) {
+            return -1;
+        }
+
+        ByteBuffer eocdBuffer = endBuffer.duplicate().order(ByteOrder.LITTLE_ENDIAN).position(endBuffer.capacity() - ZIP_EOCD_SIZE);
+
+        if (eocdBuffer.getInt() != ZIP_EOCD_MAGIC) {
+            return -1;
+        }
+
+        // Number of this disk
+        if (eocdBuffer.getShort() != 0) {
+            return -1;
+        }
+
+        // Disk where central directory starts
+        if (eocdBuffer.getShort() != 0) {
+            return -1;
+        }
+
+        // Number of central directory records on this disk
+        eocdBuffer.getShort();
+
+        // Total number of central directory records
+        eocdBuffer.getShort();
+
+        long centralDirectoryLength = Integer.toUnsignedLong(eocdBuffer.getInt());
+        long centralDirectoryOffset = Integer.toUnsignedLong(eocdBuffer.getInt());
+
+        if (eocdBuffer.getShort() != 0) {
+            return -1;
+        }
+
+        assert !eocdBuffer.hasRemaining();
+
+        return ZIP_EOCD_SIZE + centralDirectoryLength + centralDirectoryOffset;
+    }
 
     public static JAppLauncherMetadata readFile(Path file) throws IOException {
         try (FileChannel channel = FileChannel.open(file)) {
