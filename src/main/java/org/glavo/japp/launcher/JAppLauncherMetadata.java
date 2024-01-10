@@ -25,12 +25,13 @@ import java.nio.file.Path;
 
 public final class JAppLauncherMetadata {
 
-    private static final int MAGIC_NUMBER = 0x5050414a;
+    private static final int DEFAULT_END_BUFFER_SIZE = 8192;
+
+    public static final int FILE_END_SIZE = 64;
+    public static final int FILE_END_MAGIC_NUMBER = 0x5050414a;
 
     public static final short MAJOR_VERSION = -1;
     public static final short MINOR_VERSION = 0;
-
-    public static final int FILE_END_SIZE = 64;
 
     private static final int ZIP_EOCD_SIZE = 22;
     private static final int ZIP_EOCD_MAGIC = 0x06054b50;
@@ -82,7 +83,7 @@ public final class JAppLauncherMetadata {
                 throw new IOException("File is too small");
             }
 
-            int endBufferSize = (int) Math.min(fileSize, 8192);
+            int endBufferSize = (int) Math.min(fileSize, DEFAULT_END_BUFFER_SIZE);
             ByteBuffer endBuffer = ByteBuffer.allocateDirect(endBufferSize).order(ByteOrder.LITTLE_ENDIAN);
 
             channel.position(fileSize - endBufferSize);
@@ -90,6 +91,31 @@ public final class JAppLauncherMetadata {
             endBuffer.position(endBufferSize - FILE_END_SIZE);
 
             int magicNumber = endBuffer.getInt();
+
+            if (magicNumber != FILE_END_MAGIC_NUMBER) {
+                long endZipSize = getEndZipSize(endBuffer);
+                if (endZipSize > 0 && endZipSize < fileSize) {
+                    fileSize -= endZipSize;
+
+                    if (fileSize < endBufferSize) {
+                        endBufferSize = (int) fileSize;
+                        endBuffer = ByteBuffer.allocateDirect(endBufferSize).order(ByteOrder.LITTLE_ENDIAN);
+                    } else {
+                        endBuffer.clear();
+                    }
+
+                    channel.position(fileSize - endBufferSize);
+                    IOUtils.readFully(channel, endBuffer);
+                    endBuffer.position(endBufferSize - FILE_END_SIZE);
+
+                    magicNumber = endBuffer.getInt();
+                }
+
+                if (magicNumber != FILE_END_MAGIC_NUMBER) {
+                    throw new IOException("Invalid magic number: " + Long.toHexString(magicNumber));
+                }
+            }
+
             short majorVersion = endBuffer.getShort();
             short minorVersion = endBuffer.getShort();
             long flags = endBuffer.getLong();
@@ -98,10 +124,6 @@ public final class JAppLauncherMetadata {
             long launcherMetadataOffset = endBuffer.getLong();
 
             assert endBuffer.remaining() == 24; // reserved
-
-            if (magicNumber != 0x5050414a) {
-                throw new IOException("Invalid magic number: " + Long.toHexString(magicNumber));
-            }
 
             if (majorVersion != MAJOR_VERSION || minorVersion != MINOR_VERSION) {
                 throw new IOException("Version number mismatch");
