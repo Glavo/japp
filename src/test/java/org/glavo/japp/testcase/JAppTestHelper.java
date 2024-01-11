@@ -105,4 +105,10 @@ public final class JAppTestHelper {
 
         Assertions.assertEquals(builder.toString(), value);
     }
+
+    public static void test(List<String> args, List<String> lines) throws IOException {
+        try (JAppTestHelper.FileHolder holder = JAppTestHelper.create(args.toArray(String[]::new))) {
+            assertLines(JAppTestHelper.launch(holder.file), lines.toArray(String[]::new));
+        }
+    }
 }

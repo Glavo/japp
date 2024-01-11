@@ -15,28 +15,24 @@
  */
 package org.glavo.japp.testcase;
 
-import org.junit.jupiter.api.Test;
+import java.util.List;
+import java.util.stream.Stream;
 
-import java.io.IOException;
-
-import static org.glavo.japp.testcase.JAppTestHelper.assertLines;
-
-public final class ModulePathTest {
+public final class ModulePathTest implements JAppTestTemplate {
 
     public static final String FILE = JAppTestHelper.getTestCase("modulepath");
 
-    @Test
-    public void test() throws IOException {
-        try (JAppTestHelper.FileHolder holder = JAppTestHelper.create(
-                "--module-path", FILE,
-                "org.glavo.japp.testcase.modulepath.ModulePath"
-        )) {
-
-            assertLines(JAppTestHelper.launch(holder.file),
-                    "japp:/modules/org.glavo.japp.testcase.modulepath/org/glavo/japp/testcase/modulepath/ModulePath.class",
-                    "japp:/modules/com.google.gson/com/google/gson/Gson.class",
-                    "japp:/modules/org.apache.commons.lang3/org/apache/commons/lang3/ObjectUtils.class"
-            );
-        }
+    @Override
+    public Stream<TestArgument> tests() {
+        return Stream.of(
+                newTest("test",
+                        List.of("--module-path", FILE, "org.glavo.japp.testcase.modulepath.ModulePath"),
+                        List.of(
+                                "japp:/modules/org.glavo.japp.testcase.modulepath/org/glavo/japp/testcase/modulepath/ModulePath.class",
+                                "japp:/modules/com.google.gson/com/google/gson/Gson.class",
+                                "japp:/modules/org.apache.commons.lang3/org/apache/commons/lang3/ObjectUtils.class"
+                        )
+                )
+        );
     }
 }

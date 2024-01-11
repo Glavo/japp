@@ -15,27 +15,18 @@
  */
 package org.glavo.japp.testcase;
 
-import org.junit.jupiter.api.Test;
+import java.util.List;
+import java.util.stream.Stream;
 
-import java.io.IOException;
-
-import static org.glavo.japp.testcase.JAppTestHelper.assertLines;
-
-public final class HelloWorldTest {
+public final class HelloWorldTest implements JAppTestTemplate {
     public static final String FILE = JAppTestHelper.getTestCase("helloworld");
+    public static final String MAIN_CLASS = "org.glavo.japp.testcase.helloworld.HelloWorld";
 
-    private void test(boolean useModulePath) throws IOException {
-        try (JAppTestHelper.FileHolder holder = JAppTestHelper.create(
-                useModulePath ? "--module-path" : "--classpath", FILE,
-                "org.glavo.japp.testcase.helloworld.HelloWorld"
-        )) {
-            assertLines(JAppTestHelper.launch(holder.file), "Hello World!");
-        }
-    }
-
-    @Test
-    public void test() throws IOException {
-        test(true);
-        test(false);
+    @Override
+    public Stream<TestArgument> tests() {
+        return Stream.of(
+                newTest("Module Path", List.of("--module-path", FILE, MAIN_CLASS), List.of("Hello World!")),
+                newTest("Class Path", List.of("--classpath", FILE, MAIN_CLASS), List.of("Hello World!"))
+        );
     }
 }
