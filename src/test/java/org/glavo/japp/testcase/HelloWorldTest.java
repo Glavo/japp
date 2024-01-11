@@ -22,9 +22,11 @@ import java.io.IOException;
 import static org.glavo.japp.testcase.JAppTestHelper.assertLines;
 
 public final class HelloWorldTest {
+    public static final String FILE = JAppTestHelper.getTestCase("helloworld");
+
     private void test(boolean useModulePath) throws IOException {
         try (JAppTestHelper.FileHolder holder = JAppTestHelper.create(
-                useModulePath ? "--module-path" : "--classpath", System.getProperty("japp.testcase.helloworld"),
+                useModulePath ? "--module-path" : "--classpath", FILE,
                 "org.glavo.japp.testcase.helloworld.HelloWorld"
         )) {
             assertLines(JAppTestHelper.launch(holder.file), "Hello World!");

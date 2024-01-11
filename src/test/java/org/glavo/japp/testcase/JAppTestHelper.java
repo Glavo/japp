@@ -69,6 +69,15 @@ public final class JAppTestHelper {
         }
     }
 
+    public static String getTestCase(String name) {
+        String file = System.getProperty("japp.testcase." + name);
+        if (file == null) {
+            throw new AssertionError(name);
+        }
+
+        return file;
+    }
+
     public static FileHolder create(String... args) throws IOException {
         Path targetFile = Files.createTempFile("japp-test-", ".japp").toAbsolutePath();
 

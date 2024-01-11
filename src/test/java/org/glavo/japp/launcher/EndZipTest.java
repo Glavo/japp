@@ -31,23 +31,21 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class GetEndZipSizeTest {
+public class EndZipTest {
 
-    private static Path getJarPath(Class<?> clazz) {
-        try {
-            return Path.of(clazz.getProtectionDomain().getCodeSource().getLocation().toURI());
-        } catch (URISyntaxException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    private static Stream<Path> testFiles() {
-        return Stream.of(Test.class, Zstd.class).map(GetEndZipSizeTest::getJarPath);
+    private static Stream<Path> jars() {
+        return Stream.of(Test.class, Zstd.class).map(clazz -> {
+            try {
+                return Path.of(clazz.getProtectionDomain().getCodeSource().getLocation().toURI());
+            } catch (URISyntaxException e) {
+                throw new AssertionError(e);
+            }
+        });
     }
 
     @ParameterizedTest
-    @MethodSource("testFiles")
-    void test(Path zipFile) throws IOException {
+    @MethodSource("jars")
+    void testGetSize(Path zipFile) throws IOException {
         try (FileChannel channel = FileChannel.open(zipFile)) {
             long fileSize = channel.size();
 

@@ -22,10 +22,13 @@ import java.io.IOException;
 import static org.glavo.japp.testcase.JAppTestHelper.assertLines;
 
 public final class ModulePathTest {
+
+    public static final String FILE = JAppTestHelper.getTestCase("modulepath");
+
     @Test
     public void test() throws IOException {
         try (JAppTestHelper.FileHolder holder = JAppTestHelper.create(
-                "--module-path", System.getProperty("japp.testcase.modulepath"),
+                "--module-path", FILE,
                 "org.glavo.japp.testcase.modulepath.ModulePath"
         )) {
 
