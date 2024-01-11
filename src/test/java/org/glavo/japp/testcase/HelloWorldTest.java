@@ -25,8 +25,9 @@ public final class HelloWorldTest implements JAppTestTemplate {
     @Override
     public Stream<TestArgument> tests() {
         return Stream.of(
-                newTest("Module Path", List.of("--module-path", FILE, MAIN_CLASS), List.of("Hello World!")),
-                newTest("Class Path", List.of("--classpath", FILE, MAIN_CLASS), List.of("Hello World!"))
+                newTest("module path", List.of("--module-path", FILE, MAIN_CLASS), List.of("Hello World!")),
+                newTest("classpath", List.of("--classpath", FILE, MAIN_CLASS), List.of("Hello World!")),
+                newTest("module path with end zip", List.of("-Tappend-boot-jar", "--module-path", FILE, MAIN_CLASS), List.of("Hello World!"))
         );
     }
 }

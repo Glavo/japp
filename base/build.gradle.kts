@@ -12,11 +12,12 @@ tasks.compileJava {
 
 val jappPropertiesFile = rootProject.layout.buildDirectory.file("japp.properties").get().asFile
 
- tasks.create("generateJAppProperties") {
+tasks.create("generateJAppProperties") {
     outputs.file(jappPropertiesFile)
     doLast {
         val properties = Properties()
         properties["Project-Directory"] = rootProject.layout.projectDirectory.asFile.absolutePath
+        properties["Boot-Jar"] = project(":boot").tasks.getByName<Jar>("bootJar").archiveFile.get().asFile.absolutePath
         jappPropertiesFile.writer().use { writer ->
             properties.store(writer, null)
         }

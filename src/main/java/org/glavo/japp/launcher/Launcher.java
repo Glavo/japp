@@ -15,6 +15,7 @@
  */
 package org.glavo.japp.launcher;
 
+import org.glavo.japp.JAppProperties;
 import org.glavo.japp.boot.JAppBootArgs;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.platform.JAppRuntimeContext;
@@ -31,12 +32,6 @@ import java.util.jar.Manifest;
 
 public final class Launcher {
     private static final String BOOT_LAUNCHER_MODULE = "org.glavo.japp.boot";
-
-    private static String getBootLauncher() throws IOException {
-        return new Manifest(Launcher.class.getResourceAsStream("/META-INF/MANIFEST.MF"))
-                .getMainAttributes()
-                .getValue("JApp-Boot");
-    }
 
     private static void writeStringListField(ByteBufferOutputStream out, JAppBootArgs.Field field, List<String> list) throws IOException {
         if (list.isEmpty()) {
@@ -239,7 +234,7 @@ public final class Launcher {
 
         Collections.addAll(command,
                 "--module-path",
-                getBootLauncher(),
+                JAppProperties.getBootJar().toString(),
                 "--add-exports=java.base/jdk.internal.loader=" + BOOT_LAUNCHER_MODULE,
                 "--add-exports=java.base/jdk.internal.module=" + BOOT_LAUNCHER_MODULE,
                 "--add-exports=java.base/jdk.internal.misc=" + BOOT_LAUNCHER_MODULE,

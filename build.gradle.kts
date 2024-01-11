@@ -87,7 +87,6 @@ dependencies {
 tasks.jar {
     manifest.attributes(
         "Main-Class" to "org.glavo.japp.Main",
-        "JApp-Boot" to project(":boot").tasks.getByName<Jar>("bootJar").archiveFile.get().asFile.absolutePath,
         "Add-Exports" to "java.base/jdk.internal.misc"
     )
 }

@@ -27,6 +27,7 @@ public final class JAppProperties {
 
     private static final Path PROJECT_DIRECTORY;
     private static final Path HOME_DIRECTORY;
+    private static final Path BOOT_JAR;
 
     static {
         Properties properties = new Properties();
@@ -39,8 +40,9 @@ public final class JAppProperties {
         }
 
         // In the early stages we isolate the configuration in the project directory
-        PROJECT_DIRECTORY = Paths.get(properties.getProperty("Project-Directory")).toAbsolutePath().normalize();
+        PROJECT_DIRECTORY = Paths.get(properties.getProperty("Project-Directory"));
         HOME_DIRECTORY = PROJECT_DIRECTORY.resolve(".japp");
+        BOOT_JAR = Paths.get(properties.getProperty("Boot-Jar"));
     }
 
     public static Path getProjectDirectory() {
@@ -49,6 +51,10 @@ public final class JAppProperties {
 
     public static Path getHomeDirectory() {
         return HOME_DIRECTORY;
+    }
+
+    public static Path getBootJar() {
+        return BOOT_JAR;
     }
 
     private JAppProperties() {

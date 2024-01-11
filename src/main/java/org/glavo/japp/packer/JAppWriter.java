@@ -245,11 +245,7 @@ public final class JAppWriter implements CompressContext, Closeable {
 
             writeFileEnd(bootMetadataOffset, launcherMetadataOffset);
         } finally {
-            try {
-                this.output.close();
-            } finally {
-                this.zstdCompressCtx.close();
-            }
+            this.zstdCompressCtx.close();
         }
     }
 }

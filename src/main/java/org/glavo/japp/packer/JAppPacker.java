@@ -24,6 +24,7 @@ import org.glavo.japp.packer.processor.ClassPathProcessor;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
@@ -71,6 +72,7 @@ public final class JAppPacker {
     public static void main(String[] args) throws Throwable {
         JAppPacker packer = new JAppPacker();
         Path outputFile = null;
+        boolean appendBootJar = false;
 
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -138,6 +140,11 @@ public final class JAppPacker {
                     packer.current = packer.current.parent;
                     break;
                 }
+                // Test Options
+                case "-Tappend-boot-jar": {
+                    appendBootJar = true;
+                    break;
+                }
                 default: {
                     if (arg.startsWith("-D")) {
                         String property = arg.substring("-D".length());
@@ -190,6 +197,10 @@ public final class JAppPacker {
 
             try (JAppWriter writer = new JAppWriter(output, packer.current.group)) {
                 packer.current.writeTo(writer);
+            }
+
+            if (appendBootJar) {
+                output.writeBytes(Files.readAllBytes(JAppProperties.getBootJar()));
             }
         }
 
