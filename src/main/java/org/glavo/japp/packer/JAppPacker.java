@@ -19,18 +19,25 @@ import org.glavo.japp.JAppProperties;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.io.LittleEndianDataOutput;
 import org.glavo.japp.launcher.JAppConfigGroup;
+import org.glavo.japp.launcher.Launcher;
 import org.glavo.japp.packer.processor.ClassPathProcessor;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public final class JAppPacker {
     private static final class JAppConfigGroupBuilder {
@@ -141,7 +148,7 @@ public final class JAppPacker {
                     break;
                 }
                 // Test Options
-                case "-Tappend-boot-jar": {
+                case "-Tembed-launcher": {
                     appendBootJar = true;
                     break;
                 }
@@ -192,7 +199,7 @@ public final class JAppPacker {
         }
 
         try (LittleEndianDataOutput output = LittleEndianDataOutput.of(
-                FileChannel.open(outputFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)))) {
+                FileChannel.open(outputFile, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)))) {
             output.writeBytes(header.getBytes(StandardCharsets.UTF_8));
 
             try (JAppWriter writer = new JAppWriter(output, packer.current.group)) {
@@ -200,7 +207,7 @@ public final class JAppPacker {
             }
 
             if (appendBootJar) {
-                output.writeBytes(Files.readAllBytes(JAppProperties.getBootJar()));
+                embedLauncher(output);
             }
         }
 
@@ -208,4 +215,32 @@ public final class JAppPacker {
         outputFile.toFile().setExecutable(true);
     }
 
+    private static void embedLauncher(LittleEndianDataOutput output) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+
+        try (ZipOutputStream zipOut = new ZipOutputStream(buffer)) {
+            try (ZipInputStream zipIn = new ZipInputStream(Launcher.class.getProtectionDomain().getCodeSource().getLocation().openStream())) {
+                ZipEntry entry;
+                while ((entry = zipIn.getNextEntry()) != null) {
+                    String name = entry.getName();
+                    if (!name.startsWith("win/") && !name.startsWith("darwin/") && !name.startsWith("linux/") && !name.startsWith("freebsd/")
+                        && !name.startsWith("com/github/luben/zstd/")) {
+                        zipOut.putNextEntry(entry);
+                        zipIn.transferTo(zipOut);
+                    }
+                }
+            }
+
+            try (ZipFile zipFile = new ZipFile(JAppProperties.getBootJar().toFile())) {
+                ZipEntry moduleInfo = zipFile.getEntry("module-info.class");
+                zipOut.putNextEntry(moduleInfo);
+
+                try (InputStream input = zipFile.getInputStream(moduleInfo)) {
+                    input.transferTo(zipOut);
+                }
+            }
+        }
+
+        output.writeBytes(buffer.toByteArray());
+    }
 }

@@ -20,7 +20,9 @@ import org.glavo.japp.packer.JAppPacker;
 import org.glavo.japp.platform.JavaRuntime;
 
 import java.io.PrintStream;
+import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 
 public final class Main {
     private static void printHelpMessage(PrintStream out) {
@@ -32,6 +34,11 @@ public final class Main {
     }
 
     public static void main(String[] args) throws Throwable {
+        if (Main.class.getProtectionDomain().getCodeSource().getLocation().toString().endsWith(".japp")) {
+            Launcher.run(Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()), Collections.emptyList(), Arrays.asList(args));
+            return;
+        }
+
         if (args.length == 0) {
             printHelpMessage(System.out);
             return;

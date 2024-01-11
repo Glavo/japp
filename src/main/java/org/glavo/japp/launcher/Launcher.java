@@ -106,40 +106,8 @@ public final class Launcher {
         out.println("  -J<flag>    Pass <flag> directly to java");
     }
 
-    public static void main(String[] args) throws Throwable {
-        ArrayList<String> jvmOptions = new ArrayList<>();
-
-        String jappFile = null;
-
-        int i = 0;
-        while (i < args.length) {
-            String arg = args[i++];
-
-            switch (arg) {
-                case "-help":
-                case "--help":
-                    printHelpMessage(System.out);
-                    return;
-                default:
-                    if (arg.startsWith("-J")) {
-                        jvmOptions.add(arg.substring("-J".length()));
-                    } else if (arg.startsWith("-")) {
-                        throw new IllegalArgumentException("Unknown option: " + arg);
-                    } else {
-                        jappFile = arg;
-                        break;
-                    }
-            }
-        }
-
-        if (jappFile == null) {
-            printHelpMessage(System.err);
-            System.exit(1);
-        }
-
-        Path file = Paths.get(jappFile).toAbsolutePath().normalize();
-
-        JAppLauncherMetadata config = JAppLauncherMetadata.readFile(file);
+    public static void run(Path jappFile, List<String> jvmOptions, List<String> args) throws Throwable {
+        JAppLauncherMetadata config = JAppLauncherMetadata.readFile(jappFile);
         JAppConfigGroup group = config.getGroup();
 
         JAppRuntimeContext context = JAppRuntimeContext.search(group);
@@ -172,7 +140,7 @@ public final class Launcher {
         command.addAll(group.getExtraJvmOptions());
 
         try (ByteBufferOutputStream argsBuilder = new ByteBufferOutputStream()) {
-            argsBuilder.writeString(file.toString());
+            argsBuilder.writeString(jappFile.toString());
             argsBuilder.writeLong(config.getBaseOffset());
             argsBuilder.writeLong(config.getBootMetadataOffset());
             argsBuilder.writeLong(config.getBootMetadataSize());
@@ -244,10 +212,43 @@ public final class Launcher {
                 BOOT_LAUNCHER_MODULE
         );
 
-        while (i < args.length) {
-            command.add(args[i++]);
-        }
+        command.addAll(args);
 
         System.exit(new ProcessBuilder(command).inheritIO().start().waitFor());
+    }
+
+    public static void main(String[] args) throws Throwable {
+        ArrayList<String> jvmOptions = new ArrayList<>();
+
+        String jappFile = null;
+
+        int i = 0;
+        while (i < args.length) {
+            String arg = args[i++];
+
+            switch (arg) {
+                case "-help":
+                case "--help":
+                    printHelpMessage(System.out);
+                    return;
+                default:
+                    if (arg.startsWith("-J")) {
+                        jvmOptions.add(arg.substring("-J".length()));
+                    } else if (arg.startsWith("-")) {
+                        throw new IllegalArgumentException("Unknown option: " + arg);
+                    } else {
+                        jappFile = arg;
+                        break;
+                    }
+            }
+        }
+
+        if (jappFile == null) {
+            printHelpMessage(System.err);
+            System.exit(1);
+        }
+
+        Path file = Paths.get(jappFile).toAbsolutePath().normalize();
+        run(file, jvmOptions, Arrays.asList(args).subList(i, args.length));
     }
 }
