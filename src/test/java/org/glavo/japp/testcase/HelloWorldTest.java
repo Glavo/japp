@@ -27,7 +27,7 @@ public final class HelloWorldTest implements JAppTestTemplate {
         return Stream.of(
                 newTest("module path", List.of("--module-path", FILE, MAIN_CLASS), List.of("Hello World!")),
                 newTest("classpath", List.of("--classpath", FILE, MAIN_CLASS), List.of("Hello World!")),
-                newTest("module path with end zip", List.of("-embed-launcher", "--module-path", FILE, MAIN_CLASS), List.of("Hello World!"))
+                newTest("module path with end zip", List.of("--embed-launcher", "--module-path", FILE, MAIN_CLASS), List.of("Hello World!"))
         );
     }
 }

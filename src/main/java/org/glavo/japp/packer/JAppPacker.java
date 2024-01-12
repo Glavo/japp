@@ -147,7 +147,7 @@ public final class JAppPacker {
                     packer.current = packer.current.parent;
                     break;
                 }
-                case "-embed-launcher": {
+                case "--embed-launcher": {
                     appendBootJar = true;
                     break;
                 }
