@@ -16,6 +16,7 @@
 package org.glavo.japp.packer;
 
 import org.glavo.japp.JAppProperties;
+import org.glavo.japp.Main;
 import org.glavo.japp.condition.ConditionParser;
 import org.glavo.japp.io.LittleEndianDataOutput;
 import org.glavo.japp.launcher.JAppConfigGroup;
@@ -32,6 +33,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -218,7 +221,9 @@ public final class JAppPacker {
             }
 
             if (appendBootJar) {
-                embedLauncher(output);
+                try (ZipOutputStream zipOut = new ZipOutputStream(output)) {
+                    embedLauncher(zipOut);
+                }
             }
         }
 
@@ -226,27 +231,49 @@ public final class JAppPacker {
         outputFile.toFile().setExecutable(true);
     }
 
-    private static void embedLauncher(LittleEndianDataOutput output) throws IOException {
-        try (ZipOutputStream zipOut = new ZipOutputStream(output)) {
-            try (ZipInputStream zipIn = new ZipInputStream(Launcher.class.getProtectionDomain().getCodeSource().getLocation().openStream())) {
-                ZipEntry entry;
-                while ((entry = zipIn.getNextEntry()) != null) {
-                    String name = entry.getName();
-                    if (!name.startsWith("win/") && !name.startsWith("darwin/") && !name.startsWith("linux/") && !name.startsWith("freebsd/")
-                        && !name.startsWith("com/github/luben/zstd/")) {
-                        zipOut.putNextEntry(entry);
-                        zipIn.transferTo(zipOut);
-                    }
+    private static Manifest getEmbeddedLauncherManifest() {
+        Manifest manifest = new Manifest();
+        Attributes attributes = manifest.getMainAttributes();
+        attributes.putValue("Manifest-Version", "1.0");
+        attributes.putValue("Main-Class", "org.glavo.japp.launcher.EmbeddedLauncher");
+        attributes.putValue("Add-Exports", String.join(" ",
+                "java.base/jdk.internal.loader",
+                "java.base/jdk.internal.loader",
+                "java.base/jdk.internal.misc"
+        ));
+        attributes.putValue("Add-Opens", String.join(" ",
+                "java.base/jdk.internal.loader",
+                "java.base/java.lang"
+        ));
+        return manifest;
+    }
+
+    private static void embedLauncher(ZipOutputStream output) throws IOException {
+        final String manifestPath = "META-INF/MANIFEST.MF";
+
+        output.putNextEntry(new ZipEntry(manifestPath));
+        getEmbeddedLauncherManifest().write(output);
+
+        try (ZipInputStream zipIn = new ZipInputStream(Launcher.class.getProtectionDomain().getCodeSource().getLocation().openStream())) {
+            ZipEntry entry;
+            while ((entry = zipIn.getNextEntry()) != null) {
+                String name = entry.getName();
+                if (entry.isDirectory() || name.equals(manifestPath)
+                    || name.startsWith("win/") || name.startsWith("darwin/") || name.startsWith("linux/") || name.startsWith("freebsd/")
+                    || name.startsWith("com/github/luben/zstd/")) {
+                    continue;
                 }
+                output.putNextEntry(entry);
+                zipIn.transferTo(output);
             }
+        }
 
-            try (ZipFile zipFile = new ZipFile(JAppProperties.getBootJar().toFile())) {
-                ZipEntry moduleInfo = zipFile.getEntry("module-info.class");
-                zipOut.putNextEntry(moduleInfo);
+        try (ZipFile zipFile = new ZipFile(JAppProperties.getBootJar().toFile())) {
+            ZipEntry moduleInfo = zipFile.getEntry("module-info.class");
+            output.putNextEntry(moduleInfo);
 
-                try (InputStream input = zipFile.getInputStream(moduleInfo)) {
-                    input.transferTo(zipOut);
-                }
+            try (InputStream input = zipFile.getInputStream(moduleInfo)) {
+                input.transferTo(output);
             }
         }
     }
