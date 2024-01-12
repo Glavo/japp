@@ -22,7 +22,7 @@ import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public final class ByteBufferOutputStream extends OutputStream {
+public final class ByteBufferOutputStream extends LittleEndianDataOutput {
     private ByteBuffer buffer;
 
     public ByteBufferOutputStream() {
