@@ -81,6 +81,8 @@ public final class JAppPacker {
         Path outputFile = null;
         boolean appendBootJar = false;
 
+        boolean hasMain = false;
+
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
 
@@ -102,7 +104,10 @@ public final class JAppPacker {
                     packer.current.classPath = nextArg(args, i++);
                     break;
                 }
-                case "-m": {
+                case "-m":
+                case "-module":
+                case "--module": {
+                    hasMain = true;
                     packer.current.group.mainModule = nextArg(args, i++);
                     break;
                 }
@@ -175,6 +180,10 @@ public final class JAppPacker {
                         System.err.println("Error: Unrecognized option: " + arg);
                         System.exit(1);
                     } else {
+                        if (packer.current.group.mainClass != null) {
+                            System.err.println("Error: Multiple main classes specified");
+                        }
+                        hasMain = true;
                         packer.current.group.mainClass = arg;
                     }
                 }
@@ -182,12 +191,17 @@ public final class JAppPacker {
         }
 
         if (packer.current.parent != null) {
-            System.err.println("Error: group not ended");
+            System.err.println("Error: Group not ended");
             System.exit(1);
         }
 
         if (outputFile == null) {
-            System.err.println("Error: miss output file");
+            System.err.println("Error: Miss output file");
+            System.exit(1);
+        }
+
+        if (!hasMain) {
+            System.err.println("Error: No main class or main module specified");
             System.exit(1);
         }
 
