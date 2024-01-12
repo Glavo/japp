@@ -23,7 +23,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.Objects;
 
-final class WritableByteChannelWrapper implements LittleEndianDataOutput {
+final class WritableByteChannelWrapper extends LittleEndianDataOutput {
     private final WritableByteChannel channel;
     private final ByteBuffer buffer = ByteBuffer.allocate(8192).order(ByteOrder.LITTLE_ENDIAN);
     private long totalBytes = 0L;

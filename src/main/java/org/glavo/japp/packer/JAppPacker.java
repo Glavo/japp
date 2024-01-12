@@ -22,7 +22,6 @@ import org.glavo.japp.launcher.JAppConfigGroup;
 import org.glavo.japp.launcher.Launcher;
 import org.glavo.japp.packer.processor.ClassPathProcessor;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.FileChannel;
@@ -33,7 +32,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -229,9 +227,7 @@ public final class JAppPacker {
     }
 
     private static void embedLauncher(LittleEndianDataOutput output) throws IOException {
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
-        try (ZipOutputStream zipOut = new ZipOutputStream(buffer)) {
+        try (ZipOutputStream zipOut = new ZipOutputStream(output)) {
             try (ZipInputStream zipIn = new ZipInputStream(Launcher.class.getProtectionDomain().getCodeSource().getLocation().openStream())) {
                 ZipEntry entry;
                 while ((entry = zipIn.getNextEntry()) != null) {
@@ -253,7 +249,5 @@ public final class JAppPacker {
                 }
             }
         }
-
-        output.writeBytes(buffer.toByteArray());
     }
 }

@@ -22,21 +22,21 @@ import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 
-public interface LittleEndianDataOutput extends Closeable {
+public abstract class LittleEndianDataOutput extends OutputStream implements Closeable {
 
-    static LittleEndianDataOutput of(OutputStream outputStream) {
+    public static LittleEndianDataOutput of(OutputStream outputStream) {
         return new WritableByteChannelWrapper(Channels.newChannel(outputStream));
     }
 
-    static LittleEndianDataOutput of(WritableByteChannel channel) {
+    public static LittleEndianDataOutput of(WritableByteChannel channel) {
         return new WritableByteChannelWrapper(channel);
     }
 
-    long getTotalBytes();
+    public abstract long getTotalBytes();
 
-    void writeByte(byte v) throws IOException;
+    public abstract void writeByte(byte v) throws IOException;
 
-    default void writeUnsignedByte(int v) throws IOException {
+    public void writeUnsignedByte(int v) throws IOException {
         if (v < 0 || v > 0xff) {
             throw new IllegalArgumentException();
         }
@@ -44,9 +44,9 @@ public interface LittleEndianDataOutput extends Closeable {
         writeByte((byte) v);
     }
 
-    void writeShort(short v) throws IOException;
+    public abstract void writeShort(short v) throws IOException;
 
-    default void writeUnsignedShort(int v) throws IOException {
+    public void writeUnsignedShort(int v) throws IOException {
         if (v < 0 || v > 0xffff) {
             throw new IllegalArgumentException();
         }
@@ -54,9 +54,9 @@ public interface LittleEndianDataOutput extends Closeable {
         writeShort((short) v);
     }
 
-    void writeInt(int v) throws IOException;
+    public abstract void writeInt(int v) throws IOException;
 
-    default void writeUnsignedInt(long v) throws IOException {
+    public void writeUnsignedInt(long v) throws IOException {
         if (v < 0 || v > 0xffff_ffffL) {
             throw new IllegalArgumentException();
         }
@@ -64,15 +64,15 @@ public interface LittleEndianDataOutput extends Closeable {
         writeInt((int) v);
     }
 
-    void writeLong(long v) throws IOException;
+    public abstract void writeLong(long v) throws IOException;
 
-    default void writeBytes(byte[] array) throws IOException {
+    public void writeBytes(byte[] array) throws IOException {
         writeBytes(array, 0, array.length);
     }
 
-    void writeBytes(byte[] array, int offset, int len) throws IOException;
+    public abstract void writeBytes(byte[] array, int offset, int len) throws IOException;
 
-    default void writeString(String str) throws IOException {
+    public void writeString(String str) throws IOException {
         if (str != null) {
             byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
             writeInt(bytes.length);
@@ -80,5 +80,15 @@ public interface LittleEndianDataOutput extends Closeable {
         } else {
             writeInt(0);
         }
+    }
+
+    @Override
+    public void write(int b) throws IOException {
+        LittleEndianDataOutput.this.writeByte((byte) b);
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        LittleEndianDataOutput.this.writeBytes(b, off, len);
     }
 }
