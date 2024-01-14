@@ -245,6 +245,7 @@ public final class JAppPacker {
                 "java.base/jdk.internal.loader",
                 "java.base/java.lang"
         ));
+        attributes.putValue("Enable-Native-Access", "ALL-UNNAMED");
         return manifest;
     }
 
