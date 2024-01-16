@@ -109,7 +109,15 @@ public final class JAppPacker {
                 case "-module":
                 case "--module": {
                     hasMain = true;
-                    packer.current.group.mainModule = nextArg(args, i++);
+
+                    String value = nextArg(args, i++);
+                    int idx = value.indexOf('/');
+                    if (idx < 0) {
+                        packer.current.group.mainModule = value;
+                    } else {
+                        packer.current.group.mainModule = value.substring(0, idx);
+                        packer.current.group.mainClass = value.substring(idx + 1);
+                    }
                     break;
                 }
                 case "--add-reads": {
