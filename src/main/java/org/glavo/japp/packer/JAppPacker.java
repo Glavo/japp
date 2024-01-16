@@ -255,6 +255,15 @@ public final class JAppPacker {
         output.putNextEntry(new ZipEntry(manifestPath));
         getEmbeddedLauncherManifest().write(output);
 
+        try (ZipFile zipFile = new ZipFile(JAppProperties.getBootJar().toFile())) {
+            ZipEntry moduleInfo = zipFile.getEntry("module-info.class");
+            output.putNextEntry(moduleInfo);
+
+            try (InputStream input = zipFile.getInputStream(moduleInfo)) {
+                input.transferTo(output);
+            }
+        }
+
         try (ZipInputStream zipIn = new ZipInputStream(Launcher.class.getProtectionDomain().getCodeSource().getLocation().openStream())) {
             ZipEntry entry;
             while ((entry = zipIn.getNextEntry()) != null) {
@@ -266,15 +275,6 @@ public final class JAppPacker {
                 }
                 output.putNextEntry(entry);
                 zipIn.transferTo(output);
-            }
-        }
-
-        try (ZipFile zipFile = new ZipFile(JAppProperties.getBootJar().toFile())) {
-            ZipEntry moduleInfo = zipFile.getEntry("module-info.class");
-            output.putNextEntry(moduleInfo);
-
-            try (InputStream input = zipFile.getInputStream(moduleInfo)) {
-                input.transferTo(output);
             }
         }
     }
