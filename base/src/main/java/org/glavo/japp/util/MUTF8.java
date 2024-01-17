@@ -48,7 +48,7 @@ public final class MUTF8 {
                 }
             }
 
-            builder.append(uch);
+            builder.appendCodePoint(uch);
         }
 
         return builder.toString();
