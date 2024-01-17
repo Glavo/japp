@@ -15,9 +15,12 @@
  */
 package org.glavo.japp.packer;
 
+import org.glavo.japp.packer.compressor.classfile.ClassFileReader;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.module.ModuleDescriptor;
+import java.nio.ByteBuffer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,11 +35,10 @@ public final class ModuleInfoReader {
             throw new IllegalArgumentException(jarFileName);
         }
 
-        int end = jarFileName.length() - ".jar".length();
+        final int end = jarFileName.length() - ".jar".length();
 
-        int start;
-
-        for (start = 0; start < end; start++) {
+        int start = 0;
+        for (; start < end; start++) {
             if (jarFileName.charAt(start) != '.') {
                 break;
             }
@@ -46,7 +48,7 @@ public final class ModuleInfoReader {
             throw new IllegalArgumentException(jarFileName);
         }
 
-        String name = jarFileName.substring(start, jarFileName.length() - ".jar".length());
+        String name = jarFileName.substring(start, end);
 
         // find first occurrence of -${NUMBER}. or -${NUMBER}$
         Matcher matcher = DASH_VERSION.matcher(name);
@@ -67,7 +69,10 @@ public final class ModuleInfoReader {
     }
 
     public static String readModuleName(InputStream moduleInfo) throws IOException {
-        // TODO: Support Java 8
-        return ModuleDescriptor.read(moduleInfo).name();
+        String moduleName = new ClassFileReader(ByteBuffer.wrap(moduleInfo.readAllBytes())).getModuleName();
+        if (moduleName == null) {
+            throw new IOException();
+        }
+        return moduleName;
     }
 }

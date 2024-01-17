@@ -20,10 +20,11 @@ import org.glavo.japp.util.MUTF8;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import static org.glavo.japp.classfile.ClassFile.*;
 
-final class ClassFileReader {
+public final class ClassFileReader {
     private final ByteBuffer buffer;
     final byte[] tags;
     final int[] positions;
@@ -39,7 +40,11 @@ final class ClassFileReader {
     final int thisClass;
     final int superClass;
 
-    ClassFileReader(ByteBuffer buffer) throws IOException {
+    private String moduleName;
+
+    public ClassFileReader(ByteBuffer buffer) throws IOException {
+        assert buffer.order() == ByteOrder.BIG_ENDIAN;
+
         this.buffer = buffer;
 
         int magic = buffer.getInt();
@@ -280,6 +285,16 @@ final class ClassFileReader {
                     }
                     break;
                 }
+                case "Module": {
+                    int moduleNameIndex = readU2();
+                    skip(attributeLength - 2);
+
+                    if (tags[moduleNameIndex] == CONSTANT_Module) {
+                        int stringIndex = Short.toUnsignedInt(buffer.getShort(positions[moduleNameIndex]));
+                        moduleName = getString(stringIndex);
+                    }
+                    break;
+                }
                 default:
                     skip(attributeLength);
             }
@@ -355,5 +370,9 @@ final class ClassFileReader {
             default:
                 throw new IOException(String.format("Unknown element value: 0x%02x", tag));
         }
+    }
+
+    public String getModuleName() {
+        return moduleName;
     }
 }
