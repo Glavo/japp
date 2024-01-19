@@ -272,26 +272,22 @@ public final class JAppReader implements DecompressContext, Closeable {
             CompressionMethod method,
             ByteBuffer compressed,
             int size) throws IOException {
-
-        byte[] output = new byte[size];
-        ByteBuffer outputBuffer = ByteBuffer.wrap(output);
-
         switch (method) {
             case CLASSFILE: {
+                byte[] output = new byte[size];
                 ClassFileDecompressor.decompress(this, compressed, output);
-                break;
+                return ByteBuffer.wrap(output);
             }
             case ZSTD: {
+                ByteBuffer outputBuffer = ByteBuffer.allocate(size);
                 decompressZstd(compressed, outputBuffer);
                 outputBuffer.flip();
-                break;
+                return outputBuffer;
             }
             default: {
                 throw new IOException("Unsupported compression method: " + method);
             }
         }
-
-        return outputBuffer;
     }
 
     private int castArrayLength(long value) {
@@ -316,7 +312,7 @@ public final class JAppReader implements DecompressContext, Closeable {
         if (mappedBuffer != null) {
             compressed = ByteBufferUtils.slice(mappedBuffer, offset, compressedSize);
         } else {
-            compressed = ByteBuffer.allocate(compressedSize);
+            compressed = ByteBuffer.allocateDirect(compressedSize);
 
             while (compressed.hasRemaining()) {
                 int n = channel.read(compressed, offset + baseOffset + compressed.position());
