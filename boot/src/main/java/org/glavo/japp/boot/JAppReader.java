@@ -37,7 +37,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 public final class JAppReader implements DecompressContext, Closeable {
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
@@ -191,8 +190,6 @@ public final class JAppReader implements DecompressContext, Closeable {
         return args;
     }
 
-    private final ReentrantLock zstdLock = new ReentrantLock();
-
     private final FileChannel channel;
     private final long baseOffset;
 
@@ -245,13 +242,8 @@ public final class JAppReader implements DecompressContext, Closeable {
     }
 
     @Override
-    public void decompressZstd(ByteBuffer input, ByteBuffer output) {
-        zstdLock.lock();
-        try {
-            decompressor.decompress(input, output);
-        } finally {
-            zstdLock.unlock();
-        }
+    public synchronized void decompressZstd(ByteBuffer input, ByteBuffer output) {
+        decompressor.decompress(input, output);
     }
 
     public Map<String, JAppResourceGroup> getRoot(JAppResourceRoot root) {
