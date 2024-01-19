@@ -15,11 +15,26 @@
  */
 package org.glavo.japp.util;
 
+import java.nio.charset.StandardCharsets;
+
 public final class MUTF8 {
     public static String stringFromMUTF8(byte[] bytes, int offset, int count) {
+        final int end = offset + count;
+
+        int i;
+        for (i = offset; i < end; i++) {
+            if ((bytes[i] & 0x80) != 0) {
+                break;
+            }
+        }
+
+        if (i == end) {
+            return new String(bytes, offset, count, StandardCharsets.US_ASCII);
+        }
+
         StringBuilder builder = new StringBuilder(count);
 
-        for (int i = offset; i < offset + count; i++) {
+        for (i = offset; i < end; i++) {
             byte ch = bytes[i];
 
             if (ch == 0) {
