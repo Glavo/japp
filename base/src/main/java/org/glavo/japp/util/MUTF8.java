@@ -33,7 +33,6 @@ public final class MUTF8 {
         }
 
         StringBuilder builder = new StringBuilder(count);
-
         for (i = offset; i < end; i++) {
             byte ch = bytes[i];
 
@@ -41,10 +40,10 @@ public final class MUTF8 {
                 break;
             }
 
-            boolean isUnicode = (ch & 0x80) != 0;
-            int uch = ch & 0x7F;
-
-            if (isUnicode) {
+            if (ch > 0) {
+                builder.append((char) ch);
+            } else {
+                int uch = ch & 0x7F;
                 int mask = 0x40;
 
                 while ((uch & mask) != 0) {
@@ -61,11 +60,9 @@ public final class MUTF8 {
                 if ((uch & 0xFFFF) != uch) {
                     throw new IllegalArgumentException("character out of range \\u" + Integer.toHexString(uch));
                 }
+                builder.appendCodePoint(uch);
             }
-
-            builder.appendCodePoint(uch);
         }
-
         return builder.toString();
     }
 

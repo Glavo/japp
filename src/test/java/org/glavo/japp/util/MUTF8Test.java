@@ -32,7 +32,9 @@ public final class MUTF8Test {
                 "",
                 "\0\0\0",
                 "Hello World!",
-                "Hello\0测试字符串"
+                "Hello àáâãäå",
+                "Hello 测试字符串",
+                "测试测试ABC测试测试\0测试"
         );
     }
 
