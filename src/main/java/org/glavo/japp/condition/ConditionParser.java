@@ -18,7 +18,7 @@ package org.glavo.japp.condition;
 import java.util.*;
 import java.util.function.Function;
 
-public class ConditionParser {
+public final class ConditionParser {
 
     private static final Map<String, Function<Map<String, String>, ? extends Condition>> factories = new HashMap<>();
 

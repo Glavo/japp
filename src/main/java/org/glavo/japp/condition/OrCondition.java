@@ -20,7 +20,7 @@ import org.glavo.japp.platform.JAppRuntimeContext;
 import java.util.Iterator;
 import java.util.List;
 
-public class OrCondition implements Condition {
+public final class OrCondition implements Condition {
     private final List<Condition> conditions;
 
     public OrCondition(List<Condition> conditions) {

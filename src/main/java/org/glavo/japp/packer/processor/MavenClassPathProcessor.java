@@ -18,6 +18,7 @@ package org.glavo.japp.packer.processor;
 import org.glavo.japp.launcher.JAppResourceGroupReference;
 import org.glavo.japp.maven.MavenResolver;
 import org.glavo.japp.packer.JAppWriter;
+import org.glavo.japp.packer.ModuleInfoReader;
 
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;

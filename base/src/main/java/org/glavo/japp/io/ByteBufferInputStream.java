@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.InvalidMarkException;
 import java.util.Objects;
 
-public class ByteBufferInputStream extends InputStream {
+public final class ByteBufferInputStream extends InputStream {
 
     private final ByteBuffer buffer;
 

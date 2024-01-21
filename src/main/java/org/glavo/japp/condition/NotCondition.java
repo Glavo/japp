@@ -17,7 +17,7 @@ package org.glavo.japp.condition;
 
 import org.glavo.japp.platform.JAppRuntimeContext;
 
-public class NotCondition implements Condition {
+public final class NotCondition implements Condition {
     private final Condition original;
 
     public NotCondition(Condition original) {

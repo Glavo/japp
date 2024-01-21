@@ -20,7 +20,7 @@ import org.glavo.japp.platform.JAppRuntimeContext;
 import java.util.Iterator;
 import java.util.List;
 
-public class AndCondition implements Condition {
+public final class AndCondition implements Condition {
     private final List<Condition> conditions;
 
     public AndCondition(List<Condition> conditions) {
