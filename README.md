@@ -50,6 +50,7 @@ Work in progress:
   * Now that the japp launcher will only scan Java from a fixed list of paths, 
     we need a way to manage the list of available Java runtimes instead.
 * Support for filtering unused classes;
+* Support embedding configuration files in JAR;
 * Support for Java 8.
 
 To be investigated:
