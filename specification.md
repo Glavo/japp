@@ -2,7 +2,7 @@
 
 ## types
 
-`u1`/`u2`/`u4`/`u8`: Little-endian unsigned 1/2/4/8 byte integer.
+`u1`/`u2`/`u4`/`u8`: Little-endian unsigned 1/2/4/8 byte(s) integer.
 
 
 Field:
