@@ -95,4 +95,3 @@ tasks.shadowJar {
     destinationDirectory.set(rootProject.layout.buildDirectory)
     archiveFileName.set("japp.jar")
 }
-
