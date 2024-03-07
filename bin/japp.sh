@@ -8,4 +8,4 @@ if [ ! -f "$japp_jar" ]; then
   exit 1
 fi
 
-java -jar $japp_jar "$@"
+exec java -jar $japp_jar "$@"

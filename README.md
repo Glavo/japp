@@ -197,4 +197,3 @@ Thanks to [PLCT Lab](https://plctlab.github.io/) for supporting me.
 <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/IntelliJ_IDEA.svg" alt="IntelliJ IDEA logo.">
 
 This project is developed using JetBrains IDEA. Thanks to JetBrains for providing me with a free license.
-
