@@ -40,6 +40,7 @@ import java.util.*;
 
 public final class JAppReader implements DecompressContext, Closeable {
     private static final int MAX_ARRAY_LENGTH = Integer.MAX_VALUE - 8;
+    private static final int READ_ALL_THRESHOLD = 16 * 1024 * 1024;
 
     private static JAppReader systemReader;
 
@@ -66,7 +67,7 @@ public final class JAppReader implements DecompressContext, Closeable {
         JAppBootMetadata metadata = JAppBootMetadata.readFrom(metadataBuffer, decompressor);
 
         ByteBuffer mappedBuffer = null;
-        if (metadataOffset < 16 * 1024 * 1024) { // TODO: Configurable threshold
+        if (metadataOffset < READ_ALL_THRESHOLD) {
             mappedBuffer = ByteBuffer.allocateDirect((int) metadataOffset);
             IOUtils.readFully(channel.position(baseOffset), mappedBuffer);
             mappedBuffer.flip();
