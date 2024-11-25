@@ -3,7 +3,7 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import java.util.Locale;
 
 public class LWJGL {
-    private static final String LWJGL_VERSION = "3.3.3";
+    private static final String LWJGL_VERSION = "3.3.4";
     private static final String LWJGL_PLATFORM;
 
     static {
