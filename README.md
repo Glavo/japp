@@ -1,5 +1,7 @@
 # JApp
 
+[![Gradle Check](https://github.com/Glavo/japp/actions/workflows/check.yml/badge.svg)](https://github.com/Glavo/japp/actions/workflows/check.yml)
+
 A new packaging format for Java programs. 
 
 Features:
@@ -191,6 +193,8 @@ When running this japp file, the japp launcher will first download the dependenc
 then add it to the module path and then start the program.
 
 ## Thanks
+
+<img alt="PLCT Logo" src="./PLCT.svg" width="200" height="200">
 
 Thanks to [PLCT Lab](https://plctlab.github.io/) for supporting me.
 
