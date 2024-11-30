@@ -50,7 +50,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
 
-    testImplementation(Deps.ZSTD_JNI)
+    testImplementation(libs.zstd.jni)
 
     LWJGL.addDependency(this, "testImplementation", "lwjgl")
     LWJGL.addDependency(this, "testImplementation", "lwjgl-xxhash")
@@ -97,7 +97,7 @@ tasks.test {
 dependencies {
     implementation(project(":base"))
     implementation(project(":boot"))
-    implementation(Deps.ZSTD_JNI)
+    implementation(libs.zstd.jni)
 }
 
 tasks.jar {
