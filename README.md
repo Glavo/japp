@@ -2,9 +2,12 @@
 
 [![Gradle Check](https://github.com/Glavo/japp/actions/workflows/check.yml/badge.svg)](https://github.com/Glavo/japp/actions/workflows/check.yml)
 
-A new packaging format for Java programs. 
+JApp is a modern Java program packaging format.
 
-Features:
+Its design goal is to be a better alternative to shadow jar (fat jar) and launch4j,
+and to be the optimal solution for single-file packaging and distribution of Java programs.
+
+## Features and Progress
 
 * Pack multiple modular or non-modular JARs into one file;
   * Unlike Shadow JAR (Fat JAR), JApp has good support for the Java module system;
