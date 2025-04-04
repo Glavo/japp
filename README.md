@@ -59,7 +59,7 @@ Disadvantage:
   and the Java runtime can no longer be shared between multiple Java programs.
 
   For end users, the countless chromium on the disk has already troubled many people,
-  and jlink has added countless Java standard libraries/JVMs to their disks.
+  and jlink has brings countless Java standard libraries/JVMs to their disks.
 
   For servers, the Java runtime environment does not need to change often.
   Traditionally, the Java runtime environment can be installed on the system, or in a base image.
