@@ -50,8 +50,7 @@ Disadvantage:
 
   The platforms supported by these vendors cover most of the common platforms,
   but there are some niche platforms that are not taken care of.
-  For example, platforms like FreeBSD, Alpine Linux, and Linux LoongArch 64,
-  no one from the main JDK vendors considers them,
+  For example, platforms like FreeBSD, Alpine Linux, and Linux LoongArch 64, few JDK vendors considers them,
   and Java on these platforms is often provided by the system's package manager.
   Therefore, these platforms are rarely considered by developers who use jlink to package programs.
 * Since the program is always distributed with the Java runtime environment, 
