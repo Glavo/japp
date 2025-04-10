@@ -7,6 +7,9 @@ JApp is a modern Java program packaging format.
 Its design goal is to be a better alternative to shadow jar (fat jar) and launch4j,
 and to be the optimal solution for single-file packaging and distribution of Java programs.
 
+The project is under development. We have implemented a prototype, but it still needs to be refined.
+Everyone is welcome to report bugs, make feature requests, or discuss designs through [issues](https://github.com/Glavo/japp/issues/new/choose).
+
 ## Features and Progress
 
 * Pack multiple modular or non-modular JARs into one file;
@@ -65,8 +68,6 @@ To be investigated:
 * Proguard support;
 * Build time optimization;
 * Embed japp file data in the launcher instead of appending it at the end.
-
-Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
 
 ## Vision for the future
 
