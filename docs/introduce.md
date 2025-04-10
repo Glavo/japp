@@ -15,7 +15,13 @@ Here are some features:
 
 My ambition is to make it the standard way of distributing Java programs.
 
-The official strong recommendation of jlink makes me feel uneasy.
+The official strong recommendation of jlink makes me feel uneasy:
+
+I want to be able to download a single program file of a few hundred KB to a few MB, rather than a compressed package of a few hundred MB; <br/>
+I want to avoid having dozens of JVMs and Java standard libraries on disk; <br/>
+I want to be able to easily get programs that work on Linux RISC-V 64 or FreeBSD.
+
+For me, the most serious problem among them is that jlink hurts the cross-platform capabilities of programs in the Java world.
 
 Think about it, in a world dominated by jlink and jpackage, who cares about users of niche platforms like FreeBSD, AIX, and Linux RISC-V 64?
 
@@ -41,10 +47,6 @@ For example, platforms like FreeBSD, Alpine Linux, and Linux LoongArch 64, few J
 and Java on these platforms is often provided by the package manager.
 Therefore, these platforms are rarely considered by developers who use jlink to package programs.
 
-I want to be able to download a single program file of a few hundred KB to a few MB, rather than a compressed package of a few hundred MB.
+Out of these dissatisfactions, I developed the japp project.
 
-I want to avoid having dozens of JVMs and Java standard libraries on disk.
-
-I want to be able to easily get programs that work on Linux RISC-V 64 or FreeBSD.
-
-If you have these wishes like me, I hope to get your help.
+If you have the same ambition as me, please give me a hand.
