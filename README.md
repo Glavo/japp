@@ -8,6 +8,7 @@ Its design goal is to be a better alternative to shadow jar (fat jar) and launch
 and to be the optimal solution for single-file packaging and distribution of Java programs.
 
 The project is under development. We have implemented a prototype, but it still needs to be refined.
+
 Everyone is welcome to report bugs, make feature requests, or discuss designs through [issues](https://github.com/Glavo/japp/issues/new/choose).
 
 ## Features and Progress
