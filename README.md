@@ -68,6 +68,43 @@ To be investigated:
 
 Welcome to discuss in [Discussions](https://github.com/Glavo/japp/discussions).
 
+## Vision for the future
+
+My vision for this project is to provide two distribution options for all Java projects.
+
+### Distribute JApp files only
+
+In the preferred solution, developers simply package the program into a japp file and distribute it.
+This will keep the japp file minimal and easily cross-platform.
+
+Users are expected to install the japp launcher themselves, ideally this should be done via winget/apt/Homebrew etc.
+The japp launcher will register as the default program for opening japp files, 
+and users should be able to easily launch japp applications from within a file manager or terminal.
+
+In addition, japp launcher can do many other things.
+Users can use it to manage Java (similar to sdkman/jenv) and download Java applications (similar to cargo/pip).
+
+### Distributing JApp files with the launcher embedded
+
+This is the second-best option developers can embed the JApp Launcher in a japp file and distribute it.
+The final product can have a file extension such as exe/sh.
+
+This will sacrifice the cross-platform capabilities of the program files, but is the most user-friendly, 
+as users can launch japp applications without installing Java and the japp launcher themselves.
+The embedded japp launcher helps users download Java and prepare the runtime environment.
+
+For cross-platform, we should also try our best to make it not so bad.
+
+For the embedded launcher on Windows platform, we can consider building it for x86 32-bit first, 
+making it compatible with Windows x86/x86-64/ARM64 at the same time.
+
+For other platforms, we might be able to develop an embedded launcher in bash that is compatible with macOS,
+Linux, BSD, AIX, and even Windows (wsl/msys2/cygwin required).
+
+Furthermore, even if a japp file has an embedded launcher, it should be able to be launched using other launchers.
+Developers may consider distributing only a japp file with a launcher embedded for Windows,
+and let users of other platforms launch it using a self-installed japp launcher.
+
 ## Try it
 
 NOTE: This project is in its early stages.
