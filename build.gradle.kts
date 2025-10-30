@@ -16,7 +16,7 @@
 
 plugins {
     id("java")
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
 allprojects {
@@ -47,8 +47,8 @@ tasks.register("buildAll") {
 defaultTasks("buildAll")
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.10.2"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.junit.jupiter:junit-jupiter:6.0.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     testImplementation(libs.zstd.jni)
 
