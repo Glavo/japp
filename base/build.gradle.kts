@@ -12,7 +12,7 @@ tasks.compileJava {
 
 val jappPropertiesFile = rootProject.layout.buildDirectory.file("japp.properties").get().asFile
 
-tasks.create("generateJAppProperties") {
+tasks.register("generateJAppProperties") {
     inputs
     outputs.file(jappPropertiesFile)
     doLast {

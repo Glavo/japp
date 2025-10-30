@@ -38,7 +38,7 @@ allprojects {
     }
 }
 
-tasks.create("buildAll") {
+tasks.register("buildAll") {
     dependsOn(
         ":boot:bootJar", ":shadowJar"
     )
